@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Archimedes</title>
+  <style>
+    .powered-by-emscripten {
+      display: none;
+    }
+    
+    #canvas {
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        margin: auto;
+    }
+    
+    body {
+        background-color: #000000;
+    }
+
+  </style>
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+  <script>
+    var Module = {
+        canvas: (function() {
+            var canvas = document.getElementById('canvas');
+            return canvas;
+        })(),
+    };
+    
+    Module.ccall('g_ChangeColor', 
+    'void',
+    ['void'],
+    []
+    );
+  </script>
+  {{{ SCRIPT }}}
+  <script>
+  </script>
+</body>
+</html>
+
