@@ -1,0 +1,70 @@
+/* ===== THREE COLUMN LAYOUT ===== */
+.app-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+}
+
+.main-layout {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+}
+
+
+
+/* ===== CENTER GAME AREA ===== */
+.center-game-area {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    background-color: var(--bg-primary);
+    overflow: hidden;
+}
+
+.game-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    max-width: 100%;
+    max-height: 100%;
+}
+
+.game-container {
+    border: 3px solid var(--border-accent);
+    background-color: var(--bg-tertiary);
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 8px;
+}
+
+/* ===== CONSOLE AREA (BOTTOM) ===== */
+.console-area {
+    background-color: var(--bg-secondary);
+    border-top: 2px solid var(--border-primary);
+    flex-shrink: 0;
+    min-height: 180px;
+    max-height: 180px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 900px) {
+    .main-layout {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 600px) {
+    .center-game-area {
+        padding: 10px;
+    }
+}
+

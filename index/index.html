@@ -85,8 +85,6 @@
                    </div>
                  </div>
                </div>
-
-               <!-- Selected Object Info - will be dynamically added by JavaScript -->
              </aside>
 
       <!-- Center Game Area -->
@@ -99,14 +97,14 @@
       <!-- Right Button Bar -->
       <aside class="right-sidebar">
           <div class="sidebar-header">
-            <h3>Interface</h3>
+            <h3>Character</h3>
           </div>
           <div class="button-grid">
-            <button class="icon-btn active" onclick="openInventory()" title="Inventory">
-              <i class="fas fa-backpack"></i>
-            </button>
             <button class="icon-btn" onclick="openCharacterSheet()" title="Character Sheet">
               <i class="fas fa-user"></i>
+            </button>
+            <button class="icon-btn" onclick="openInventory()" title="Inventory">
+              <i class="fas fa-backpack"></i>
             </button>
             <button class="icon-btn" onclick="openProgress()" title="Progress/Skills">
               <i class="fas fa-chart-bar"></i>
@@ -122,9 +120,27 @@
             </button>
           </div>
 
-        <!-- Dynamic Content Area - will be populated by JavaScript -->
+        <!-- Quick Skills/Actions -->
+        <div class="quick-actions">
+          <h4>Quick Skills</h4>
+          <button class="skill-btn mining" onclick="startMining()">
+            <i class="fas fa-hammer"></i>
+            <span>Mining</span>
+          </button>
+          <button class="skill-btn woodcutting" onclick="startWoodcutting()">
+            <i class="fas fa-tree"></i>
+            <span>Woodcut</span>
+          </button>
+          <button class="skill-btn fishing" onclick="startFishing()">
+            <i class="fas fa-fish"></i>
+            <span>Fishing</span>
+          </button>
+          <button class="skill-btn cooking" onclick="startCooking()">
+            <i class="fas fa-fire"></i>
+            <span>Cooking</span>
+          </button>
+        </div>
       </aside>
-
 
     </div>
 
@@ -170,7 +186,7 @@
     };
   </script>
 
-  {{{ SCRIPT }}}
+  <script async type="text/javascript" src="index.js"></script>
 
 </body>
 <script src="../htmlTemplate/js/animations.js"></script>
