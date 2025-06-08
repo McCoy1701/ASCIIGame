@@ -23,7 +23,7 @@ $(OBJ_DIR)/em_game.o: $(SRC_DIR)/game.c
 
 $(INDEX_DIR)/index: $(OBJ_DIR)/em_main.o $(OBJ_DIR)/em_game.o $(LIB_DIR)/libArchimedes.a
 	mkdir $(INDEX_DIR)
-	$(ECC) $^ -s WASM=1 --shell-file htmlTemplate/template.html --preload-file resources/ -o $@.html -s MODULARIZE -s EXPORTED_RUNTIME_METHODS=ccall $(EFLAGS)
+	$(ECC) $^ -s WASM=1 --shell-file htmlTemplate/template.html --preload-file resources/ -o $@.html $(EFLAGS)
 
 
 .PHONY: native
@@ -58,5 +58,3 @@ clean:
 .PHONY: always
 always:
 	mkdir $(OBJ_DIR) $(BIN_DIR)
-
-

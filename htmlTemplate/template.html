@@ -7,7 +7,7 @@
     .powered-by-emscripten {
       display: none;
     }
-    
+
     #canvas {
         position: absolute;
         top: 0;
@@ -15,8 +15,11 @@
         bottom: 0;
         left: 0;
         margin: auto;
+        border: 5px solid #ffffff;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 222, 0.5);
     }
-    
+
     body {
         background-color: #000000;
     }
@@ -24,24 +27,46 @@
   </style>
 </head>
 <body>
+    <!-- Module Canvas -->
   <canvas id="canvas"></canvas>
-  <script>
+  <!-- End Module Canvas -->
+  <!-- Get ready for module loading -->
+  <script type="module">
+      import { initModuleLoader } from '../htmlTemplate/module_loader.mjs';
+      window.initModuleLoader = initModuleLoader;
+    </script>
+    <!-- MODULE INITIALIZATION HAS TO BE PART OF THE TEMPLATE-->
+    <script>
     var Module = {
-        canvas: (function() {
-            var canvas = document.getElementById('canvas');
-            return canvas;
-        })(),
+      canvas: (function () {
+        var canvas = document.getElementById("canvas");
+        return canvas;
+      })(),
+      onRuntimeInitialized: function () {
+        console.log("Runtime initialized!");
+        // TODO: make a custom logger with configuration for this
+        // console.log("Module object:", Module);
+        // console.log("_g_ChangeColor function:", Module._g_ChangeColor);
+
+        // Use the globally available function to build the module
+        if (typeof window.initModuleLoader === "function") {
+          window.initModuleLoader(Module);
+        }
+      },
+      /* -----
+
+      ADD YOUR C FUNCTIONS HERE
+
+      ----- */
+      change_color: function (color) {
+        if (typeof Module._g_ChangeColor === "function") {
+          Module._g_ChangeColor(color); // Blue color
+        }
+      },
     };
-    
-    Module.ccall('g_ChangeColor', 
-    'void',
-    ['void'],
-    []
-    );
-  </script>
+    </script>
   {{{ SCRIPT }}}
-  <script>
-  </script>
+
+
 </body>
 </html>
-
