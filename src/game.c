@@ -10,7 +10,11 @@ void g_DrawWorldMap( World_t* world, aColor_t color )
     int w = CELL_SIZE;
     int h = CELL_SIZE;
 
-    a_DrawRect( x, y, w, h, color );
+    SDL_SetRenderDrawColor(app.renderer, color.r, color.g, color.b, color.a);
+    SDL_Rect rect = { x, y, w, h };
+    SDL_RenderDrawRect( app.renderer, &rect );
+    SDL_SetRenderDrawColor(app.renderer, 255, 255, 255, 255);
+    //a_DrawRect( x, y, w, h, color );
   }
 
 }

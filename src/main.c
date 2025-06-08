@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -9,12 +10,24 @@
 #include "Archimedes.h"
 #include "game.h"
 
+void g_ChangeColor( uint32_t hex_color_value );
 static void aDoLoop( float );
 static void aRenderLoop( float );
 
 SDL_Surface* surf;
 World_t* g_world;
 aColor_t grid_color;
+
+EMSCRIPTEN_KEEPALIVE
+void g_ChangeColor( uint32_t hex_color_value )
+{
+  uint8_t a = 0xff;
+  uint8_t b = hex_color_value;
+  uint8_t g = hex_color_value >> 8;
+  uint8_t r = hex_color_value >> 16;
+  aColor_t new_color = { r, g, b, a };
+  grid_color = new_color;
+}
 
 void aInitGame( void )
 {
@@ -48,13 +61,8 @@ void aInitGame( void )
 
   }
 
-  grid_color = blue;
-}
-
-EMSCRIPTEN_KEEPALIVE
-void g_ChangeColor( int hex_color_value )
-{
-  printf("test\n");
+//  grid_color = blue;
+  //g_ChangeColor( 0xff0000 );
 }
 
 static void aDoLoop( float dt )
@@ -73,6 +81,7 @@ static void aRenderLoop( float dt )
   //a_DrawFilledRect( 100, 100, 32, 32, blue );
   //a_DrawFilledRect( 300, 300, 32, 32, red );
   //a_Blit( surf, 200, 200 );
+
 }
 
 void aMainloop( void )
