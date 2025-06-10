@@ -1,32 +1,67 @@
 export async function initModuleLoader(Module) {
   console.log("We are OUT -- OF -- THE -- OBJECT -- INITIALIZATION -- ! ");
   console.log("");
+
+  // Hide the loading indicator
+  const loadingIndicator = document.querySelector(
+    ".game-wrapper .loading-indicator",
+  );
+  if (loadingIndicator) {
+    // Add the fade-out animation class
+    loadingIndicator.classList.add("loading-fade-out");
+
+    // After animation completes, hide it completely
+    setTimeout(() => {
+      loadingIndicator.style.display = "none";
+    }, 300); // 300ms matches the animation duration
+  }
+
   setTimeout(() => {
     /* -----
   TEST YOUR CODE HERE
   ----- */
     colorLoop(Module, true);
+
+    /* -----
+  END OF TEST AREA
+  ----- */
   }, 1); // delay to start
 }
-
 // This makes it globally available so template.html can use it
 window.initModuleLoader = initModuleLoader;
 
+// Now we can define functions
+
 export function colorLoop(Module, random = false) {
-  let colors = [
-    0xd1b187, 0xc77b58, 0xae5d40, 0x79444a, 0x4b3d44, 0xba9158, 0x927441,
-    0x4d4539, 0x77743b, 0xb3a555, 0xd2c9a5, 0x8caba1, 0x4b726e, 0x574852,
-    0x847875, 0xab9b8e,
-  ];
+  // Organized color palette with descriptive groupings
+  const colorPalette = {
+    blues: [0x172038, 0x253a5e, 0x3c5e8b, 0x4f8fba, 0x73bed3, 0xa4dddb],
+    greens: [0x19332d, 0x25562e, 0x468232, 0x75a743, 0xa8ca58, 0xd0da91],
+    browns: [0x4d2b32, 0x7a4841, 0xad7757, 0xc09473, 0xd7b594, 0xe7d5b3],
+    oranges: [0x341c27, 0x602c2c, 0x884b2b, 0xbe772b, 0xde9e41, 0xe8c170],
+    reds: [0x241527, 0x411d31, 0x752438, 0xa53030, 0xcf573c, 0xda863e],
+    purples: [0x1e1d39, 0x402751, 0x7a367b, 0xa23e8c, 0xc65197, 0xdf84a5],
+    grays: [
+      0x090a14, 0x10141f, 0x151d28, 0x202e37, 0x394a50, 0x577277, 0x819796,
+      0xa8b5b2, 0xc7cfcc, 0xebede9,
+    ],
+  };
+
+  // Flatten all colors into a single array
+  let colors = Object.values(colorPalette).flat();
   let index = 0;
 
   function changeColor() {
     if (random) {
-      colors = shuffle(colors);
+      // Pick a completely random color each time
+      const randomIndex = Math.floor(Math.random() * colors.length);
+      Module._g_ChangeColor(colors[randomIndex]);
+    } else {
+      // Sequential mode
+      Module._g_ChangeColor(colors[index]);
+      index = (index + 1) % colors.length;
     }
-    Module._g_ChangeColor(colors[index]);
-    index = (index + 1) % colors.length;
-    // recursively call itself... :)
+
     setTimeout(changeColor, 1000);
   }
 

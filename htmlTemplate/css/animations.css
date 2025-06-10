@@ -1,0 +1,38 @@
+/* -- RPG/static/RPG/css/animations.css -- */
+
+/* Keyframe animation for the button press effect */
+@keyframes button-press {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(0.95);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Class to apply the button press animation */
+.btn-press-anim {
+    animation-name: button-press;
+    animation-duration: 0.3s;
+    animation-timing-function: ease-in-out;
+}
+
+/* animation for the loading indicator to fade out */
+@keyframes loading-fade-out {
+    0% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+
+/* Class to apply the loading fade out animation */
+.loading-fade-out {
+    animation-name: loading-fade-out;
+    animation-duration: 0.3s;
+    animation-timing-function: ease-in-out;
+}

@@ -1,0 +1,106 @@
+/*
+ * ASCIIGame Root CSS - Color Palette and Global Styles
+ * Location: htmlTemplate/css/root.css
+ */
+
+:root {
+    /* ===== BLUES - Cool Ocean Tones ===== */
+    --color-blue-darkest: #172038; /* Deep navy */
+    --color-blue-dark: #253a5e; /* Dark blue */
+    --color-blue-medium: #3c5e8b; /* Medium blue */
+    --color-blue-light: #4f8fba; /* Sky blue */
+    --color-blue-lighter: #73bed3; /* Light cyan */
+    --color-blue-lightest: #a4dddb; /* Pale cyan */
+
+    /* ===== GREENS - Nature Earth Tones ===== */
+    --color-green-darkest: #19332d; /* Dark forest */
+    --color-green-dark: #25562e; /* Deep green */
+    --color-green-medium: #468232; /* Forest green */
+    --color-green-light: #75a743; /* Grass green */
+    --color-green-lighter: #a8ca58; /* Light lime */
+    --color-green-lightest: #d0da91; /* Pale lime */
+
+    /* ===== BROWNS - Warm Earth Tones ===== */
+    --color-brown-darkest: #4d2b32; /* Dark burgundy */
+    --color-brown-dark: #7a4841; /* Dark brown */
+    --color-brown-medium: #ad7757; /* Medium brown */
+    --color-brown-light: #c09473; /* Light brown */
+    --color-brown-lighter: #d7b594; /* Tan */
+    --color-brown-lightest: #e7d5b3; /* Cream */
+
+    /* ===== ORANGES - Fire Warm Tones ===== */
+    --color-orange-darkest: #341c27; /* Dark maroon */
+    --color-orange-dark: #602c2c; /* Dark red-brown */
+    --color-orange-medium: #884b2b; /* Brown-orange */
+    --color-orange-light: #be772b; /* Orange */
+    --color-orange-lighter: #de9e41; /* Light orange */
+    --color-orange-lightest: #e8c170; /* Golden yellow */
+
+    /* ===== REDS - Bold Vibrant Tones ===== */
+    --color-red-darkest: #241527; /* Dark purple-red */
+    --color-red-dark: #411d31; /* Deep maroon */
+    --color-red-medium: #752438; /* Dark red */
+    --color-red-light: #a53030; /* Red */
+    --color-red-lighter: #cf573c; /* Light red */
+    --color-red-lightest: #da863e; /* Red-orange */
+
+    /* ===== PURPLES - Mystic Magical Tones ===== */
+    --color-purple-darkest: #1e1d39; /* Deep indigo */
+    --color-purple-dark: #402751; /* Dark purple */
+    --color-purple-medium: #7a367b; /* Medium purple */
+    --color-purple-light: #a23e8c; /* Light purple */
+    --color-purple-lighter: #c65197; /* Pink-purple */
+    --color-purple-lightest: #df84a5; /* Light pink */
+
+    /* ===== GRAYS - Neutral Balanced Tones ===== */
+    --color-gray-darkest: #090a14; /* Almost black */
+    --color-gray-darker: #10141f; /* Very dark gray */
+    --color-gray-dark: #151d28; /* Dark gray */
+    --color-gray-medium-dark: #202e37; /* Medium-dark gray */
+    --color-gray-medium: #394a50; /* Medium gray */
+    --color-gray-medium-light: #577277; /* Medium-light gray */
+    --color-gray-light: #819796; /* Light gray */
+    --color-gray-lighter: #a8b5b2; /* Lighter gray */
+    --color-gray-lightest: #c7cfcc; /* Very light gray */
+    --color-gray-almost-white: #ebede9; /* Off-white */
+
+    /* ===== SEMANTIC COLOR MAPPINGS ===== */
+    --color-primary: var(--color-blue-dark);
+    --color-secondary: var(--color-purple-medium);
+    --color-accent: var(--color-orange-light);
+    --color-success: var(--color-green-medium);
+    --color-warning: var(--color-orange-lighter);
+    --color-error: var(--color-red-light);
+    --color-info: var(--color-blue-light);
+
+    /* ===== BACKGROUND COLORS ===== */
+    --bg-primary: var(--color-gray-darkest);
+    --bg-secondary: var(--color-gray-dark);
+    --bg-tertiary: var(--color-gray-medium-dark);
+    --bg-surface: var(--color-gray-medium);
+    --bg-overlay: var(--color-gray-darker);
+
+    /* ===== TEXT COLORS ===== */
+    --text-primary: var(--color-gray-almost-white);
+    --text-secondary: var(--color-gray-lighter);
+    --text-muted: var(--color-gray-light);
+    --text-inverse: var(--color-gray-darkest);
+
+    /* ===== BORDER COLORS ===== */
+    --border-primary: var(--color-gray-medium);
+    --border-secondary: var(--color-gray-medium-dark);
+    --border-accent: var(--color-blue-light);
+}
+
+/* Optional: Base styling for common elements */
+* {
+    box-sizing: border-box;
+}
+
+body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: "Courier New", monospace;
+    margin: 0;
+    padding: 0;
+}

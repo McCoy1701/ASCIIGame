@@ -1,0 +1,313 @@
+/*
+ * Console/Terminal Styles for ASCII Game
+ * Location: htmlTemplate/css/console.css
+ */
+
+/* ===== CONSOLE/TERMINAL AREA ===== */
+.console-area {
+    background-color: var(--bg-secondary);
+    border-top: 2px solid var(--border-primary);
+    flex-shrink: 0;
+    min-height: 180px;
+    max-height: 180px;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.3s ease;
+}
+
+.console-area.resizing {
+    transition: none;
+}
+
+/* ===== CONSOLE HEADER ===== */
+.console-header {
+    height: 8px;
+    background-color: var(--bg-tertiary);
+    border-bottom: 1px solid var(--border-secondary);
+    cursor: ns-resize;
+    user-select: none;
+    position: relative;
+    transition: background-color 0.2s ease;
+}
+
+.console-header:hover {
+    background-color: var(--color-gray-medium);
+}
+
+.console-header::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 40px;
+    height: 2px;
+    background-color: var(--text-muted);
+    border-radius: 1px;
+}
+
+.console-header::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 40px;
+    height: 2px;
+    background-color: var(--text-muted);
+    border-radius: 1px;
+    margin-top: 4px;
+}
+
+/* ===== CONSOLE CONTENT ===== */
+.console-content {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.console-output {
+    flex: 1;
+    padding: 10px 15px;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: "Courier New", monospace;
+    font-size: 13px;
+    overflow-y: auto;
+    line-height: 1.4;
+    scroll-behavior: smooth;
+}
+
+/* Custom scrollbar for console */
+.console-output::-webkit-scrollbar {
+    width: 8px;
+}
+
+.console-output::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+}
+
+.console-output::-webkit-scrollbar-thumb {
+    background: var(--color-gray-medium);
+    border-radius: 4px;
+}
+
+.console-output::-webkit-scrollbar-thumb:hover {
+    background: var(--color-gray-light);
+}
+
+/* ===== CONSOLE LINES ===== */
+.console-line {
+    margin-bottom: 2px;
+    word-wrap: break-word;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 2px 0;
+    transition: background-color 0.2s ease;
+}
+
+.console-line:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 3px;
+}
+
+.console-line.error {
+    color: var(--color-error);
+    border-left: 3px solid var(--color-error);
+    padding-left: 8px;
+    background-color: rgba(165, 48, 48, 0.1);
+}
+
+.console-line.success {
+    color: var(--color-success);
+    border-left: 3px solid var(--color-success);
+    padding-left: 8px;
+    background-color: rgba(70, 130, 50, 0.1);
+}
+
+.console-line.warning {
+    color: var(--color-warning);
+    border-left: 3px solid var(--color-warning);
+    padding-left: 8px;
+    background-color: rgba(222, 158, 65, 0.1);
+}
+
+.console-line.info {
+    color: var(--color-info);
+    border-left: 3px solid var(--color-info);
+    padding-left: 8px;
+    background-color: rgba(79, 143, 186, 0.1);
+}
+
+.console-line.system {
+    color: var(--color-purple-light);
+    font-style: italic;
+    opacity: 0.8;
+}
+
+.console-line.command {
+    color: var(--color-accent);
+    font-weight: bold;
+}
+
+/* Timestamp styling */
+.console-timestamp {
+    color: var(--text-muted);
+    font-size: 11px;
+    min-width: 80px;
+    opacity: 0.7;
+}
+
+/* ===== CONSOLE INPUT AREA ===== */
+.console-input-area {
+    display: flex;
+    align-items: center;
+    padding: 8px 15px;
+    background-color: var(--bg-tertiary);
+    border-top: 1px solid var(--border-secondary);
+    gap: 8px;
+}
+
+.console-input-area.hidden {
+    display: none;
+}
+
+.console-prompt {
+    color: var(--color-accent);
+    font-family: "Courier New", monospace;
+    font-weight: bold;
+    font-size: 14px;
+    user-select: none;
+}
+
+.console-input {
+    flex: 1;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-primary);
+    padding: 6px 10px;
+    font-family: "Courier New", monospace;
+    font-size: 13px;
+    outline: none;
+    border-radius: 3px;
+    transition: all 0.2s ease;
+}
+
+.console-input:focus {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 2px rgba(79, 143, 186, 0.2);
+    background-color: var(--bg-secondary);
+}
+
+.console-input::placeholder {
+    color: var(--text-muted);
+    opacity: 0.7;
+}
+
+/* ===== CONSOLE ANIMATIONS ===== */
+@keyframes console-flash {
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.console-line.flash {
+    animation: console-flash 0.5s ease-in-out;
+}
+
+@keyframes console-slide-in {
+    from {
+        transform: translateX(-10px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.console-line.slide-in {
+    animation: console-slide-in 0.3s ease-out;
+}
+
+/* ===== CONSOLE RESPONSIVE DESIGN ===== */
+@media (max-width: 900px) {
+    .console-area {
+        min-height: 120px;
+        max-height: 120px;
+    }
+
+    .console-area.expanded {
+        min-height: 200px;
+        max-height: 200px;
+    }
+
+    .console-output {
+        font-size: 12px;
+        padding: 8px 12px;
+    }
+
+    .console-input-area {
+        padding: 6px 12px;
+    }
+
+    .console-input {
+        font-size: 12px;
+        padding: 5px 8px;
+    }
+}
+
+@media (max-width: 600px) {
+    .console-header {
+        padding: 6px 10px;
+    }
+
+    .console-title {
+        font-size: 12px;
+    }
+
+    .console-btn {
+        font-size: 11px;
+        padding: 3px 6px;
+    }
+
+    .console-controls {
+        gap: 6px;
+    }
+
+    .console-timestamp {
+        display: none;
+    }
+}
+
+/* ===== CONSOLE THEMES ===== */
+.console-area.retro {
+    background-color: #000;
+    border-color: #00ff00;
+}
+
+.console-area.retro .console-output {
+    background-color: #000;
+    color: #00ff00;
+}
+
+.console-area.retro .console-line {
+    color: #00ff00;
+}
+
+.console-area.matrix {
+    background-color: #001100;
+    border-color: #00aa00;
+}
+
+.console-area.matrix .console-output {
+    background-color: #001100;
+    color: #00aa00;
+}

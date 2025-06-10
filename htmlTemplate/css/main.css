@@ -1,0 +1,120 @@
+/* ===== THREE COLUMN LAYOUT ===== */
+.app-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+}
+
+.main-layout {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+}
+
+/* ===== CENTER GAME AREA ===== */
+.center-game-area {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    background-color: var(--bg-primary);
+    overflow: hidden;
+}
+
+.game-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    max-width: 100%;
+    max-height: 100%;
+}
+
+.game-container {
+    border: 3px solid var(--border-accent);
+    background-color: var(--bg-tertiary);
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 8px;
+}
+
+/* ===== CONSOLE AREA (BOTTOM) ===== */
+.console-area {
+    background-color: var(--bg-secondary);
+    border-top: 2px solid var(--border-primary);
+    flex-shrink: 0;
+    min-height: 180px;
+    max-height: 180px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 900px) {
+    .main-layout {
+        flex-direction: column;
+        gap: 0;
+    }
+    
+    .center-game-area {
+        order: 0;
+        flex: 1;
+        min-height: 300px;
+        padding: 15px;
+    }
+    
+    .game-container {
+        width: 100%;
+        height: 100%;
+        max-width: calc(100vw - 30px);
+        max-height: calc(100vh - 400px);
+    }
+}
+
+@media (max-width: 600px) {
+    .center-game-area {
+        padding: 8px;
+        min-height: 250px;
+    }
+    
+    .game-container {
+        max-width: calc(100vw - 16px);
+        max-height: calc(100vh - 350px);
+        border-width: 2px;
+    }
+    
+    .game-wrapper .loading-indicator {
+        font-size: 11px;
+        transform: translateX(200%);
+    }
+}
+
+.game-wrapper .loading-indicator {
+    opacity: 0.6;
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-secondary, #888);
+    padding: 2px;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: absolute;
+    transform: translateX(250%);
+}
+
+.inventory-slot .loading-indicator {
+    opacity: 0.6;
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-secondary, #888);
+    padding: 2px;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}

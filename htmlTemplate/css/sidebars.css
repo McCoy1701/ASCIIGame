@@ -1,0 +1,1260 @@
+/*
+ * Sidebar Styles for ASCII Game MMO Interface
+ * Location: htmlTemplate/css/sidebars.css
+ */
+
+/* ===== SIDEBAR STYLES ===== */
+.left-sidebar,
+.right-sidebar {
+    width: 200px;
+    background-color: var(--bg-secondary);
+    border: 2px solid var(--border-primary);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    flex-shrink: 0;
+}
+
+.left-sidebar {
+    border-right: none;
+}
+
+.right-sidebar {
+    border-left: none;
+}
+
+.sidebar-header {
+    padding: 15px;
+    background-color: var(--bg-tertiary);
+    border-bottom: 1px solid var(--border-secondary);
+    text-align: center;
+}
+
+.sidebar-header h3 {
+    margin: 0;
+    color: var(--text-primary);
+    font-family: "Courier New", monospace;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+/* ===== ICON BUTTON STYLES ===== */
+.button-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    padding: 15px;
+}
+
+.icon-btn {
+    width: 60px;
+    height: 60px;
+    background-color: var(--color-primary);
+    color: var(--text-primary);
+    border: 2px solid var(--color-blue-light);
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    font-size: 18px;
+    position: relative;
+    overflow: hidden;
+}
+
+.icon-btn:hover {
+    background-color: var(--color-blue-light);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(79, 143, 186, 0.3);
+}
+
+.icon-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(79, 143, 186, 0.2);
+}
+
+.icon-btn:focus {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+    z-index: 1;
+}
+
+.icon-btn:focus:not(:focus-visible) {
+    outline: none;
+}
+
+.icon-btn i {
+    z-index: 1;
+}
+
+/* Button hover effect */
+.icon-btn::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.2),
+        transparent
+    );
+    transition: left 0.5s;
+}
+
+.icon-btn:hover::before {
+    left: 100%;
+}
+
+/* Enhanced icon buttons for MMO feel */
+.icon-btn::after {
+    content: attr(title);
+    position: absolute;
+    bottom: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: var(--bg-overlay);
+    color: var(--text-primary);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    white-space: nowrap;
+    opacity: 0;
+    transition: all 0.3s ease;
+    pointer-events: none;
+    z-index: 1000;
+}
+
+.icon-btn:hover::after {
+    opacity: 1;
+    bottom: -20px;
+}
+
+/* Active/Selected state for buttons */
+.icon-btn.active {
+    background-color: var(--color-accent);
+    border-color: var(--color-orange-lighter);
+    box-shadow: 0 0 10px rgba(190, 119, 43, 0.5);
+}
+
+/* ===== PLAYER INFO PANEL ===== */
+.player-info {
+    padding: 15px;
+    background-color: var(--bg-tertiary);
+    border-bottom: 1px solid var(--border-secondary);
+    text-align: center;
+}
+
+.player-avatar {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 10px;
+}
+
+.player-avatar i {
+    font-size: 32px;
+    color: var(--color-accent);
+}
+
+.player-avatar span {
+    color: var(--text-primary);
+    font-family: "Courier New", monospace;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.player-level {
+    color: var(--color-warning);
+    font-family: "Courier New", monospace;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+/* ===== GAME STATS STYLES ===== */
+.game-stats {
+    padding: 15px;
+    border-top: 1px solid var(--border-secondary);
+}
+
+.game-stats h4 {
+    margin: 0 0 15px 0;
+    color: var(--text-primary);
+    font-family: "Courier New", monospace;
+    font-size: 14px;
+    text-align: center;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-secondary);
+}
+
+.stat-item:last-child {
+    border-bottom: none;
+}
+
+.stat-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+}
+
+.stat-label i {
+    color: var(--color-accent);
+    font-size: 14px;
+    width: 16px;
+}
+
+.stat-label span {
+    color: var(--text-secondary);
+    font-family: "Courier New", monospace;
+    font-weight: bold;
+}
+
+.stat-bar {
+    position: relative;
+    height: 16px;
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.stat-fill {
+    height: 100%;
+    transition: width 0.3s ease;
+    position: relative;
+}
+
+.health-fill {
+    background: linear-gradient(
+        90deg,
+        var(--color-red-light),
+        var(--color-red-lighter)
+    );
+}
+
+.stamina-fill {
+    background: linear-gradient(
+        90deg,
+        var(--color-green-medium),
+        var(--color-green-light)
+    );
+}
+
+.mana-fill {
+    background: linear-gradient(
+        90deg,
+        var(--color-blue-medium),
+        var(--color-blue-light)
+    );
+}
+
+.xp-fill {
+    background: linear-gradient(
+        90deg,
+        var(--color-orange-light),
+        var(--color-orange-lighter)
+    );
+}
+
+.stat-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: var(--text-primary);
+    font-family: "Courier New", monospace;
+    font-size: 10px;
+    font-weight: bold;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+/* ===== QUICK ACTIONS ===== */
+.quick-actions {
+    padding: 15px;
+    border-top: 1px solid var(--border-secondary);
+}
+
+.quick-actions h4 {
+    margin: 0 0 15px 0;
+    color: var(--text-primary);
+    font-family: "Courier New", monospace;
+    font-size: 14px;
+    text-align: center;
+}
+
+.quick-btn {
+    width: 100%;
+    height: 50px;
+    background-color: var(--color-success);
+    color: var(--text-primary);
+    border: 2px solid var(--color-green-light);
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    transition: all 0.3s ease;
+    font-family: "Courier New", monospace;
+    font-size: 14px;
+}
+
+.quick-btn:hover {
+    background-color: var(--color-green-light);
+    transform: translateY(-1px);
+}
+
+.quick-btn:last-child {
+    margin-bottom: 0;
+}
+
+/* ===== SKILL BUTTONS ===== */
+.skill-btn {
+    width: 100%;
+    height: 40px;
+    border: 2px solid;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+    margin-bottom: 8px;
+    padding: 0 12px;
+    transition: all 0.3s ease;
+    font-family: "Courier New", monospace;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.skill-btn:last-child {
+    margin-bottom: 0;
+}
+
+.skill-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Skill-specific colors */
+.skill-btn.mining {
+    background-color: var(--color-gray-medium);
+    border-color: var(--color-gray-light);
+    color: var(--text-primary);
+}
+
+.skill-btn.mining:hover {
+    background-color: var(--color-gray-light);
+}
+
+.skill-btn.woodcutting {
+    background-color: var(--color-brown-medium);
+    border-color: var(--color-brown-light);
+    color: var(--text-primary);
+}
+
+.skill-btn.woodcutting:hover {
+    background-color: var(--color-brown-light);
+}
+
+.skill-btn.fishing {
+    background-color: var(--color-blue-medium);
+    border-color: var(--color-blue-light);
+    color: var(--text-primary);
+}
+
+.skill-btn.fishing:hover {
+    background-color: var(--color-blue-light);
+}
+
+.skill-btn.cooking {
+    background-color: var(--color-red-medium);
+    border-color: var(--color-red-light);
+    color: var(--text-primary);
+}
+
+.skill-btn.cooking:hover {
+    background-color: var(--color-red-light);
+}
+
+.skill-btn.active {
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3);
+    transform: scale(0.98);
+}
+
+/* ===== SELECTED OBJECT INFO ===== */
+.selected-object-info {
+    padding: 15px;
+    border-top: 1px solid var(--border-secondary);
+    background-color: var(--bg-secondary);
+}
+
+.selected-object-info h4 {
+    margin: 0 0 15px 0;
+    color: var(--text-primary);
+    font-family: "Courier New", monospace;
+    font-size: 14px;
+    text-align: center;
+}
+
+.object-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.object-btn {
+    width: 100%;
+    height: 30px;
+    background-color: var(--color-purple-medium);
+    color: var(--text-primary);
+    border: 1px solid var(--color-purple-light);
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: "Courier New", monospace;
+    font-size: 11px;
+    transition: all 0.2s ease;
+}
+
+.object-btn:hover {
+    background-color: var(--color-purple-light);
+    transform: translateY(-1px);
+}
+
+.object-display {
+    min-height: 100px;
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 4px;
+    padding: 10px;
+}
+
+.no-object {
+    color: var(--text-muted);
+    font-style: italic;
+    text-align: center;
+    font-size: 12px;
+    font-family: "Courier New", monospace;
+}
+
+.object-info h5 {
+    margin: 0 0 10px 0;
+    color: var(--color-accent);
+    font-family: "Courier New", monospace;
+    font-size: 13px;
+    font-weight: bold;
+}
+
+.object-details {
+    font-size: 11px;
+    font-family: "Courier New", monospace;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 4px;
+    padding: 2px 0;
+}
+
+.detail-label {
+    color: var(--text-secondary);
+    font-weight: bold;
+}
+
+.detail-value {
+    color: var(--text-primary);
+}
+
+/* ===== DYNAMIC CONTENT SCREENS ===== */
+.dynamic-content {
+    flex: 1;
+    overflow-y: auto;
+    background-color: var(--bg-primary);
+}
+
+.screen-content {
+    padding: 15px;
+    font-family: "Courier New", monospace;
+}
+
+.screen-content h4 {
+    margin: 0 0 15px 0;
+    color: var(--text-primary);
+    font-size: 14px;
+    text-align: center;
+    border-bottom: 1px solid var(--border-secondary);
+    padding-bottom: 8px;
+}
+
+/* Inventory Screen */
+
+.inventory-slot {
+    aspect-ratio: 1;
+    border: 1px solid var(--border-primary);
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 4px;
+    position: relative;
+    width: 100%;
+    height: auto;
+    min-height: 60px;
+    box-sizing: border-box;
+}
+
+.inventory-slot.filled {
+    background-color: var(--bg-tertiary);
+    border-color: var(--color-accent);
+}
+
+.inventory-slot.empty {
+    background-color: var(--bg-secondary);
+    border-style: dashed;
+}
+
+.inventory-slot:hover {
+    border-color: var(--color-accent);
+    transform: scale(1.05);
+}
+
+.inventory-slot i {
+    font-size: 16px;
+    color: var(--color-accent);
+    margin-bottom: 4px;
+}
+
+.inventory-slot span {
+    font-size: 9px;
+    text-align: center;
+    color: var(--text-primary);
+}
+
+/* Character Screen */
+.character-stats,
+.character-equipment {
+    margin-bottom: 20px;
+}
+
+.stat-row,
+.equipment-slot {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border-secondary);
+    font-size: 12px;
+}
+
+.stat-name {
+    color: var(--text-secondary);
+}
+
+.stat-value {
+    color: var(--color-accent);
+    font-weight: bold;
+}
+
+.character-equipment h5 {
+    margin: 0 0 10px 0;
+    color: var(--text-primary);
+    font-size: 12px;
+}
+
+/* Progress Screen */
+.skill-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.skill-item {
+    background-color: var(--bg-secondary);
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid var(--border-primary);
+}
+
+.skill-name {
+    display: block;
+    color: var(--text-primary);
+    font-size: 12px;
+    font-weight: bold;
+    margin-bottom: 6px;
+}
+
+.skill-bar {
+    position: relative;
+    height: 12px;
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 2px;
+}
+
+.skill-fill {
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        var(--color-blue-medium),
+        var(--color-blue-light)
+    );
+    transition: width 0.3s ease;
+}
+
+.skill-level {
+    position: absolute;
+    top: 50%;
+    right: 4px;
+    transform: translateY(-50%);
+    color: var(--text-primary);
+    font-size: 9px;
+    font-weight: bold;
+}
+
+/* Map Screen */
+.map-display {
+    background-color: var(--bg-secondary);
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid var(--border-primary);
+}
+
+.map-legend {
+    margin-bottom: 10px;
+    font-size: 10px;
+    color: var(--text-secondary);
+}
+
+.legend-item {
+    margin-bottom: 2px;
+}
+
+.ascii-map {
+    font-family: "Courier New", monospace;
+    font-size: 12px;
+    color: var(--text-primary);
+    background-color: var(--bg-primary);
+    padding: 8px;
+    border-radius: 2px;
+    line-height: 1.2;
+}
+
+/* Quest Screen */
+.quest-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.quest-item {
+    background-color: var(--bg-secondary);
+    padding: 12px;
+    border-radius: 4px;
+    border: 1px solid var(--border-primary);
+}
+
+.quest-item.active {
+    border-color: var(--color-accent);
+}
+
+.quest-item h5 {
+    margin: 0 0 6px 0;
+    color: var(--color-accent);
+    font-size: 12px;
+}
+
+.quest-item p {
+    margin: 0 0 8px 0;
+    color: var(--text-primary);
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+.quest-status {
+    font-size: 10px;
+    color: var(--color-success);
+    font-weight: bold;
+}
+
+/* Settings Screen */
+.settings-options {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.setting-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.setting-item label {
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.setting-item input,
+.setting-item select {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-primary);
+    padding: 4px 6px;
+    border-radius: 2px;
+    font-family: "Courier New", monospace;
+    font-size: 11px;
+}
+
+.setting-item input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+}
+
+/* ===== INVENTORY MODULE STYLES ===== */
+.inventory-header {
+    padding: 10px;
+    border-bottom: 1px solid var(--border-secondary);
+    background-color: var(--bg-secondary);
+}
+
+.inventory-header-toggle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding: 5px 0;
+}
+
+.inventory-header-toggle h4 {
+    margin: 0;
+    color: var(--text-primary);
+}
+
+.inventory-toggle-btn {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-secondary);
+    color: var(--text-secondary);
+    padding: 6px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    height: 28px;
+}
+
+.inventory-toggle-btn:hover {
+    background: var(--accent-color);
+    color: var(--text-primary);
+    border-color: var(--accent-color);
+    transform: translateY(-1px);
+}
+
+.inventory-toggle-btn:active {
+    transform: translateY(0);
+}
+
+.inventory-toggle-btn i {
+    font-size: 12px;
+}
+
+.inventory-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+.inventory-search {
+    position: relative;
+    margin-bottom: 10px;
+}
+
+.search-input {
+    width: 100%;
+    padding: 6px 30px 6px 10px;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 4px;
+    font-family: "Courier New", monospace;
+    font-size: 11px;
+}
+
+.search-input:focus {
+    border-color: var(--color-accent);
+    outline: none;
+}
+
+.search-icon {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.inventory-filters {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.filter-tab {
+    padding: 4px 8px;
+    background-color: var(--bg-primary);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: 3px;
+    font-family: "Courier New", monospace;
+    font-size: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.filter-tab:hover {
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+.filter-tab.active {
+    background-color: var(--color-accent);
+    color: var(--text-primary);
+    border-color: var(--color-orange-lighter);
+}
+
+.inventory-body {
+    padding: 10px;
+    flex: 1;
+    overflow-y: auto;
+}
+
+.inventory-footer {
+    padding: 5px;
+    border-top: 1px solid var(--border-secondary);
+    background-color: var(--bg-secondary);
+    margin-bottom: 5px;
+}
+
+.inventory-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+.action-btn {
+    padding: 6px 12px;
+    background-color: var(--color-purple-medium);
+    color: var(--text-primary);
+    border: 1px solid var(--color-purple-light);
+    border-radius: 4px;
+    font-family: "Courier New", monospace;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.action-btn:hover {
+    background-color: var(--color-purple-light);
+    transform: translateY(-1px);
+}
+
+/* Enhanced inventory slot styles */
+.inventory-slot.rarity-common {
+    border-color: var(--color-gray-light);
+}
+
+.inventory-slot.rarity-uncommon {
+    border-color: var(--color-green-light);
+    box-shadow: 0 0 4px rgba(117, 167, 67, 0.3);
+}
+
+.inventory-slot.rarity-rare {
+    border-color: var(--color-blue-light);
+    box-shadow: 0 0 4px rgba(79, 143, 186, 0.3);
+}
+
+.inventory-slot.rarity-epic {
+    border-color: var(--color-purple-light);
+    box-shadow: 0 0 4px rgba(162, 62, 140, 0.3);
+}
+
+.inventory-slot.rarity-legendary {
+    border-color: var(--color-orange-lighter);
+    box-shadow: 0 0 4px rgba(222, 158, 65, 0.3);
+}
+
+.inventory-slot.equipped {
+    background-color: var(--color-blue-medium);
+    border-color: var(--color-blue-light);
+}
+
+.inventory-slot.quest-item {
+    background-color: var(--color-purple-darkest);
+    border-color: var(--color-purple-light);
+}
+
+/* Context menu styles */
+.context-menu {
+    background-color: var(--bg-tertiary);
+    border: 1px solid var(--border-primary);
+    border-radius: 4px;
+    padding: 4px 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    font-family: "Courier New", monospace;
+    min-width: 120px;
+}
+
+.context-menu-item {
+    padding: 6px 12px;
+    color: var(--text-primary);
+    font-size: 11px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.context-menu-item:hover {
+    background-color: var(--color-accent);
+}
+/* ===== SIDEBAR RESPONSIVE DESIGN ===== */
+@media (min-width: 1719px) {
+    .left-sidebar,
+    .right-sidebar {
+        width: 280px;
+    }
+
+    .button-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+    }
+
+    .icon-btn {
+        width: 70px;
+        height: 70px;
+        font-size: 20px;
+    }
+
+
+
+    .screen-content {
+        padding: 20px;
+    }
+
+    .selected-object-info {
+        padding: 20px;
+    }
+
+    .object-display {
+        min-height: 120px;
+        padding: 12px;
+    }
+}
+
+@media (min-width: 1900px) {
+    .left-sidebar,
+    .right-sidebar {
+        min-width: 420px;
+    }
+
+
+
+
+@media (max-width: 1200px) {
+    .left-sidebar,
+    .right-sidebar {
+        width: 200px;
+    }
+
+    .button-grid {
+        gap: 8px;
+    }
+
+    .icon-btn {
+        width: 50px;
+        height: 50px;
+        font-size: 16px;
+    }
+}
+
+@media (max-width: 900px) {
+    /* Transform sidebars into horizontal top/bottom bars */
+    .left-sidebar,
+    .right-sidebar {
+        width: 100%;
+        height: auto;
+        max-height: none;
+        overflow-x: auto;
+        overflow-y: visible;
+        flex-shrink: 0;
+    }
+
+    /* Left sidebar becomes top bar */
+    .left-sidebar {
+        order: -1;
+        border-right: 2px solid var(--border-primary);
+        border-bottom: 2px solid var(--border-primary);
+        border-top: none;
+    }
+
+    /* Right sidebar becomes bottom bar */  
+    .right-sidebar {
+        order: 1;
+        border-left: 2px solid var(--border-primary);
+        border-top: 2px solid var(--border-primary);
+        border-bottom: none;
+    }
+
+    /* Horizontal button layout for mobile */
+    .button-grid {
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 8px;
+        padding: 12px 15px;
+        overflow-x: auto;
+        scrollbar-width: thin;
+        scroll-behavior: smooth;
+        -webkit-overflow-scrolling: touch;
+        scroll-snap-type: x proximity;
+    }
+
+    .button-grid::-webkit-scrollbar {
+        height: 4px;
+    }
+
+    .button-grid::-webkit-scrollbar-track {
+        background: var(--bg-secondary);
+    }
+
+    .button-grid::-webkit-scrollbar-thumb {
+        background: var(--color-accent);
+        border-radius: 2px;
+    }
+
+    /* Mobile-friendly stats layout */
+    .game-stats {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 10px 15px;
+    }
+
+    .game-stats h4 {
+        width: 100%;
+        margin: 0 0 8px 0;
+        font-size: 14px;
+    }
+
+    .stat-item {
+        flex: 1;
+        min-width: 120px;
+        margin-bottom: 8px;
+    }
+
+    .stat-label {
+        flex-direction: row;
+        gap: 4px;
+    }
+
+    .stat-label span {
+        font-size: 11px;
+    }
+
+    .stat-bar {
+        height: 16px;
+        margin-top: 2px;
+    }
+
+    .stat-text {
+        font-size: 10px;
+        line-height: 16px;
+    }
+
+    /* Player info mobile layout */
+    .player-info {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 15px;
+        padding: 12px 15px;
+        border-bottom: 1px solid var(--border-secondary);
+    }
+
+    .player-avatar {
+        flex-direction: row;
+        gap: 8px;
+    }
+
+    .player-avatar span {
+        font-size: 14px;
+    }
+
+    .player-level {
+        font-size: 12px;
+    }
+
+    /* Mobile dynamic content */
+    .dynamic-content {
+        display: block;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+
+    .screen-content {
+        padding: 12px 15px;
+        max-height: 180px;
+        overflow-y: auto;
+    }
+
+    /* Inventory mobile layout */
+    .inventory-slot {
+        width: 35px;
+        height: 35px;
+        font-size: 10px;
+    }
+
+    .inventory-slot span {
+        font-size: 8px;
+    }
+
+    /* Selected object info mobile */
+    .selected-object-info {
+        padding: 12px 15px;
+        max-height: 150px;
+        overflow-y: auto;
+    }
+
+    .object-display {
+        min-height: 80px;
+        padding: 8px;
+    }
+
+    .object-buttons {
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .object-btn {
+        flex: 1;
+        min-width: 80px;
+        height: 32px;
+        font-size: 11px;
+        padding: 4px 8px;
+    }
+}
+
+@media (max-width: 600px) {
+    /* Extra small screens - more compact layout */
+    .icon-btn {
+        width: 44px;
+        height: 44px;
+        font-size: 14px;
+        flex-shrink: 0;
+        scroll-snap-align: start;
+        touch-action: manipulation;
+    }
+
+    .button-grid {
+        gap: 6px;
+        padding: 8px 12px;
+        padding-right: 20px;
+    }
+
+    /* More compact player info */
+    .player-info {
+        padding: 8px 12px;
+        gap: 10px;
+    }
+
+    .player-avatar i {
+        font-size: 18px;
+    }
+
+    .player-avatar span {
+        font-size: 12px;
+    }
+
+    .player-level {
+        font-size: 11px;
+    }
+
+    /* Compact stats */
+    .game-stats {
+        padding: 8px 12px;
+    }
+
+    .stat-item {
+        min-width: 100px;
+        margin-bottom: 6px;
+    }
+
+    .stat-label span {
+        font-size: 10px;
+    }
+
+    .stat-bar {
+        height: 14px;
+    }
+
+    .stat-text {
+        font-size: 9px;
+        line-height: 14px;
+    }
+
+    /* Compact content areas */
+    .screen-content {
+        padding: 8px 12px;
+        max-height: 160px;
+    }
+
+    .selected-object-info {
+        padding: 8px 12px;
+        max-height: 120px;
+    }
+
+    .object-display {
+        min-height: 60px;
+        padding: 6px;
+    }
+
+    .inventory-slot {
+        width: 32px;
+        height: 32px;
+        font-size: 9px;
+    }
+
+    .inventory-slot span {
+        font-size: 7px;
+    }
+
+    /* Sidebar headers */
+    .sidebar-header {
+        padding: 8px 12px;
+    }
+
+    .sidebar-header h3 {
+        font-size: 14px;
+    }
+}
