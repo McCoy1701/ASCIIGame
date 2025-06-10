@@ -10,7 +10,7 @@ BIN_DIR=bin
 OBJ_DIR=obj
 LIB_DIR=lib
 INDEX_DIR=index
-
+EDITOR_DIR=editor
 
 .PHONY: all
 all: always $(INDEX_DIR)/index
@@ -23,7 +23,7 @@ $(OBJ_DIR)/em_game.o: $(SRC_DIR)/game.c
 
 $(INDEX_DIR)/index: $(OBJ_DIR)/em_main.o $(OBJ_DIR)/em_game.o $(LIB_DIR)/libArchimedes.a
 	mkdir $(INDEX_DIR)
-	$(ECC) $^ -s WASM=1 --shell-file htmlTemplate/template.html --preload-file resources/ -o $@.html $(EFLAGS)
+	$(ECC) $^ -s WASM=1 --shell-file htmlTemplate/template.html --preload-file resources/ -o $@.html -sALLOW_MEMORY_GROWTH $(EFLAGS)
 
 
 .PHONY: native
@@ -36,6 +36,16 @@ $(OBJ_DIR)/game.o: $(SRC_DIR)/game.c
 	$(CC) -c $< -o $@ -ggdb $(CFLAGS)
 
 $(BIN_DIR)/native: $(OBJ_DIR)/main.o $(OBJ_DIR)/game.o
+	$(CC) $^ -ggdb -lArchimedes $(CFLAGS) -o $@
+
+
+.PHONY: editor
+editor: always $(BIN_DIR)/editor
+
+$(OBJ_DIR)/world_editor.o: $(EDITOR_DIR)/world_editor.c
+	$(CC) -c $< -o $@ -ggdb $(CFLAGS)
+
+$(BIN_DIR)/editor: $(OBJ_DIR)/world_editor.o
 	$(CC) $^ -ggdb -lArchimedes $(CFLAGS) -o $@
 
 
