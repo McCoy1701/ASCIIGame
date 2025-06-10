@@ -10,7 +10,7 @@ BIN_DIR=bin
 OBJ_DIR=obj
 LIB_DIR=lib
 INDEX_DIR=index
-
+EDITOR_DIR=editor
 
 .PHONY: all
 all: always $(INDEX_DIR)/index
@@ -36,6 +36,16 @@ $(OBJ_DIR)/game.o: $(SRC_DIR)/game.c
 	$(CC) -c $< -o $@ -ggdb $(CFLAGS)
 
 $(BIN_DIR)/native: $(OBJ_DIR)/main.o $(OBJ_DIR)/game.o
+	$(CC) $^ -ggdb -lArchimedes $(CFLAGS) -o $@
+
+
+.PHONY: editor
+editor: always $(BIN_DIR)/editor
+
+$(OBJ_DIR)/world_editor.o: $(EDITOR_DIR)/world_editor.c
+	$(CC) -c $< -o $@ -ggdb $(CFLAGS)
+
+$(BIN_DIR)/editor: $(OBJ_DIR)/world_editor.o
 	$(CC) $^ -ggdb -lArchimedes $(CFLAGS) -o $@
 
 
