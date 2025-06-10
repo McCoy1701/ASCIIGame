@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="../htmlTemplate/css/main.css">
     <link rel="stylesheet" href="../htmlTemplate/css/sidebars.css">
     <link rel="stylesheet" href="../htmlTemplate/css/console.css">
+    <link rel="stylesheet" href="../htmlTemplate/css/inventory.css">
 
     <link rel="stylesheet" href="../htmlTemplate/css/animations.css">
     <!-- Font Awesome for icons -->
@@ -85,26 +86,29 @@
                    </div>
                  </div>
                </div>
+
+               <!-- Selected Object Info - will be dynamically added by JavaScript -->
              </aside>
 
       <!-- Center Game Area -->
       <main class="center-game-area">
         <div class="game-wrapper">
-          <canvas class="game-container" id="canvas"></canvas>
+            <div class="loading-indicator loading-fade-out">Loading...</div>
+          <canvas class="game-container" id="canvas">.</canvas>
         </div>
       </main>
 
       <!-- Right Button Bar -->
       <aside class="right-sidebar">
           <div class="sidebar-header">
-            <h3>Character</h3>
+            <h3>Interface</h3>
           </div>
           <div class="button-grid">
+            <button class="icon-btn active" onclick="openInventory()" title="Inventory">
+              <i class="fas fa-briefcase"></i>
+            </button>
             <button class="icon-btn" onclick="openCharacterSheet()" title="Character Sheet">
               <i class="fas fa-user"></i>
-            </button>
-            <button class="icon-btn" onclick="openInventory()" title="Inventory">
-              <i class="fas fa-backpack"></i>
             </button>
             <button class="icon-btn" onclick="openProgress()" title="Progress/Skills">
               <i class="fas fa-chart-bar"></i>
@@ -120,26 +124,7 @@
             </button>
           </div>
 
-        <!-- Quick Skills/Actions -->
-        <div class="quick-actions">
-          <h4>Quick Skills</h4>
-          <button class="skill-btn mining" onclick="startMining()">
-            <i class="fas fa-hammer"></i>
-            <span>Mining</span>
-          </button>
-          <button class="skill-btn woodcutting" onclick="startWoodcutting()">
-            <i class="fas fa-tree"></i>
-            <span>Woodcut</span>
-          </button>
-          <button class="skill-btn fishing" onclick="startFishing()">
-            <i class="fas fa-fish"></i>
-            <span>Fishing</span>
-          </button>
-          <button class="skill-btn cooking" onclick="startCooking()">
-            <i class="fas fa-fire"></i>
-            <span>Cooking</span>
-          </button>
-        </div>
+        <!-- Dynamic Content Area - will be populated by JavaScript -->
       </aside>
 
     </div>

@@ -1,0 +1,137 @@
+.inventory-item-name {
+    font-size: 14px;
+    font-weight: bold;
+    color: #ffffffee;
+    background-color: #12121288;
+    text-align: center;
+    padding: 3%;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+}
+.item-quantity,
+.equipped-indicator,
+.quest-indicator {
+    font-size: 12px;
+}
+
+.item-quantity {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background-color: var(--color-orange-light);
+    color: var(--text-primary);
+    font-weight: bold;
+    padding: 1px 3px;
+    border-radius: 2px;
+    min-width: 12px;
+    text-align: center;
+    z-index: 10;
+    pointer-events: none;
+}
+
+.equipped-indicator {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    background-color: var(--color-success);
+    color: var(--text-primary);
+    font-weight: bold;
+    padding: 1px 2px;
+    border-radius: 2px;
+    z-index: 10;
+    pointer-events: none;
+}
+
+.quest-indicator {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    background-color: #12121256;
+    color: var(--text-primary);
+    font-weight: bold;
+    padding: 1px 2px;
+    border-radius: 2px;
+    z-index: 10;
+    pointer-events: none;
+}
+.inventory-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    width: 100%;
+    box-sizing: border-box;
+}
+/* 3 columns for medium screens */
+@media (min-width: 1200px) {
+    .inventory-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 6px;
+    }
+    .inventory-item-name {
+        font-size: 8px !important;
+    }
+}
+
+/* 4 columns for large screens */
+@media (min-width: 1719px) {
+    .inventory-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 6px;
+    }
+}
+
+/* Keep 2 columns for smaller screens */
+@media (max-width: 1199px) {
+    .inventory-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+    .inventory-item-name {
+        font-size: 10px !important;
+    }
+}
+
+@media (min-width: 1900px) {
+    .inventory-item-name {
+        font-size: 12px !important;
+    }
+}
+
+/* Mobile responsive inventory for horizontal sidebar layout */
+@media (max-width: 900px) {
+    .inventory-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 6px;
+    }
+    
+    .inventory-item-name {
+        font-size: 9px !important;
+        padding: 2%;
+    }
+    
+    .item-quantity,
+    .equipped-indicator,
+    .quest-indicator {
+        font-size: 10px;
+        padding: 1px 2px;
+    }
+}
+
+@media (max-width: 600px) {
+    .inventory-grid {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 4px;
+    }
+    
+    .inventory-item-name {
+        font-size: 8px !important;
+        padding: 1%;
+    }
+    
+    .item-quantity,
+    .equipped-indicator,
+    .quest-indicator {
+        font-size: 9px;
+        padding: 1px;
+        min-width: 10px;
+    }
+}

@@ -1,8 +1,9 @@
 /* Interface Functions - Add these to your template.html or separate JS file */
 
 // Global state
-let activeScreen = 'inventory';
+let activeScreen = "inventory";
 let selectedObject = null;
+let inventoryModule = null;
 
 // Console drag-to-resize functionality
 let isResizingConsole = false;
@@ -10,51 +11,55 @@ let startY = 0;
 let startHeight = 0;
 
 function initializeConsoleResize() {
-  const consoleHeader = document.querySelector('.console-header');
-  const consoleArea = document.querySelector('.console-area');
-  
+  const consoleHeader = document.querySelector(".console-header");
+  const consoleArea = document.querySelector(".console-area");
+
   if (!consoleHeader || !consoleArea) return;
-  
-  consoleHeader.addEventListener('mousedown', startResize);
-  document.addEventListener('mousemove', doResize);
-  document.addEventListener('mouseup', stopResize);
+
+  consoleHeader.addEventListener("mousedown", startResize);
+  document.addEventListener("mousemove", doResize);
+  document.addEventListener("mouseup", stopResize);
 }
 
 function startResize(e) {
   isResizingConsole = true;
   startY = e.clientY;
-  const consoleArea = document.querySelector('.console-area');
+  const consoleArea = document.querySelector(".console-area");
   startHeight = parseInt(window.getComputedStyle(consoleArea).height, 10);
-  consoleArea.classList.add('resizing');
-  document.body.style.cursor = 'ns-resize';
+  consoleArea.classList.add("resizing");
+  document.body.style.cursor = "ns-resize";
   e.preventDefault();
 }
 
 function doResize(e) {
   if (!isResizingConsole) return;
-  
-  const consoleArea = document.querySelector('.console-area');
+
+  const consoleArea = document.querySelector(".console-area");
   const deltaY = startY - e.clientY;
-  const newHeight = Math.min(Math.max(startHeight + deltaY, 80), window.innerHeight * 0.6);
-  
-  consoleArea.style.minHeight = newHeight + 'px';
-  consoleArea.style.maxHeight = newHeight + 'px';
+  const newHeight = Math.min(
+    Math.max(startHeight + deltaY, 80),
+    window.innerHeight * 0.6,
+  );
+
+  consoleArea.style.minHeight = newHeight + "px";
+  consoleArea.style.maxHeight = newHeight + "px";
 }
 
 function stopResize() {
   if (!isResizingConsole) return;
-  
+
   isResizingConsole = false;
-  const consoleArea = document.querySelector('.console-area');
-  consoleArea.classList.remove('resizing');
-  document.body.style.cursor = '';
+  const consoleArea = document.querySelector(".console-area");
+  consoleArea.classList.remove("resizing");
+  document.body.style.cursor = "";
 }
 
 // Initialize system when DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener("DOMContentLoaded", function () {
   initializeConsoleResize();
   initializeDynamicContent();
-  setActiveScreen('inventory'); // Default to inventory
+  initializeModules();
+  setActiveScreen("inventory"); // Default to inventory
 });
 
 // Console functions
@@ -62,23 +67,23 @@ function updateConsole(message, type = "info", includeTimestamp = true) {
   const output = document.getElementById("console-output");
   const line = document.createElement("div");
   line.className = `console-line ${type} slide-in`;
-  
+
   if (includeTimestamp) {
     const timestamp = document.createElement("span");
     timestamp.className = "console-timestamp";
     timestamp.textContent = `[${new Date().toLocaleTimeString()}]`;
     line.appendChild(timestamp);
   }
-  
+
   const messageSpan = document.createElement("span");
   messageSpan.textContent = message;
   line.appendChild(messageSpan);
-  
+
   output.appendChild(line);
   output.scrollTop = output.scrollHeight;
-  
+
   // Auto-remove old messages if too many (keep last 100)
-  const lines = output.querySelectorAll('.console-line');
+  const lines = output.querySelectorAll(".console-line");
   if (lines.length > 100) {
     lines[0].remove();
   }
@@ -97,34 +102,89 @@ function logCommand(command) {
   updateConsole(`> ${command}`, "command");
 }
 
+// Initialize all modules
+function initializeModules() {
+  console.log("Starting module initialization...");
+
+  import("../mjs/utils.mjs")
+    .then((utilsModuleImport) => {
+      console.log("Utils module imported:", utilsModuleImport);
+      window.Utils = utilsModuleImport.default;
+      console.log("Utils attached to window:", window.Utils);
+      return import("../mjs/inventory.mjs");
+    })
+    .then((inventoryModuleImport) => {
+      console.log("Inventory module imported:", inventoryModuleImport);
+      inventoryModule = inventoryModuleImport.default;
+      console.log("Inventory module assigned:", inventoryModule);
+
+      if (inventoryModule && inventoryModule.initialize) {
+        return inventoryModule.initialize();
+      } else {
+        throw new Error("Inventory module or initialize function not found");
+      }
+    })
+    .then(() => {
+      console.log("Inventory module initialized, setting up events...");
+
+      // Set up event listeners for module communication
+      if (window.Utils && window.Utils.Events) {
+        window.Utils.Events.on("inventory:refresh", () => {
+          if (activeScreen === "inventory") {
+            loadScreenContent("inventory");
+          }
+        });
+
+        window.Utils.Events.on("object-inspector:display", (data) => {
+          displayObjectInInspector(data.object, data.category);
+        });
+
+        console.log("Event listeners set up");
+      }
+
+      // Force refresh inventory if it's currently active
+      if (activeScreen === "inventory") {
+        loadScreenContent("inventory");
+      }
+
+      updateConsole("Modules initialized successfully", "success");
+      console.log("Module initialization complete");
+    })
+    .catch((error) => {
+      updateConsole(`Failed to initialize modules: ${error.message}`, "error");
+      console.error("Module initialization error:", error);
+      console.error("Error stack:", error.stack);
+    });
+}
+
 // Dynamic Content System
 function initializeDynamicContent() {
   // Create dynamic content container in right sidebar
-  const rightSidebar = document.querySelector('.right-sidebar');
+  const rightSidebar = document.querySelector(".right-sidebar");
   if (!rightSidebar) return;
-  
+
   // Remove existing quick-actions if it exists
-  const existingQuickActions = rightSidebar.querySelector('.quick-actions');
+  const existingQuickActions = rightSidebar.querySelector(".quick-actions");
   if (existingQuickActions) {
     existingQuickActions.remove();
   }
-  
+
   // Create dynamic content container
-  const dynamicContent = document.createElement('div');
-  dynamicContent.className = 'dynamic-content';
-  dynamicContent.id = 'dynamic-content';
+  const dynamicContent = document.createElement("div");
+  dynamicContent.className = "dynamic-content";
+  dynamicContent.id = "dynamic-content";
   rightSidebar.appendChild(dynamicContent);
-  
+
   // Create selected object info in left sidebar
   createSelectedObjectInfo();
 }
 
 function createSelectedObjectInfo() {
-  const leftSidebar = document.querySelector('.left-sidebar');
+  const leftSidebar = document.querySelector(".left-sidebar");
   if (!leftSidebar) return;
-  
-  const objectInfo = document.createElement('div');
-  objectInfo.className = 'selected-object-info';
+
+  const objectInfo = document.createElement("div");
+  objectInfo.className = "selected-object-info";
   objectInfo.innerHTML = `
     <h4>Object Inspector</h4>
     <div class="object-buttons">
@@ -136,83 +196,109 @@ function createSelectedObjectInfo() {
       <div class="no-object">Click a button to inspect an object</div>
     </div>
   `;
-  
+
   leftSidebar.appendChild(objectInfo);
 }
 
 // Screen Management Functions
 function setActiveScreen(screenName) {
   activeScreen = screenName;
-  
+
   // Update button states
-  document.querySelectorAll('.icon-btn').forEach(btn => {
-    btn.classList.remove('active');
+  document.querySelectorAll(".icon-btn").forEach((btn) => {
+    btn.classList.remove("active");
   });
-  
+
+  // Map screen names to onclick function names
+  const functionMap = {
+    inventory: "openInventory",
+    "character-sheet": "openCharacterSheet",
+    progress: "openProgress",
+    map: "openMap",
+    quests: "openQuests",
+    settings: "openSettings",
+  };
+
   // Find and activate the corresponding button
-  const activeButton = document.querySelector(`[onclick*="${screenName}"]`);
-  if (activeButton) {
-    activeButton.classList.add('active');
+  const functionName = functionMap[screenName];
+  if (functionName) {
+    const activeButton = document.querySelector(`[onclick*="${functionName}"]`);
+    if (activeButton) {
+      activeButton.classList.add("active");
+    }
   }
-  
+
   // Load the screen content
   loadScreenContent(screenName);
-  updateConsole(`${screenName.charAt(0).toUpperCase() + screenName.slice(1)} opened`, "info");
 }
 
 function loadScreenContent(screenName) {
-  const container = document.getElementById('dynamic-content');
+  const container = document.getElementById("dynamic-content");
   if (!container) return;
-  
-  let content = '';
-  
-  switch(screenName) {
-    case 'inventory':
+
+  let content = "";
+
+  switch (screenName) {
+    case "inventory":
       content = generateInventoryContent();
       break;
-    case 'character-sheet':
+    case "character-sheet":
       content = generateCharacterContent();
       break;
-    case 'progress':
+    case "progress":
       content = generateProgressContent();
       break;
-    case 'map':
+    case "map":
       content = generateMapContent();
       break;
-    case 'quests':
+    case "quests":
       content = generateQuestContent();
       break;
-    case 'settings':
+    case "settings":
       content = generateSettingsContent();
       break;
     default:
       content = '<div class="screen-content">Unknown screen</div>';
   }
-  
+
   container.innerHTML = content;
 }
 
 // Screen Content Generators
 function generateInventoryContent() {
+  // Check user preference for inventory view (default to simple)
+  const useAdvancedView =
+    localStorage.getItem("inventory-advanced-view") === "true";
+
+  if (useAdvancedView && inventoryModule) {
+    return `
+      <div class="screen-content inventory-screen">
+        <div class="inventory-header-toggle">
+          <h4>Inventory</h4>
+          <button class="inventory-toggle-btn" onclick="toggleInventoryView()" title="Switch to Simple View">
+            <i class="fas fa-cog"></i>
+          </button>
+        </div>
+        ${inventoryModule.generateContent()}
+      </div>
+    `;
+  }
+
+  // Simple inventory view (default) - use module data if available
+  const simpleInventoryData = inventoryModule
+    ? inventoryModule.getInventoryData()
+    : null;
+
   return `
     <div class="screen-content inventory-screen">
-      <h4>Inventory</h4>
+      <div class="inventory-header-toggle">
+        <h4>Inventory</h4>
+        <button class="inventory-toggle-btn" onclick="toggleInventoryView()" title="Switch to Advanced View">
+          <i class="fas fa-cog"></i>
+        </button>
+      </div>
       <div class="inventory-grid">
-        <div class="inventory-slot filled" onclick="inspectItem('iron-sword')">
-          <i class="fas fa-sword"></i>
-          <span>Iron Sword</span>
-        </div>
-        <div class="inventory-slot filled" onclick="inspectItem('health-potion')">
-          <i class="fas fa-flask"></i>
-          <span>Health Potion</span>
-        </div>
-        <div class="inventory-slot filled" onclick="inspectItem('ancient-key')">
-          <i class="fas fa-key"></i>
-          <span>Ancient Key</span>
-        </div>
-        <div class="inventory-slot empty"></div>
-        <div class="inventory-slot empty"></div>
-        <div class="inventory-slot empty"></div>
+        ${generateSimpleInventorySlots(simpleInventoryData)}
       </div>
     </div>
   `;
@@ -352,76 +438,150 @@ function generateSettingsContent() {
 // Object Inspection Functions
 function loadRandomItem() {
   const items = [
-    { name: "Enchanted Blade", type: "Weapon", damage: "15-20", rarity: "Rare", description: "A sword imbued with magical properties." },
-    { name: "Health Potion", type: "Consumable", effect: "Restores 50 HP", rarity: "Common", description: "A red liquid that heals wounds." },
-    { name: "Mithril Ring", type: "Accessory", effect: "+5 Magic Resist", rarity: "Epic", description: "A ring forged from pure mithril." }
+    {
+      name: "Enchanted Blade",
+      type: "Weapon",
+      damage: "15-20",
+      rarity: "Rare",
+      description: "A sword imbued with magical properties.",
+    },
+    {
+      name: "Health Potion",
+      type: "Consumable",
+      effect: "Restores 50 HP",
+      rarity: "Common",
+      description: "A red liquid that heals wounds.",
+    },
+    {
+      name: "Mithril Ring",
+      type: "Accessory",
+      effect: "+5 Magic Resist",
+      rarity: "Epic",
+      description: "A ring forged from pure mithril.",
+    },
   ];
-  
+
   const item = items[Math.floor(Math.random() * items.length)];
   displayObject(item, "item");
 }
 
 function loadRandomEntity() {
   const entities = [
-    { name: "Goblin Warrior", type: "Enemy", health: "45/45", level: 5, description: "A fierce goblin wielding a rusty sword." },
-    { name: "Village Merchant", type: "NPC", status: "Friendly", trades: "Yes", description: "An old merchant selling various goods." },
-    { name: "Forest Wolf", type: "Beast", health: "30/30", level: 3, description: "A wild wolf prowling the forest." }
+    {
+      name: "Goblin Warrior",
+      type: "Enemy",
+      health: "45/45",
+      level: 5,
+      description: "A fierce goblin wielding a rusty sword.",
+    },
+    {
+      name: "Village Merchant",
+      type: "NPC",
+      status: "Friendly",
+      trades: "Yes",
+      description: "An old merchant selling various goods.",
+    },
+    {
+      name: "Forest Wolf",
+      type: "Beast",
+      health: "30/30",
+      level: 3,
+      description: "A wild wolf prowling the forest.",
+    },
   ];
-  
+
   const entity = entities[Math.floor(Math.random() * entities.length)];
   displayObject(entity, "entity");
 }
 
 function loadRandomObject() {
   const objects = [
-    { name: "Ancient Chest", type: "Container", status: "Locked", contents: "Unknown", description: "An old chest with mysterious engravings." },
-    { name: "Magic Crystal", type: "Resource", mana: "50 points", rarity: "Uncommon", description: "A glowing crystal pulsing with energy." },
-    { name: "Stone Altar", type: "Structure", function: "Ritual Site", age: "Ancient", description: "A weathered altar covered in runes." }
+    {
+      name: "Ancient Chest",
+      type: "Container",
+      status: "Locked",
+      contents: "Unknown",
+      description: "An old chest with mysterious engravings.",
+    },
+    {
+      name: "Magic Crystal",
+      type: "Resource",
+      mana: "50 points",
+      rarity: "Uncommon",
+      description: "A glowing crystal pulsing with energy.",
+    },
+    {
+      name: "Stone Altar",
+      type: "Structure",
+      function: "Ritual Site",
+      age: "Ancient",
+      description: "A weathered altar covered in runes.",
+    },
   ];
-  
+
   const object = objects[Math.floor(Math.random() * objects.length)];
   displayObject(object, "object");
 }
 
 function displayObject(obj, category) {
-  const display = document.getElementById('object-display');
+  displayObjectInInspector(obj, category);
+}
+
+function displayObjectInInspector(obj, category) {
+  const display = document.getElementById("object-display");
   if (!display) return;
-  
+
   selectedObject = obj;
-  
+
   let content = `
     <div class="object-info">
       <h5>${obj.name}</h5>
       <div class="object-details">
   `;
-  
+
   // Display properties dynamically
-  Object.keys(obj).forEach(key => {
-    if (key !== 'name') {
+  Object.keys(obj).forEach((key) => {
+    if (key !== "name") {
       content += `<div class="detail-row"><span class="detail-label">${key}:</span> <span class="detail-value">${obj[key]}</span></div>`;
     }
   });
-  
+
   content += `
       </div>
     </div>
   `;
-  
+
   display.innerHTML = content;
   updateConsole(`Inspecting ${obj.name} (${category})`, "info");
 }
 
 // Interface Functions (simplified)
-function openCharacterSheet() { setActiveScreen('character-sheet'); }
-function openInventory() { setActiveScreen('inventory'); }
-function openProgress() { setActiveScreen('progress'); }
-function openMap() { setActiveScreen('map'); }
-function openQuests() { setActiveScreen('quests'); }
-function openSettings() { setActiveScreen('settings'); }
+function openCharacterSheet() {
+  setActiveScreen("character-sheet");
+}
+function openInventory() {
+  setActiveScreen("inventory");
+}
+function openProgress() {
+  setActiveScreen("progress");
+}
+function openMap() {
+  setActiveScreen("map");
+}
+function openQuests() {
+  setActiveScreen("quests");
+}
+function openSettings() {
+  setActiveScreen("settings");
+}
 
 function inspectItem(itemId) {
   updateConsole(`Examining ${itemId}`, "info");
-  // This would load specific item data in a real implementation
+
+  // If inventory module is loaded, use its item click handler
+  if (inventoryModule && inventoryModule.handleItemClick) {
+    inventoryModule.handleItemClick(itemId);
+  }
 }
 
 // Skill Actions (simplified)
@@ -458,8 +618,12 @@ function setActiveSkill(skillName) {
 
 // Player stat management functions
 function simulateStatRecovery() {
-  let currentStamina = parseInt(document.getElementById("player-stamina").textContent);
-  let currentMana = parseInt(document.getElementById("player-mana").textContent);
+  let currentStamina = parseInt(
+    document.getElementById("player-stamina").textContent,
+  );
+  let currentMana = parseInt(
+    document.getElementById("player-mana").textContent,
+  );
 
   const recoveryInterval = setInterval(() => {
     if (currentStamina < 100) {
@@ -487,7 +651,8 @@ function updatePlayerStat(statType, current, max) {
 
   if (statElement) statElement.textContent = current;
   if (fillElement) fillElement.style.width = percentage + "%";
-  if (textElement) textElement.innerHTML = `<span id="player-${statType}">${current}</span>/${max}`;
+  if (textElement)
+    textElement.innerHTML = `<span id="player-${statType}">${current}</span>/${max}`;
 }
 
 function updatePlayerStats(health, stamina, mana, xp = null, level = null) {
@@ -505,3 +670,71 @@ function updatePlayerStats(health, stamina, mana, xp = null, level = null) {
     if (levelElement) levelElement.textContent = level;
   }
 }
+
+// Helper function to generate simple inventory slots
+function generateSimpleInventorySlots(inventoryData, defaultSlotCount = 12) {
+  if (!inventoryData) {
+    // Create multiple empty slots with loading indicators when module isn't loaded
+    let slots = "";
+    for (let i = 0; i < defaultSlotCount; i++) {
+      slots += `
+        <div class="inventory-slot empty">
+          <div class="loading-indicator loading-fade-out">..</div>
+        </div>
+      `;
+    }
+    return slots;
+  }
+
+  // Generate slots from actual inventory data
+  let slots = "";
+
+  // Add filled slots
+  inventoryData.items.forEach((item) => {
+    const equippedClass = item.equipped ? "equipped" : "";
+    const questClass = item.quest_item ? "quest-item" : "";
+
+    slots += `
+      <div class="inventory-slot filled ${equippedClass} ${questClass}" onclick="handleItemClick('${item.id}')" style="position: relative;">
+        <i class="${item.icon}"></i>
+        <span class="inventory-item-name">${item.name}</span>
+        ${item.quantity > 1 ? `<div class="item-quantity">${item.quantity}</div>` : ""}
+        ${item.equipped ? '<div class="equipped-indicator">E</div>' : ""}
+        ${item.quest_item ? '<div class="quest-indicator">Q</div>' : ""}
+      </div>
+    `;
+  });
+
+  // Add empty slots
+  const emptySlots = Math.max(
+    0,
+    inventoryData.maxSlots - inventoryData.items.length,
+  );
+  for (let i = 0; i < emptySlots; i++) {
+    slots += '<div class="inventory-slot empty"></div>';
+  }
+
+  return slots;
+}
+
+// Toggle between simple and advanced inventory views
+function toggleInventoryView() {
+  const currentView =
+    localStorage.getItem("inventory-advanced-view") === "true";
+  const newView = !currentView;
+
+  localStorage.setItem("inventory-advanced-view", newView.toString());
+
+  updateConsole(
+    newView ? "Switched to Advanced Inventory" : "Switched to Simple Inventory",
+    "info",
+  );
+
+  // Refresh the inventory screen if it's currently active
+  if (activeScreen === "inventory") {
+    loadScreenContent("inventory");
+  }
+}
+
+// Make toggle function globally available
+window.toggleInventoryView = toggleInventoryView;

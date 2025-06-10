@@ -1,14 +1,32 @@
 export async function initModuleLoader(Module) {
   console.log("We are OUT -- OF -- THE -- OBJECT -- INITIALIZATION -- ! ");
   console.log("");
+
+  // Hide the loading indicator
+  const loadingIndicator = document.querySelector(
+    ".game-wrapper .loading-indicator",
+  );
+  if (loadingIndicator) {
+    // Add the fade-out animation class
+    loadingIndicator.classList.add("loading-fade-out");
+
+    // After animation completes, hide it completely
+    setTimeout(() => {
+      loadingIndicator.style.display = "none";
+    }, 300); // 300ms matches the animation duration
+  }
+
   setTimeout(() => {
     /* -----
   TEST YOUR CODE HERE
   ----- */
     colorLoop(Module, true);
+
+    /* -----
+  END OF TEST AREA
+  ----- */
   }, 1); // delay to start
 }
-
 // This makes it globally available so template.html can use it
 window.initModuleLoader = initModuleLoader;
 

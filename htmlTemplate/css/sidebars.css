@@ -74,6 +74,16 @@
     box-shadow: 0 2px 6px rgba(79, 143, 186, 0.2);
 }
 
+.icon-btn:focus {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+    z-index: 1;
+}
+
+.icon-btn:focus:not(:focus-visible) {
+    outline: none;
+}
+
 .icon-btn i {
     z-index: 1;
 }
@@ -491,11 +501,6 @@
 }
 
 /* Inventory Screen */
-.inventory-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
-}
 
 .inventory-slot {
     aspect-ratio: 1;
@@ -508,6 +513,11 @@
     cursor: pointer;
     transition: all 0.2s ease;
     padding: 4px;
+    position: relative;
+    width: 100%;
+    height: auto;
+    min-height: 60px;
+    box-sizing: border-box;
 }
 
 .inventory-slot.filled {
@@ -538,11 +548,13 @@
 }
 
 /* Character Screen */
-.character-stats, .character-equipment {
+.character-stats,
+.character-equipment {
     margin-bottom: 20px;
 }
 
-.stat-row, .equipment-slot {
+.stat-row,
+.equipment-slot {
     display: flex;
     justify-content: space-between;
     padding: 6px 0;
@@ -597,7 +609,11 @@
 
 .skill-fill {
     height: 100%;
-    background: linear-gradient(90deg, var(--color-blue-medium), var(--color-blue-light));
+    background: linear-gradient(
+        90deg,
+        var(--color-blue-medium),
+        var(--color-blue-light)
+    );
     transition: width 0.3s ease;
 }
 
@@ -695,7 +711,8 @@
     font-weight: bold;
 }
 
-.setting-item input, .setting-item select {
+.setting-item input,
+.setting-item select {
     background-color: var(--bg-secondary);
     color: var(--text-primary);
     border: 1px solid var(--border-primary);
@@ -710,11 +727,264 @@
     height: 16px;
 }
 
+/* ===== INVENTORY MODULE STYLES ===== */
+.inventory-header {
+    padding: 10px;
+    border-bottom: 1px solid var(--border-secondary);
+    background-color: var(--bg-secondary);
+}
+
+.inventory-header-toggle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding: 5px 0;
+}
+
+.inventory-header-toggle h4 {
+    margin: 0;
+    color: var(--text-primary);
+}
+
+.inventory-toggle-btn {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-secondary);
+    color: var(--text-secondary);
+    padding: 6px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    height: 28px;
+}
+
+.inventory-toggle-btn:hover {
+    background: var(--accent-color);
+    color: var(--text-primary);
+    border-color: var(--accent-color);
+    transform: translateY(-1px);
+}
+
+.inventory-toggle-btn:active {
+    transform: translateY(0);
+}
+
+.inventory-toggle-btn i {
+    font-size: 12px;
+}
+
+.inventory-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+.inventory-search {
+    position: relative;
+    margin-bottom: 10px;
+}
+
+.search-input {
+    width: 100%;
+    padding: 6px 30px 6px 10px;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 4px;
+    font-family: "Courier New", monospace;
+    font-size: 11px;
+}
+
+.search-input:focus {
+    border-color: var(--color-accent);
+    outline: none;
+}
+
+.search-icon {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.inventory-filters {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.filter-tab {
+    padding: 4px 8px;
+    background-color: var(--bg-primary);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: 3px;
+    font-family: "Courier New", monospace;
+    font-size: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.filter-tab:hover {
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+.filter-tab.active {
+    background-color: var(--color-accent);
+    color: var(--text-primary);
+    border-color: var(--color-orange-lighter);
+}
+
+.inventory-body {
+    padding: 10px;
+    flex: 1;
+    overflow-y: auto;
+}
+
+.inventory-footer {
+    padding: 5px;
+    border-top: 1px solid var(--border-secondary);
+    background-color: var(--bg-secondary);
+    margin-bottom: 5px;
+}
+
+.inventory-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+.action-btn {
+    padding: 6px 12px;
+    background-color: var(--color-purple-medium);
+    color: var(--text-primary);
+    border: 1px solid var(--color-purple-light);
+    border-radius: 4px;
+    font-family: "Courier New", monospace;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.action-btn:hover {
+    background-color: var(--color-purple-light);
+    transform: translateY(-1px);
+}
+
+/* Enhanced inventory slot styles */
+.inventory-slot.rarity-common {
+    border-color: var(--color-gray-light);
+}
+
+.inventory-slot.rarity-uncommon {
+    border-color: var(--color-green-light);
+    box-shadow: 0 0 4px rgba(117, 167, 67, 0.3);
+}
+
+.inventory-slot.rarity-rare {
+    border-color: var(--color-blue-light);
+    box-shadow: 0 0 4px rgba(79, 143, 186, 0.3);
+}
+
+.inventory-slot.rarity-epic {
+    border-color: var(--color-purple-light);
+    box-shadow: 0 0 4px rgba(162, 62, 140, 0.3);
+}
+
+.inventory-slot.rarity-legendary {
+    border-color: var(--color-orange-lighter);
+    box-shadow: 0 0 4px rgba(222, 158, 65, 0.3);
+}
+
+.inventory-slot.equipped {
+    background-color: var(--color-blue-medium);
+    border-color: var(--color-blue-light);
+}
+
+.inventory-slot.quest-item {
+    background-color: var(--color-purple-darkest);
+    border-color: var(--color-purple-light);
+}
+
+/* Context menu styles */
+.context-menu {
+    background-color: var(--bg-tertiary);
+    border: 1px solid var(--border-primary);
+    border-radius: 4px;
+    padding: 4px 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    font-family: "Courier New", monospace;
+    min-width: 120px;
+}
+
+.context-menu-item {
+    padding: 6px 12px;
+    color: var(--text-primary);
+    font-size: 11px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.context-menu-item:hover {
+    background-color: var(--color-accent);
+}
 /* ===== SIDEBAR RESPONSIVE DESIGN ===== */
+@media (min-width: 1719px) {
+    .left-sidebar,
+    .right-sidebar {
+        width: 280px;
+    }
+
+    .button-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+    }
+
+    .icon-btn {
+        width: 70px;
+        height: 70px;
+        font-size: 20px;
+    }
+
+
+
+    .screen-content {
+        padding: 20px;
+    }
+
+    .selected-object-info {
+        padding: 20px;
+    }
+
+    .object-display {
+        min-height: 120px;
+        padding: 12px;
+    }
+}
+
+@media (min-width: 1900px) {
+    .left-sidebar,
+    .right-sidebar {
+        min-width: 420px;
+    }
+
+
+
+
 @media (max-width: 1200px) {
     .left-sidebar,
     .right-sidebar {
-        width: 160px;
+        width: 200px;
     }
 
     .button-grid {
@@ -729,36 +999,262 @@
 }
 
 @media (max-width: 900px) {
+    /* Transform sidebars into horizontal top/bottom bars */
     .left-sidebar,
     .right-sidebar {
         width: 100%;
         height: auto;
+        max-height: none;
         overflow-x: auto;
-        overflow-y: hidden;
+        overflow-y: visible;
+        flex-shrink: 0;
     }
 
+    /* Left sidebar becomes top bar */
+    .left-sidebar {
+        order: -1;
+        border-right: 2px solid var(--border-primary);
+        border-bottom: 2px solid var(--border-primary);
+        border-top: none;
+    }
+
+    /* Right sidebar becomes bottom bar */  
+    .right-sidebar {
+        order: 1;
+        border-left: 2px solid var(--border-primary);
+        border-top: 2px solid var(--border-primary);
+        border-bottom: none;
+    }
+
+    /* Horizontal button layout for mobile */
     .button-grid {
-        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-        grid-template-rows: repeat(auto-fit, minmax(50px, 1fr));
-        gap: 1px;
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 8px;
+        padding: 12px 15px;
+        overflow-x: auto;
+        scrollbar-width: thin;
+        scroll-behavior: smooth;
+        -webkit-overflow-scrolling: touch;
+        scroll-snap-type: x proximity;
+    }
+
+    .button-grid::-webkit-scrollbar {
+        height: 4px;
+    }
+
+    .button-grid::-webkit-scrollbar-track {
+        background: var(--bg-secondary);
+    }
+
+    .button-grid::-webkit-scrollbar-thumb {
+        background: var(--color-accent);
+        border-radius: 2px;
+    }
+
+    /* Mobile-friendly stats layout */
+    .game-stats {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 8px;
         padding: 10px 15px;
     }
 
-    .game-stats,
-    .selected-object-info,
-    .dynamic-content {
-        display: none;
+    .game-stats h4 {
+        width: 100%;
+        margin: 0 0 8px 0;
+        font-size: 14px;
     }
 
-    .inventory-grid {
-        grid-template-columns: repeat(2, 1fr);
+    .stat-item {
+        flex: 1;
+        min-width: 120px;
+        margin-bottom: 8px;
+    }
+
+    .stat-label {
+        flex-direction: row;
+        gap: 4px;
+    }
+
+    .stat-label span {
+        font-size: 11px;
+    }
+
+    .stat-bar {
+        height: 16px;
+        margin-top: 2px;
+    }
+
+    .stat-text {
+        font-size: 10px;
+        line-height: 16px;
+    }
+
+    /* Player info mobile layout */
+    .player-info {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 15px;
+        padding: 12px 15px;
+        border-bottom: 1px solid var(--border-secondary);
+    }
+
+    .player-avatar {
+        flex-direction: row;
+        gap: 8px;
+    }
+
+    .player-avatar span {
+        font-size: 14px;
+    }
+
+    .player-level {
+        font-size: 12px;
+    }
+
+    /* Mobile dynamic content */
+    .dynamic-content {
+        display: block;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+
+    .screen-content {
+        padding: 12px 15px;
+        max-height: 180px;
+        overflow-y: auto;
+    }
+
+    /* Inventory mobile layout */
+    .inventory-slot {
+        width: 35px;
+        height: 35px;
+        font-size: 10px;
+    }
+
+    .inventory-slot span {
+        font-size: 8px;
+    }
+
+    /* Selected object info mobile */
+    .selected-object-info {
+        padding: 12px 15px;
+        max-height: 150px;
+        overflow-y: auto;
+    }
+
+    .object-display {
+        min-height: 80px;
+        padding: 8px;
+    }
+
+    .object-buttons {
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .object-btn {
+        flex: 1;
+        min-width: 80px;
+        height: 32px;
+        font-size: 11px;
+        padding: 4px 8px;
     }
 }
 
 @media (max-width: 600px) {
+    /* Extra small screens - more compact layout */
     .icon-btn {
-        width: 45px;
-        height: 45px;
+        width: 44px;
+        height: 44px;
+        font-size: 14px;
+        flex-shrink: 0;
+        scroll-snap-align: start;
+        touch-action: manipulation;
+    }
+
+    .button-grid {
+        gap: 6px;
+        padding: 8px 12px;
+        padding-right: 20px;
+    }
+
+    /* More compact player info */
+    .player-info {
+        padding: 8px 12px;
+        gap: 10px;
+    }
+
+    .player-avatar i {
+        font-size: 18px;
+    }
+
+    .player-avatar span {
+        font-size: 12px;
+    }
+
+    .player-level {
+        font-size: 11px;
+    }
+
+    /* Compact stats */
+    .game-stats {
+        padding: 8px 12px;
+    }
+
+    .stat-item {
+        min-width: 100px;
+        margin-bottom: 6px;
+    }
+
+    .stat-label span {
+        font-size: 10px;
+    }
+
+    .stat-bar {
+        height: 14px;
+    }
+
+    .stat-text {
+        font-size: 9px;
+        line-height: 14px;
+    }
+
+    /* Compact content areas */
+    .screen-content {
+        padding: 8px 12px;
+        max-height: 160px;
+    }
+
+    .selected-object-info {
+        padding: 8px 12px;
+        max-height: 120px;
+    }
+
+    .object-display {
+        min-height: 60px;
+        padding: 6px;
+    }
+
+    .inventory-slot {
+        width: 32px;
+        height: 32px;
+        font-size: 9px;
+    }
+
+    .inventory-slot span {
+        font-size: 7px;
+    }
+
+    /* Sidebar headers */
+    .sidebar-header {
+        padding: 8px 12px;
+    }
+
+    .sidebar-header h3 {
         font-size: 14px;
     }
 }
