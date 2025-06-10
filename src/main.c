@@ -24,6 +24,8 @@ Text_t* world_text;
 Text_t* region_text;
 Text_t* local_text;
 
+int originX;
+int originY;
 
 EMSCRIPTEN_KEEPALIVE
 void g_ChangeColor( uint32_t hex_color_value )
@@ -126,6 +128,9 @@ void aInitGame( void )
         free( g_world );
       }
     }
+
+    originX = SCREEN_WIDTH/2;
+    originY = SCREEN_HEIGHT/2;
   }
   
 
@@ -179,7 +184,7 @@ static void aRenderLoop( float dt )
 static void aRenderWorld( float dt )
 {
   a_RenderText(world_text, 600, 100, NULL, 0, NULL, SDL_FLIP_NONE);
-  g_DrawWorldMap( g_world, grid_color );
+  g_DrawWorldMap( g_world, originX, originY, grid_color );
   //a_DrawFilledRect( 100, 100, 32, 32, blue );
   //a_DrawFilledRect( 300, 300, 32, 32, red );
   //a_Blit( surf, 200, 200 );
@@ -189,7 +194,7 @@ static void aRenderWorld( float dt )
 static void aRenderRegion( float dt )
 {
   a_RenderText(region_text, 600, 100, NULL, 0, NULL, SDL_FLIP_NONE);
-  g_DrawRegionMap( g_world->regions, grid_color );
+  g_DrawRegionMap( g_world->regions, originX, originY, grid_color );
   //a_DrawFilledRect( 100, 100, 32, 32, blue );
   //a_DrawFilledRect( 300, 300, 32, 32, red );
   //a_Blit( surf, 200, 200 );
@@ -199,7 +204,7 @@ static void aRenderRegion( float dt )
 static void aRenderLocal( float dt )
 {
   a_RenderText(local_text, 600, 100, NULL, 0, NULL, SDL_FLIP_NONE);
-  g_DrawLocalMap( g_world->regions->cells, grid_color );
+  g_DrawLocalMap( g_world->regions->cells, originX, originY, grid_color );
   //a_DrawFilledRect( 100, 100, 32, 32, blue );
   //a_DrawFilledRect( 300, 300, 32, 32, red );
   //a_Blit( surf, 200, 200 );
