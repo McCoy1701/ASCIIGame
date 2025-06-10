@@ -1,3 +1,7 @@
 # c cache
 
 .cache/
+
+obj/
+index/
+bin/
