@@ -46,7 +46,6 @@ typedef struct
 } FileHeader_t;
 
 World_t* init_world( void );
-GameTile_t* CreateTile( void );
 
 #endif
 
