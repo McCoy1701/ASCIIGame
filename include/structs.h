@@ -91,11 +91,14 @@ typedef struct {
 
     // floats (1 is 100%, 0.5 is 50%, etc.)
     float weight_fact;
-    float damage_fact;
-    float armor_fact;
+    float value_coins_fact;
     float durability_fact;
-    float stealth_fact;
-    float enchant_fact;
+    float min_damage_fact;
+    float max_damage_fact;
+    float armor_value_fact;
+    float evasion_value_fact;
+    float stealth_value_fact;
+    float enchant_value_fact;
 } Material_t;
 
 // Inventory
@@ -117,6 +120,9 @@ typedef struct
     uint8_t stealth_value; // TODO: add a stealth system (weapon check on attack)
     uint8_t enchant_value; // TODO: add a enchant system
     uint8_t durability; // 255 is 100%
+
+    uint32_t value_coins; // max is 4 294 967 295
+
 } Weapon__Item_t;
 
 typedef struct
