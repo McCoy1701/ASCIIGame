@@ -672,7 +672,7 @@ function updatePlayerStats(health, stamina, mana, xp = null, level = null) {
 }
 
 // Helper function to generate simple inventory slots
-function generateSimpleInventorySlots(inventoryData, defaultSlotCount = 12) {
+function generateSimpleInventorySlots(inventoryData, defaultSlotCount = 24) {
   if (!inventoryData) {
     // Create multiple empty slots with loading indicators when module isn't loaded
     let slots = "";

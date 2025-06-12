@@ -500,53 +500,6 @@
     padding-bottom: 8px;
 }
 
-/* Inventory Screen */
-
-.inventory-slot {
-    aspect-ratio: 1;
-    border: 1px solid var(--border-primary);
-    border-radius: 4px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    padding: 4px;
-    position: relative;
-    width: 100%;
-    height: auto;
-    min-height: 60px;
-    box-sizing: border-box;
-}
-
-.inventory-slot.filled {
-    background-color: var(--bg-tertiary);
-    border-color: var(--color-accent);
-}
-
-.inventory-slot.empty {
-    background-color: var(--bg-secondary);
-    border-style: dashed;
-}
-
-.inventory-slot:hover {
-    border-color: var(--color-accent);
-    transform: scale(1.05);
-}
-
-.inventory-slot i {
-    font-size: 16px;
-    color: var(--color-accent);
-    margin-bottom: 4px;
-}
-
-.inventory-slot span {
-    font-size: 9px;
-    text-align: center;
-    color: var(--text-primary);
-}
-
 /* Character Screen */
 .character-stats,
 .character-equipment {
@@ -881,40 +834,6 @@
     transform: translateY(-1px);
 }
 
-/* Enhanced inventory slot styles */
-.inventory-slot.rarity-common {
-    border-color: var(--color-gray-light);
-}
-
-.inventory-slot.rarity-uncommon {
-    border-color: var(--color-green-light);
-    box-shadow: 0 0 4px rgba(117, 167, 67, 0.3);
-}
-
-.inventory-slot.rarity-rare {
-    border-color: var(--color-blue-light);
-    box-shadow: 0 0 4px rgba(79, 143, 186, 0.3);
-}
-
-.inventory-slot.rarity-epic {
-    border-color: var(--color-purple-light);
-    box-shadow: 0 0 4px rgba(162, 62, 140, 0.3);
-}
-
-.inventory-slot.rarity-legendary {
-    border-color: var(--color-orange-lighter);
-    box-shadow: 0 0 4px rgba(222, 158, 65, 0.3);
-}
-
-.inventory-slot.equipped {
-    background-color: var(--color-blue-medium);
-    border-color: var(--color-blue-light);
-}
-
-.inventory-slot.quest-item {
-    background-color: var(--color-purple-darkest);
-    border-color: var(--color-purple-light);
-}
 
 /* Context menu styles */
 .context-menu {
@@ -1018,7 +937,7 @@
         border-top: none;
     }
 
-    /* Right sidebar becomes bottom bar */  
+    /* Right sidebar becomes bottom bar */
     .right-sidebar {
         order: 1;
         border-left: 2px solid var(--border-primary);
@@ -1128,17 +1047,6 @@
         overflow-y: auto;
     }
 
-    /* Inventory mobile layout */
-    .inventory-slot {
-        width: 35px;
-        height: 35px;
-        font-size: 10px;
-    }
-
-    .inventory-slot span {
-        font-size: 8px;
-    }
-
     /* Selected object info mobile */
     .selected-object-info {
         padding: 12px 15px;
@@ -1239,15 +1147,6 @@
         padding: 6px;
     }
 
-    .inventory-slot {
-        width: 32px;
-        height: 32px;
-        font-size: 9px;
-    }
-
-    .inventory-slot span {
-        font-size: 7px;
-    }
 
     /* Sidebar headers */
     .sidebar-header {
