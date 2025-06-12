@@ -57,23 +57,16 @@ World_t* init_world( void )
       }
     }
   }
-
-
-
   return new_world;
 }
 
-GameTile_t*** CreateTile( void )
+GameTile_t* CreateTile( void )
 {
-  GameTile_t*** new_tile = ( GameTile_t*** )malloc( sizeof( GameTile_t** ) * Z_HEIGHT );
+  GameTile_t* new_tile = ( GameTile_t* )malloc( sizeof( GameTile_t* ) * Z_HEIGHT * LOCAL_SIZE * LOCAL_SIZE );
   if ( new_tile == NULL )
   {
     printf("Failed to allocate memory for GameTile_t\n");
     return NULL;
-  }
-  for ( int z = 0; z < Z_HEIGHT; z++ )
-  {
-    new_tile[z] = ( GameTile_t** )malloc( sizeof( GameTile_t* ) * LOCAL_SIZE );
   }
 
   return new_tile;
