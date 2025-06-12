@@ -115,6 +115,12 @@ int SaveWorld( World_t* world, const char* filename )
   header.z_height    = Z_HEIGHT;
 
   fwrite( &header, sizeof( FileHeader_t ), 1, file );
+  
+  size_t num_of_world_tiles = WORLD_WIDTH * WORLD_HEIGHT;
+  fwrite( world->regions, sizeof( RegionCell_t ), num_of_world_tiles, file );
+
+  size_t num_of_region_tiles = REGION_SIZE * REGION_SIZE;
+  fwrite( world->regions->cells, sizeof( LocalCell_t ), num_of_region_tiles, file );
 
   size_t num_of_local_tiles = LOCAL_SIZE * LOCAL_SIZE * Z_HEIGHT;
   fwrite( world->regions->cells->tiles, sizeof( GameTile_t ), num_of_local_tiles, file );

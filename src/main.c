@@ -170,6 +170,12 @@ static void aDoLoop( float dt )
   {
     app.delegate.draw = aRenderLocal;
   }
+
+  if ( app.mouse.wheel == 1 )
+  {
+    printf("scroll up\n");
+    app.mouse.wheel = 0;
+  }
   
 }
 

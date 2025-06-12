@@ -22,11 +22,13 @@ typedef struct
 typedef struct
 {
   LocalCell_t* cells;
+  GameTile_t tile;
 } RegionCell_t;
 
 typedef struct
 {
   RegionCell_t* regions;
+  GameTile_t tile;
 } World_t;
 
 typedef struct
