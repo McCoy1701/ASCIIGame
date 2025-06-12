@@ -8,10 +8,10 @@
 
 typedef struct
 {
-  char terrain;
-  int temperature;
-  int elevation;
-  int isOccupied;
+  char glyph;
+  uint8_t temperature;
+  uint8_t elevation;
+  uint8_t is_passable;
 } GameTile_t;
 
 typedef struct
@@ -22,13 +22,13 @@ typedef struct
 typedef struct
 {
   LocalCell_t* cells;
-  GameTile_t tile;
+//  GameTile_t tile;
 } RegionCell_t;
 
 typedef struct
 {
   RegionCell_t* regions;
-  GameTile_t tile;
+//  GameTile_t tile;
 } World_t;
 
 typedef struct
