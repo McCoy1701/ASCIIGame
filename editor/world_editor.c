@@ -9,24 +9,14 @@ static void aDoLoop( float );
 static void aRenderLoop( float );
 
 LocalCell_t* test_cells;
+World_t* map;
 
 void aInitGame( void )
 {
   app.delegate.logic = aDoLoop;
   app.delegate.draw  = aRenderLoop;
-  /*LocalCell_t* new_local = ( LocalCell_t* )malloc( sizeof(LocalCell_t) );
-  if ( new_local == NULL )
-  {
-    printf( "Failed to allocate memory for new_local\n" );
-  }
   
-  new_local->tiles = ( GameTile_t* )malloc( sizeof(GameTile_t) * Z_HEIGHT * LOCAL_SIZE * LOCAL_SIZE );
-  if ( new_local->tiles == NULL )
-  {
-    printf( "Failed to allocate memory for new_local->tiles\n" );
-  }
-
-  for ( int i = 0; i < ( Z_HEIGHT * LOCAL_SIZE * LOCAL_SIZE ); i++ )
+  /*for ( int i = 0; i < ( Z_HEIGHT * LOCAL_SIZE * LOCAL_SIZE ); i++ )
   {
     new_local->tiles[i].elevation   = 0;
     new_local->tiles[i].terrain     = 'G';
@@ -34,13 +24,23 @@ void aInitGame( void )
     new_local->tiles[i].isOccupied  = 0;
   }*/
 
-  //SaveTest( new_local, "resources/world/test.dat" );
-  test_cells = LoadTest( "resources/world/test.dat" );
+  map = init_world();
 
-  for ( int i = 0; i < Z_HEIGHT * LOCAL_SIZE * LOCAL_SIZE; i++ )
+  for ( int i = 0; i < WORLD_WIDTH * WORLD_HEIGHT; i++ )
   {
-    printf( "tile: %d %c\n",i, test_cells->tiles[i].terrain  );
+    for ( int j = 0; j < REGION_SIZE * REGION_SIZE; j++ )
+    {
+      for ( int k = 0; k < Z_HEIGHT * LOCAL_SIZE * LOCAL_SIZE; k++ )
+      {
+        map->regions[i].cells[j].tiles[k].terrain     = 'G';
+        map->regions[i].cells[j].tiles[k].isOccupied  = 0;
+        map->regions[i].cells[j].tiles[k].temperature = 20;
+        map->regions[i].cells[j].tiles[k].elevation   = 0;
+      }
+    }
   }
+
+  SaveWorld( map, "resources/world/world_test.dat" );
 }
 
 static void aDoLoop( float dt )
