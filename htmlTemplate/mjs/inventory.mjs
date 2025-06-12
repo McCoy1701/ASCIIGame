@@ -7,6 +7,7 @@
  */
 
 import Utils from "./utils.mjs";
+import { InventoryFilter } from "./filter.mjs";
 
 // Inventory data structure
 let inventoryData = {
@@ -23,6 +24,17 @@ let inventoryData = {
       equipped: true,
     },
     {
+      id: "shit-sword",
+      name: "Shit Sword",
+      type: "weapon",
+      icon: "fas fa-sword",
+      rarity: "junk",
+      damage: "1-2",
+      description: "A fucking shitty blade.",
+      quantity: 1,
+      equipped: false,
+    },
+    {
       id: "health-potion",
       name: "Health Potion",
       type: "consumable",
@@ -35,7 +47,7 @@ let inventoryData = {
     },
     {
       id: "ancient-key",
-      name: "Ancient Kesssssssy",
+      name: "Ancient Key",
       type: "key",
       icon: "fas fa-key",
       rarity: "rare",
@@ -45,7 +57,6 @@ let inventoryData = {
     },
   ],
   maxSlots: 20,
-  categories: ["all", "weapons", "armor", "consumables", "misc"],
 };
 
 // Configuration
@@ -53,19 +64,21 @@ const config = {
   gridColumns: 3,
   showQuantities: true,
   showTooltips: true,
-  enableSearch: false,
-  enableSorting: true,
 };
 
-// Current state
-let currentFilter = "all";
-let searchQuery = "";
-let sortBy = "name";
+// Initialize inventory filter
+let inventoryFilter;
 
 // Initialize inventory module
 export function initialize() {
   console.log("Inventory module initialize() called");
   Utils.Console.system("Inventory module initializing...");
+
+  // Initialize the inventory filter
+  inventoryFilter = new InventoryFilter({
+    enableSearch: true,
+    enableSorting: true,
+  });
 
   // Load saved inventory data
   const savedData = Utils.Storage.get("inventory", null);
@@ -76,6 +89,9 @@ export function initialize() {
 
   // Set up event listeners
   setupEventListeners();
+
+  // Set up global event handlers for the filter
+  setupFilterGlobals();
 
   Utils.Console.success("Inventory module initialized");
   console.log("Inventory module initialized successfully");
@@ -93,69 +109,50 @@ function setupEventListeners() {
   // Listen for player actions
   Utils.Events.on("player:item-use", handleItemUse);
   Utils.Events.on("player:item-equip", handleItemEquip);
+
+  // Listen for filter changes
+  Utils.Events.on("inventory:changed", handleFilterChanged);
+}
+
+// Set up global functions for filter HTML event handlers
+function setupFilterGlobals() {
+  window.inventory_handleFilterChange = inventoryFilter.handleFilterChange;
+  window.inventory_handleSearch = inventoryFilter.handleSearch;
+  window.inventory_handleSort = inventoryFilter.handleSort;
+}
+
+// Handle filter changes
+function handleFilterChanged() {
+  Utils.Events.emit("inventory:refresh");
 }
 
 // Generate inventory screen HTML
 export function generateContent() {
   Utils.Debug.time("inventory:generateContent");
 
-  const filteredItems = getFilteredItems();
+  const filteredItems = inventoryFilter.filterData(inventoryData.items);
   const emptySlots = Math.max(
     0,
     inventoryData.maxSlots - inventoryData.items.length,
   );
 
   const content = `
-        <div class="inventory-header">
-            <div class="inventory-info">
-                <span class="item-count">${inventoryData.items.length}/${inventoryData.maxSlots} slots</span>
-                <span class="weight-info">Weight: ${calculateTotalWeight()} kg</span>
-            </div>
-            ${config.enableSearch ? generateSearchBar() : ""}
-            ${generateFilterTabs()}
-        </div>
-        <div class="inventory-footer">
-            ${generateActionButtons()}
-        </div>
-        ${generateInventoryGrid(filteredItems, emptySlots)}
-
-    `;
+    <div class="inventory-header">
+      <div class="inventory-info">
+        <span class="item-count">${inventoryData.items.length}/${inventoryData.maxSlots} slots</span>
+        <span class="weight-info">Weight: ${calculateTotalWeight()} kg</span>
+      </div>
+      ${inventoryFilter.generateSearchBar()}
+      ${inventoryFilter.generateFilterTabs()}
+    </div>
+    <div class="inventory-footer">
+      ${generateActionButtons()}
+    </div>
+    ${generateInventoryGrid(filteredItems, emptySlots)}
+  `;
 
   Utils.Debug.timeEnd("inventory:generateContent");
   return content;
-}
-
-// Generate search bar
-function generateSearchBar() {
-  return `
-        <div class="inventory-search">
-            <input type="text"
-                   placeholder="Search items..."
-                   value="${searchQuery}"
-                   class="search-input"
-                   onkeyup="handleInventorySearch(this.value)"
-                   style="padding: 4px 8px; font-size: 12px; border: 1px solid var(--border-secondary); background: var(--bg-tertiary); color: var(--text-primary); width: 100%; box-sizing: border-box;">
-        </div>
-    `;
-}
-
-// Generate filter tabs
-function generateFilterTabs() {
-  return `
-        <div class="inventory-filters" style="display: flex; gap: 4px; margin-top: 8px;">
-            ${inventoryData.categories
-              .map(
-                (category) => `
-                <button class="filter-tab ${currentFilter === category ? "active" : ""}"
-                        onclick="handleFilterChange('${category}')"
-                        style="padding: 4px 8px; font-size: 11px; border: 1px solid var(--border-secondary); background: ${currentFilter === category ? "var(--accent-color)" : "var(--bg-tertiary)"}; color: var(--text-primary); cursor: pointer; border-radius: 2px;">
-                    ${category.charAt(0).toUpperCase() + category.slice(1)}
-                </button>
-            `,
-              )
-              .join("")}
-        </div>
-    `;
 }
 
 // Generate inventory grid
@@ -196,21 +193,19 @@ function generateInventorySlot(item, filled) {
         </div>
     `;
 }
-
 // Generate action buttons
 function generateActionButtons() {
   return `
-        <div class="inventory-actions" style="display: flex; gap: 4px;">
-            <button class="action-btn" onclick="handleSortInventory()"
-                    style="padding: 4px 8px; font-size: 11px; border: 1px solid var(--border-secondary); background: var(--bg-tertiary); color: var(--text-primary); cursor: pointer; border-radius: 2px; display: flex; align-items: center; gap: 4px;">
-                <i class="fas fa-sort"></i> Sort: ${sortBy}
-            </button>
-            <button class="action-btn" onclick="handleDropAllJunk()"
-                    style="padding: 4px 8px; font-size: 11px; border: 1px solid var(--border-secondary); background: var(--bg-tertiary); color: var(--text-primary); cursor: pointer; border-radius: 2px; display: flex; align-items: center; gap: 4px;">
-                <i class="fas fa-trash"></i> Drop Junk
-            </button>
-        </div>
-    `;
+    <div class="inventory-actions" style="display: flex; gap: 4px;">
+      ${inventoryFilter.generateSortControls()}
+      <button class="action-btn" onclick="handleDropAllJunk()"
+              style="padding: 4px 8px; font-size: 11px; border: 1px solid var(--border-secondary);
+                     background: var(--bg-tertiary); color: var(--text-primary); cursor: pointer; border-radius: 2px;
+                     display: flex; align-items: center; gap: 4px;">
+        <i class="fas fa-trash"></i> Drop Junk
+      </button>
+    </div>
+  `;
 }
 
 // Generate tooltip text for item
@@ -231,31 +226,10 @@ export function handleItemClick(itemId) {
     Utils.Console.warning(`Item not found: ${itemId}`);
     return;
   }
-
-  Utils.Console.info(`Clicked item: ${item.name}`);
-
   // Emit event for other modules to listen
   Utils.Events.emit("inventory:item-clicked", { item, action: "inspect" });
-
   // Show item details in object inspector
   displayItemInInspector(item);
-
-  // Log different messages based on item type
-  switch (item.type) {
-    case "weapon":
-      Utils.Console.info(`${item.name} - Damage: ${item.damage || "Unknown"}`);
-      break;
-    case "consumable":
-      Utils.Console.info(`${item.name} - Effect: ${item.effect || "Unknown"}`);
-      break;
-    case "key":
-      Utils.Console.info(`${item.name} - A special key item`);
-      break;
-    default:
-      Utils.Console.info(
-        `${item.name} - ${item.description || "No description available"}`,
-      );
-  }
 }
 
 // Right-click context menu handler
@@ -365,61 +339,6 @@ function findItemById(itemId) {
   return inventoryData.items.find((item) => item.id === itemId);
 }
 
-function getFilteredItems() {
-  let items = inventoryData.items;
-
-  // Apply category filter
-  if (currentFilter !== "all") {
-    items = items.filter((item) => {
-      switch (currentFilter) {
-        case "weapons":
-          return item.type === "weapon";
-        case "armor":
-          return item.type === "armor";
-        case "consumables":
-          return item.type === "consumable";
-        case "misc":
-          return !["weapon", "armor", "consumable"].includes(item.type);
-        default:
-          return true;
-      }
-    });
-  }
-
-  // Apply search filter
-  if (searchQuery) {
-    items = items.filter(
-      (item) =>
-        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (item.description &&
-          item.description.toLowerCase().includes(searchQuery.toLowerCase())),
-    );
-  }
-
-  // Apply sorting
-  items.sort((a, b) => {
-    switch (sortBy) {
-      case "name":
-        return a.name.localeCompare(b.name);
-      case "type":
-        return a.type.localeCompare(b.type);
-      case "rarity":
-        const rarityOrder = {
-          common: 1,
-          uncommon: 2,
-          rare: 3,
-          epic: 4,
-          legendary: 5,
-        };
-        return (rarityOrder[b.rarity] || 0) - (rarityOrder[a.rarity] || 0);
-      default:
-        return 0;
-    }
-  });
-
-  return items;
-}
-
 function calculateTotalWeight() {
   return inventoryData.items.reduce((total, item) => {
     const weight = item.weight || 1;
@@ -474,6 +393,7 @@ function removeItem(itemId) {
     inventoryData.items.splice(index, 1);
     Utils.Console.info(`Removed ${item.name} from inventory`);
     saveInventory();
+
     return item;
   }
   return null;
@@ -482,13 +402,30 @@ function removeItem(itemId) {
 // Save inventory to storage
 function saveInventory() {
   Utils.Storage.set("inventory", inventoryData);
+  // RE - RENDER THE NEW SAVED INVENTORY
+  Utils.Events.emit("inventory:refresh");
+}
+
+function handleItemRightClick(event, itemId) {
+  event.preventDefault();
+  event.stopPropagation();
+
+  const item = findItemById(itemId);
+  if (!item) {
+    Utils.Console.warning(`Item not found: ${itemId}`);
+    return false;
+  }
+
+  // For now, just show context info - you can expand this later
+  Utils.Console.info(`Right-clicked item: ${item.name}`);
+  displayItemInInspector(item);
+
+  return false;
 }
 
 // Global functions that will be called from HTML
 window.handleItemClick = handleItemClick;
 window.handleItemRightClick = (event, itemId) => {
-  event.preventDefault();
-  event.stopPropagation();
   handleItemRightClick(event, itemId);
   return false;
 };
@@ -525,10 +462,11 @@ export default {
   initialize,
   generateContent,
   handleItemClick,
-  handleItemRightClick,
+  handleItemRightClick, // NOT WORKING :()
   getInventoryData: () => inventoryData,
   addItem: (item) => Utils.Events.emit("inventory:add", { item }),
   removeItem: (itemId) => Utils.Events.emit("inventory:remove", { itemId }),
   useItem: (itemId) => Utils.Events.emit("player:item-use", { itemId }),
   equipItem: (itemId) => Utils.Events.emit("player:item-equip", { itemId }),
+  refreshInventory: () => Utils.Events.emit("inventory:refresh"),
 };

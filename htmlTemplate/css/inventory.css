@@ -63,18 +63,18 @@
 /* 3 columns for medium screens */
 @media (min-width: 1200px) {
     .inventory-grid {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 6px;
     }
     .inventory-item-name {
-        font-size: 8px !important;
+        font-size: 12px !important;
     }
 }
 
 /* 4 columns for large screens */
 @media (min-width: 1719px) {
     .inventory-grid {
-        grid-template-columns: repeat(4, minmax(0, 1fr));
+        grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 6px;
     }
 }
@@ -86,13 +86,17 @@
         gap: 8px;
     }
     .inventory-item-name {
-        font-size: 10px !important;
+        font-size: 12px !important;
     }
 }
 
 @media (min-width: 1900px) {
+    .inventory-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 8px;
+    }
     .inventory-item-name {
-        font-size: 12px !important;
+        font-size: 14px !important;
     }
 }
 
@@ -102,12 +106,12 @@
         grid-template-columns: repeat(4, minmax(0, 1fr));
         gap: 6px;
     }
-    
+
     .inventory-item-name {
         font-size: 9px !important;
         padding: 2%;
     }
-    
+
     .item-quantity,
     .equipped-indicator,
     .quest-indicator {
@@ -121,17 +125,121 @@
         grid-template-columns: repeat(5, minmax(0, 1fr));
         gap: 4px;
     }
-    
+
     .inventory-item-name {
         font-size: 8px !important;
         padding: 1%;
     }
-    
+
     .item-quantity,
     .equipped-indicator,
     .quest-indicator {
         font-size: 9px;
         padding: 1px;
         min-width: 10px;
+    }
+}
+/* Inventory Screen */
+
+.inventory-slot {
+    aspect-ratio: 1;
+    border: 1px solid var(--border-primary);
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 4px;
+    position: relative;
+    width: 100%;
+    height: auto;
+    min-height: 60px;
+    box-sizing: border-box;
+}
+
+.inventory-slot.filled {
+    background-color: var(--bg-tertiary);
+    border-color: var(--color-accent);
+}
+
+.inventory-slot.empty {
+    background-color: var(--bg-secondary);
+    border-style: dashed;
+}
+
+.inventory-slot:hover {
+    border-color: var(--color-accent);
+    transform: scale(1.05);
+}
+
+.inventory-slot i {
+    font-size: 16px;
+    color: var(--color-accent);
+    margin-bottom: 4px;
+}
+
+.inventory-slot span {
+    font-size: 9px;
+    text-align: center;
+    color: var(--text-primary);
+}
+/* Enhanced inventory slot styles */
+.inventory-slot.rarity-common {
+    border-color: var(--color-gray-light);
+}
+
+.inventory-slot.rarity-uncommon {
+    border-color: var(--color-green-light);
+    box-shadow: 0 0 4px rgba(117, 167, 67, 0.3);
+}
+
+.inventory-slot.rarity-rare {
+    border-color: var(--color-blue-light);
+    box-shadow: 0 0 4px rgba(79, 143, 186, 0.3);
+}
+
+.inventory-slot.rarity-epic {
+    border-color: var(--color-purple-light);
+    box-shadow: 0 0 4px rgba(162, 62, 140, 0.3);
+}
+
+.inventory-slot.rarity-legendary {
+    border-color: var(--color-orange-lighter);
+    box-shadow: 0 0 4px rgba(222, 158, 65, 0.3);
+}
+
+.inventory-slot.equipped {
+    background-color: var(--color-blue-medium);
+    border-color: var(--color-blue-light);
+}
+
+.inventory-slot.quest-item {
+    background-color: var(--color-purple-darkest);
+    border-color: var(--color-purple-light);
+}
+
+@media (max-width: 900px) {
+    .inventory-slot {
+        width: 35px;
+        height: 35px;
+        font-size: 10px;
+    }
+
+    .inventory-slot span {
+        font-size: 8px;
+    }
+}
+
+@media (max-width: 600px) {
+    .inventory-slot {
+        width: 32px;
+        height: 32px;
+        font-size: 9px;
+    }
+
+    .inventory-slot span {
+        font-size: 7px;
     }
 }
