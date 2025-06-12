@@ -18,7 +18,8 @@ void aInitGame( void )
   app.delegate.logic = aDoLoop;
   app.delegate.draw  = aRenderLoop;
   
-/* map = init_world();
+  /* map = init_world();
+
 
   for ( int i = 0; i < WORLD_WIDTH * WORLD_HEIGHT; i++ )
   {

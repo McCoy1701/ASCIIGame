@@ -179,6 +179,9 @@ World_t* LoadWorld( const char* filename )
     return NULL;
   }
 
+  size_t num_of_world_tiles = WORLD_WIDTH * WORLD_HEIGHT;
+  fread( new_world->regions, sizeof( GameTile_t ), num_of_world_tiles, file );
+
   for ( int i = 0; i < ( WORLD_WIDTH * WORLD_HEIGHT ); i++ )
   {
     new_world->regions[i].cells = ( LocalCell_t* )malloc( sizeof( LocalCell_t ) * REGION_SIZE * REGION_SIZE );
@@ -193,6 +196,9 @@ World_t* LoadWorld( const char* filename )
       free( new_world );
       return NULL;
     }
+  
+    size_t num_of_region_tiles = REGION_SIZE * REGION_SIZE;
+    fread( new_world->regions[i].cells, sizeof( GameTile_t ), num_of_region_tiles, file );
     
     for ( int j = 0; j < REGION_SIZE * REGION_SIZE; j++ )
     {
@@ -213,6 +219,9 @@ World_t* LoadWorld( const char* filename )
         free( new_world );
         return NULL;
       }
+
+      size_t num_of_local_tiles = Z_HEIGHT * LOCAL_SIZE * LOCAL_SIZE;
+      fread( new_world->regions[i].cells[j].tiles, sizeof( GameTile_t ), num_of_local_tiles, file );
     }
   }
   
