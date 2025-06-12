@@ -42,10 +42,16 @@ $(BIN_DIR)/native: $(OBJ_DIR)/main.o $(OBJ_DIR)/game.o
 .PHONY: editor
 editor: always $(BIN_DIR)/editor
 
+$(OBJ_DIR)/init_editor.o: $(EDITOR_DIR)/init_editor.c
+	$(CC) -c $< -o $@ -ggdb $(CFLAGS)
+
+$(OBJ_DIR)/save_editor.o: $(EDITOR_DIR)/save_editor.c
+	$(CC) -c $< -o $@ -ggdb $(CFLAGS)
+
 $(OBJ_DIR)/world_editor.o: $(EDITOR_DIR)/world_editor.c
 	$(CC) -c $< -o $@ -ggdb $(CFLAGS)
 
-$(BIN_DIR)/editor: $(OBJ_DIR)/world_editor.o
+$(BIN_DIR)/editor: $(OBJ_DIR)/world_editor.o $(OBJ_DIR)/save_editor.o $(OBJ_DIR)/init_editor.o
 	$(CC) $^ -ggdb -lArchimedes $(CFLAGS) -o $@
 
 

@@ -1,14 +1,46 @@
 #include <stdio.h>
 
 #include "Archimedes.h"
+#include "defs.h"
+#include "init_editor.h"
+#include "save_editor.h"
 
 static void aDoLoop( float );
 static void aRenderLoop( float );
+
+LocalCell_t* test_cells;
 
 void aInitGame( void )
 {
   app.delegate.logic = aDoLoop;
   app.delegate.draw  = aRenderLoop;
+  /*LocalCell_t* new_local = ( LocalCell_t* )malloc( sizeof(LocalCell_t) );
+  if ( new_local == NULL )
+  {
+    printf( "Failed to allocate memory for new_local\n" );
+  }
+  
+  new_local->tiles = ( GameTile_t* )malloc( sizeof(GameTile_t) * Z_HEIGHT * LOCAL_SIZE * LOCAL_SIZE );
+  if ( new_local->tiles == NULL )
+  {
+    printf( "Failed to allocate memory for new_local->tiles\n" );
+  }
+
+  for ( int i = 0; i < ( Z_HEIGHT * LOCAL_SIZE * LOCAL_SIZE ); i++ )
+  {
+    new_local->tiles[i].elevation   = 0;
+    new_local->tiles[i].terrain     = 'G';
+    new_local->tiles[i].temperature = 20;
+    new_local->tiles[i].isOccupied  = 0;
+  }*/
+
+  //SaveTest( new_local, "resources/world/test.dat" );
+  test_cells = LoadTest( "resources/world/test.dat" );
+
+  for ( int i = 0; i < Z_HEIGHT * LOCAL_SIZE * LOCAL_SIZE; i++ )
+  {
+    printf( "tile: %d %c\n",i, test_cells->tiles[i].terrain  );
+  }
 }
 
 static void aDoLoop( float dt )
