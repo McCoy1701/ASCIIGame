@@ -22,9 +22,12 @@ $(OBJ_DIR)/em_game.o: $(SRC_DIR)/game.c
 	$(ECC) -c $< $(CINC) $(EFLAGS) -o $@
 
 $(INDEX_DIR)/index: $(OBJ_DIR)/em_main.o $(OBJ_DIR)/em_game.o $(LIB_DIR)/libArchimedes.a
-	mkdir -p $(INDEX_DIR)
-	$(ECC) $^ -s WASM=1 --shell-file htmlTemplate/template.html --preload-file resources/ -o $@.html -sALLOW_MEMORY_GROWTH $(EFLAGS)
-	cp -r htmlTemplate/ $(INDEX_DIR)/
+	mkdir -p $(INDEX_DIR)/game
+	$(ECC) $^ -s WASM=1 --shell-file htmlTemplate/template.html --preload-file resources/ -o $(INDEX_DIR)/game/index.html -sALLOW_MEMORY_GROWTH $(EFLAGS)
+	# Copy htmlTemplate to index root so ../htmlTemplate/ works from game/index.html
+	cp -r htmlTemplate $(INDEX_DIR)/
+	# Also copy resources to the right location
+	cp -r resources $(INDEX_DIR)/game/
 
 
 .PHONY: native
