@@ -46,14 +46,13 @@ Ammunition__Item_t* get_ammunition_data(Item_t* item);
 // =============================================================================
 
 // Material creation
-Material_t create_material(const char* name, float weight_fact, float damage_fact,
-                          float armor_fact, float durability_fact,
-                          float stealth_fact, float enchant_fact);
+Material_t create_material(const char* name, MaterialProperties_t properties);
+MaterialProperties_t create_default_material_properties(void);
 
 // Apply material effects to items
 void apply_material_to_weapon(Item_t* item);
 void apply_material_to_armor(Item_t* item);
-uint8_t calculate_final_weight(const Item_t* item);
+float calculate_final_weight(const Item_t* item);
 uint8_t calculate_final_value(const Item_t* item);
 
 // =============================================================================
@@ -72,7 +71,7 @@ uint8_t get_armor_value(const Item_t* item);
 uint8_t get_evasion_value(const Item_t* item);
 
 // General item properties
-uint8_t get_item_weight(const Item_t* item);
+float get_item_weight(const Item_t* item);
 uint8_t get_item_value_coins(const Item_t* item);
 uint8_t get_stealth_value(const Item_t* item);
 uint8_t get_durability(const Item_t* item);
@@ -83,8 +82,8 @@ uint8_t get_max_stack_size(const Item_t* item);
 // DURABILITY SYSTEM
 // =============================================================================
 
-void damage_item_durability(Item_t* item, uint8_t damage);
-void repair_item(Item_t* item, uint8_t repair_amount);
+void damage_item_durability(Item_t* item, uint16_t damage);
+void repair_item(Item_t* item, uint16_t repair_amount);
 bool is_item_broken(const Item_t* item);
 float get_durability_percentage(const Item_t* item);
 
