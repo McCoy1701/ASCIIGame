@@ -8,39 +8,49 @@
 static void aDoLoop( float );
 static void aRenderLoop( float );
 
+static void free_world( void );
+
 LocalCell_t* test_cells;
+World_t* map;
 
 void aInitGame( void )
 {
   app.delegate.logic = aDoLoop;
   app.delegate.draw  = aRenderLoop;
-  /*LocalCell_t* new_local = ( LocalCell_t* )malloc( sizeof(LocalCell_t) );
-  if ( new_local == NULL )
-  {
-    printf( "Failed to allocate memory for new_local\n" );
-  }
   
-  new_local->tiles = ( GameTile_t* )malloc( sizeof(GameTile_t) * Z_HEIGHT * LOCAL_SIZE * LOCAL_SIZE );
-  if ( new_local->tiles == NULL )
+  /* map = init_world();
+
+
+  for ( int i = 0; i < WORLD_WIDTH * WORLD_HEIGHT; i++ )
   {
-    printf( "Failed to allocate memory for new_local->tiles\n" );
+    for ( int j = 0; j < REGION_SIZE * REGION_SIZE; j++ )
+    {
+      for ( int k = 0; k < Z_HEIGHT * LOCAL_SIZE * LOCAL_SIZE; k++ )
+      {
+        map->regions[i].cells[j].tiles[k].glyph       = 'G';
+        map->regions[i].cells[j].tiles[k].is_passable = 1;
+        map->regions[i].cells[j].tiles[k].temperature = 20;
+        map->regions[i].cells[j].tiles[k].elevation   = 0;
+      }
+    }
   }
 
-  for ( int i = 0; i < ( Z_HEIGHT * LOCAL_SIZE * LOCAL_SIZE ); i++ )
+  SaveWorld( map, "resources/world/world_test.dat" );*/
+  map = LoadWorld( "resources/world/world_test.dat" );
+  
+  for ( int i = 0; i < WORLD_WIDTH * WORLD_HEIGHT; i++ )
   {
-    new_local->tiles[i].elevation   = 0;
-    new_local->tiles[i].terrain     = 'G';
-    new_local->tiles[i].temperature = 20;
-    new_local->tiles[i].isOccupied  = 0;
-  }*/
-
-  //SaveTest( new_local, "resources/world/test.dat" );
-  test_cells = LoadTest( "resources/world/test.dat" );
-
-  for ( int i = 0; i < Z_HEIGHT * LOCAL_SIZE * LOCAL_SIZE; i++ )
-  {
-    printf( "tile: %d %c\n",i, test_cells->tiles[i].terrain  );
-  }
+    for ( int j = 0; j < REGION_SIZE * REGION_SIZE; j++ )
+    {
+      for ( int k = 0; k < Z_HEIGHT * LOCAL_SIZE * LOCAL_SIZE; k++ )
+      {
+        printf( "%d, %d, %d, %c, %d, %d, %d\n", i, j, k, map->regions[i].cells[j].tiles[k].glyph,
+               map->regions[i].cells[j].tiles[k].temperature,
+               map->regions[i].cells[j].tiles[k].is_passable,
+               map->regions[i].cells[j].tiles[k].elevation );
+      }
+    }
+  }  
 }
 
 static void aDoLoop( float dt )
@@ -69,6 +79,22 @@ void aMainloop( void )
   a_PresentScene();
 }
 
+static void free_world( void )
+{
+  for ( int k = 0; k < WORLD_WIDTH * WORLD_HEIGHT; k++ )
+  {
+    for ( int l = 0; l < REGION_SIZE * REGION_SIZE; l++ )
+    {
+      free( map->regions[k].cells[l].tiles );
+    }
+
+    free( map->regions[k].cells );
+  }
+
+  free( map->regions );
+  free( map );
+}
+
 int main( void )
 {
   a_Init( SCREEN_WIDTH, SCREEN_HEIGHT, "Archimedes" );
@@ -79,6 +105,8 @@ int main( void )
     aMainloop();
   }
 
+  free_world();
+  
   a_Quit();
 
   return 0;

@@ -45,7 +45,7 @@ World_t* init_world( void )
         {
           for ( int l = 0; l < j; l++ )
           {
-            free( new_world->regions[k].cells[j].tiles );
+            free( new_world->regions[k].cells[l].tiles );
           }
 
           free( new_world->regions[k].cells );
