@@ -22,8 +22,9 @@ $(OBJ_DIR)/em_game.o: $(SRC_DIR)/game.c
 	$(ECC) -c $< $(CINC) $(EFLAGS) -o $@
 
 $(INDEX_DIR)/index: $(OBJ_DIR)/em_main.o $(OBJ_DIR)/em_game.o $(LIB_DIR)/libArchimedes.a
-	mkdir $(INDEX_DIR)
+	mkdir -p $(INDEX_DIR)
 	$(ECC) $^ -s WASM=1 --shell-file htmlTemplate/template.html --preload-file resources/ -o $@.html -sALLOW_MEMORY_GROWTH $(EFLAGS)
+	cp -r htmlTemplate/ $(INDEX_DIR)/
 
 
 .PHONY: native
