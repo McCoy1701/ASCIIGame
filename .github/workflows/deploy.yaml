@@ -58,6 +58,13 @@ jobs:
           make clean
           make all
 
+      - name: Debug - List index directory contents
+        run: |
+          echo "Contents of index directory:"
+          ls -la index/
+          echo "Full directory structure:"
+          find index/ -type f
+
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
