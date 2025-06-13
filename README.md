@@ -66,7 +66,7 @@ ASCIIGame/
 - **Emscripten** - For WebAssembly compilation
 - **SDL2** libraries: SDL2, SDL2_image, SDL2_ttf, SDL2_mixer
 - **Make** - Build automation
-- **Bear** (optional) - For generating compile_commands.json
+- **Archimedes** - For running the game natively
 
 ### Building the Game
 
@@ -76,7 +76,7 @@ ASCIIGame/
 # Build for web deployment
 make all
 
-# Serve the game (requires local web server)
+python3 -m http.server 8000
 # The compiled game will be in index/index.html
 ```
 
@@ -105,9 +105,6 @@ make editor
 ```bash
 # Clean build artifacts
 make clean
-
-# Generate compile_commands.json for IDE support
-make bear
 
 # Run comprehensive test suite
 make test
@@ -164,4 +161,4 @@ Run the full test suite with: `make test`
 
 ASCIIGame aims to create a rich, immersive RPG experience that combines the depth of classic roguelikes with modern web technology. By leveraging WebAssembly, we're making complex game simulations accessible to anyone with a web browser while maintaining the performance and flexibility of native code.
 
-The political intrigue system and faction dynamics create emergent storytelling opportunities where player choices genuinely matter and reshape the world. Whether you choose to unite the kingdom, exploit the chaos for personal gain, or forge entirely new alliances, your journey through Aethermoor will be uniquely yours.
+The political intrigue system and faction dynamics create emergent storytelling opportunities where player choices genuinely matter and reshape the world. Whether you choose to unite the kingdom, exploit the chaos for personal gain, or forge entirely new alliances, your journey through ?-? will be uniquely yours.
