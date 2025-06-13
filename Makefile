@@ -68,7 +68,7 @@ bearclean:
 .PHONY: clean
 clean:
 	rm -rf $(OBJ_DIR) $(BIN_DIR) $(INDEX_DIR)
-	clear
+	@if [ -t 1 ]; then clear; fi
 
 
 .PHONY: always

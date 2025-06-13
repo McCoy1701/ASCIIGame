@@ -1,4 +1,4 @@
-name: Build ASCIIGame with Webpack
+name: Build ASCIIGame
 
 on:
   push:
@@ -9,12 +9,12 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    name: Run C Tests
+    name: Run Tests
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install C dependencies
+      - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y gcc make libsdl2-dev libsdl2-image-dev libsdl2-ttf-dev libsdl2-mixer-dev
@@ -25,64 +25,43 @@ jobs:
           chmod +x run_tests.sh
           ./run_tests.sh
 
-  build:
-    runs-on: ubuntu-latest
-    name: Build Full Application
+      - name: Build native version
+        run: |
+          make native
 
-    strategy:
-      matrix:
-        node-version: [18.x, 20.x, 22.x]
+  build-web:
+    runs-on: ubuntu-latest
+    name: Build WebAssembly
 
     steps:
       - uses: actions/checkout@v4
-
-      - name: Setup Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
 
       - name: Setup Emscripten
         uses: mymindstorm/setup-emsdk@v14
         with:
           version: latest
 
-      - name: Install system dependencies
+      - name: Install SDL2 dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y gcc make libsdl2-dev libsdl2-image-dev libsdl2-ttf-dev libsdl2-mixer-dev
+          sudo apt-get install -y libsdl2-dev libsdl2-image-dev libsdl2-ttf-dev libsdl2-mixer-dev
 
-      - name: Install npm dependencies
-        run: npm install
-
-      - name: Build WASM game
+      - name: Build WebAssembly
         run: |
           make clean
           make all
 
-      - name: Build frontend with Webpack
-        run: npm run build
-
-      - name: Upload build artifacts
+      - name: Upload WebAssembly build
         uses: actions/upload-artifact@v4
         with:
-          name: asciigame-full-build-node${{ matrix.node-version }}
+          name: asciigame-wasm
           path: |
-            dist/
             index/
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master'
-
-    steps:
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: asciigame-full-build-node18.x
+            !index/*.tmp
 
       - name: Deploy to GitHub Pages
+        if: github.ref == 'refs/heads/master'
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist
+          publish_dir: ./index
