@@ -30,13 +30,15 @@ jobs:
           chmod +x run_tests.sh
           ./run_tests.sh
 
-      - name: Build native version
-        run: |
-          make native
-
-  build-web:
+  build-and-deploy:
     runs-on: ubuntu-latest
-    name: Build WebAssembly
+    name: Build WebAssembly and Deploy
+    needs: test
+    if: github.ref == 'refs/heads/master'
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
       - uses: actions/checkout@v4
@@ -56,17 +58,14 @@ jobs:
           make clean
           make all
 
-      - name: Upload WebAssembly build
-        uses: actions/upload-artifact@v4
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          name: asciigame-wasm
-          path: |
-            index/
-            !index/*.tmp
+          path: "./index"
 
       - name: Deploy to GitHub Pages
-        if: github.ref == 'refs/heads/master'
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./index
+        id: deployment
+        uses: actions/deploy-pages@v4
