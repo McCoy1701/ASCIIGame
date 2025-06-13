@@ -26,8 +26,9 @@ Text_t* local_text;
 
 int originX;
 int originY;
-
+#ifdef __EMSCRIPTEN__
 EMSCRIPTEN_KEEPALIVE
+#endif
 void g_ChangeColor( uint32_t hex_color_value )
 {
   uint8_t a = 0xff;
@@ -143,7 +144,7 @@ void aInitGame( void )
   a_SetText( region_text, "region", text_color );
   a_SetText( local_text, "local", text_color );
 
-//  grid_color = blue;
+  grid_color = blue;
   //g_ChangeColor( 0xff0000 );
 }
 

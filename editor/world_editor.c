@@ -50,8 +50,7 @@ void aInitGame( void )
                map->regions[i].cells[j].tiles[k].elevation );
       }
     }
-  }
-  
+  }  
 }
 
 static void aDoLoop( float dt )
