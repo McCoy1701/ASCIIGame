@@ -24,7 +24,7 @@ $(OBJ_DIR)/em_game.o: $(SRC_DIR)/game.c
 $(INDEX_DIR)/index: $(OBJ_DIR)/em_main.o $(OBJ_DIR)/em_game.o $(LIB_DIR)/libArchimedes.a
 	mkdir -p $(INDEX_DIR)
 	# Create a deployment version of the template with corrected paths
-	sed 's|../htmlTemplate/|htmlTemplate/|g' htmlTemplate/template.html > $(INDEX_DIR)/template_deploy.html
+	sed 's|../htmlTemplate/|/htmlTemplate/|g' htmlTemplate/template.html > $(INDEX_DIR)/template_deploy.html
 	$(ECC) $^ -s WASM=1 --shell-file $(INDEX_DIR)/template_deploy.html --preload-file resources/ -o $(INDEX_DIR)/index.html -sALLOW_MEMORY_GROWTH $(EFLAGS)
 	# Copy htmlTemplate directory
 	cp -r htmlTemplate $(INDEX_DIR)/
