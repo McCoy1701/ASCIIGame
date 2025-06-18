@@ -6,58 +6,70 @@
 
 World_t* init_world( void )
 {
-  World_t* new_world = ( World_t* )malloc( sizeof( World_t ) );
+  World_t* new_world = ( World_t* )malloc( sizeof( World_t ) * WORLD_WIDTH * WORLD_HEIGHT );
   if ( new_world == NULL )
   {
     printf("Failed to allocate memory for world\n");
-    return NULL;
-  }
-
-  new_world->regions = ( RegionCell_t* )malloc( sizeof( RegionCell_t* ) * WORLD_WIDTH * WORLD_HEIGHT );
-  if ( new_world->regions == NULL )
-  {
-    printf("Failed to allocate memory for world->regions\n");
     free( new_world );
     return NULL;
   }
-
-  for ( int i = 0; i < ( WORLD_WIDTH * WORLD_HEIGHT ); i++ )
+  
+  for ( int i = 0; i < WORLD_WIDTH * WORLD_HEIGHT; i++ )
   {
-    new_world->regions[i].cells = ( LocalCell_t* )malloc( sizeof( LocalCell_t ) * REGION_SIZE * REGION_SIZE );
-    if ( new_world->regions[i].cells == NULL )
-    {
-      for ( int j = 0; j < i; j++ )
-      {
-        free( new_world->regions[j].cells );
-      }
+    new_world[i].tile = (GameTile_t){.glyph = 0, .elevation = 0, 
+      .temperature = 20, .is_passable = 0 };
 
-      free( new_world->regions );
-      free( new_world );
+    new_world[i].regions = ( RegionCell_t* )malloc( sizeof( RegionCell_t ) * 
+                                                   REGION_SIZE * REGION_SIZE );
+    
+    if ( new_world[i].regions == NULL )
+    {
+      free_world( new_world, i, 0 );
       return NULL;
     }
-    
-    for ( int j = 0; j < REGION_SIZE * REGION_SIZE; j++ )
+
+    for ( int j = 0; j < ( REGION_SIZE * REGION_SIZE ); j++ )
     {
-      new_world->regions[i].cells[j].tiles = (GameTile_t*)malloc( sizeof(GameTile_t ) * LOCAL_SIZE * LOCAL_SIZE * Z_HEIGHT );
-      if ( new_world->regions[i].cells[j].tiles == NULL )
+      new_world[i].regions[j].tile = (GameTile_t){.glyph = 0, .elevation = 0,
+        .temperature = 20, .is_passable = 0 };
+      
+      new_world[i].regions[j].tiles = ( GameTile_t* )malloc( sizeof( GameTile_t ) 
+                                                           * LOCAL_SIZE * LOCAL_SIZE * Z_HEIGHT );
+  
+      if ( new_world[i].regions[j].tiles == NULL )
       {
-        for ( int k = 0; k < i; k++ )
-        {
-          for ( int l = 0; l < j; l++ )
-          {
-            free( new_world->regions[k].cells[l].tiles );
-          }
-
-          free( new_world->regions[k].cells );
-        }
-
-        free( new_world->regions );
-        free( new_world );
+        free_world( new_world, i, j );
         return NULL;
-      }
+      }    
+
     }
   }
 
   return new_world;
+}
+
+void free_world( World_t* world, int world_index, int region_index )
+{
+  if ( world == NULL ) return;
+  
+  for ( int i = 0; i <= world_index; i++ )
+  {
+    if ( world[i].regions != NULL)
+    {
+      int max_regions = ( i == world_index ) ? region_index : ( REGION_SIZE * REGION_SIZE - 1 );
+
+      for ( int j = 0; j < max_regions; j++ )
+      {
+          free( world[i].regions[j].tiles );
+          world[i].regions[j].tiles = NULL;
+      }
+
+      free( world[i].regions );
+      world[i].regions = NULL;
+    }
+
+  }
+
+  free( world );
 }
 

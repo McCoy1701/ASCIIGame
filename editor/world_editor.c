@@ -3,14 +3,11 @@
 #include "Archimedes.h"
 #include "defs.h"
 #include "init_editor.h"
-#include "save_editor.h"
+//#include "save_editor.h"
 
 static void aDoLoop( float );
 static void aRenderLoop( float );
 
-static void free_world( void );
-
-LocalCell_t* test_cells;
 World_t* map;
 
 void aInitGame( void )
@@ -18,10 +15,10 @@ void aInitGame( void )
   app.delegate.logic = aDoLoop;
   app.delegate.draw  = aRenderLoop;
   
-  /* map = init_world();
+  map = init_world();
 
 
-  for ( int i = 0; i < WORLD_WIDTH * WORLD_HEIGHT; i++ )
+  /*for ( int i = 0; i < WORLD_WIDTH * WORLD_HEIGHT; i++ )
   {
     for ( int j = 0; j < REGION_SIZE * REGION_SIZE; j++ )
     {
@@ -35,7 +32,7 @@ void aInitGame( void )
     }
   }
 
-  SaveWorld( map, "resources/world/world_test.dat" );*/
+  SaveWorld( map, "resources/world/world_test.dat" );
   map = LoadWorld( "resources/world/world_test.dat" );
   
   for ( int i = 0; i < WORLD_WIDTH * WORLD_HEIGHT; i++ )
@@ -50,7 +47,7 @@ void aInitGame( void )
                map->regions[i].cells[j].tiles[k].elevation );
       }
     }
-  }  
+  }  */
 }
 
 static void aDoLoop( float dt )
@@ -79,22 +76,6 @@ void aMainloop( void )
   a_PresentScene();
 }
 
-static void free_world( void )
-{
-  for ( int k = 0; k < WORLD_WIDTH * WORLD_HEIGHT; k++ )
-  {
-    for ( int l = 0; l < REGION_SIZE * REGION_SIZE; l++ )
-    {
-      free( map->regions[k].cells[l].tiles );
-    }
-
-    free( map->regions[k].cells );
-  }
-
-  free( map->regions );
-  free( map );
-}
-
 int main( void )
 {
   a_Init( SCREEN_WIDTH, SCREEN_HEIGHT, "Archimedes" );
@@ -105,7 +86,7 @@ int main( void )
     aMainloop();
   }
 
-  free_world();
+  free_world( map, WORLD_WIDTH * WORLD_HEIGHT, REGION_SIZE * REGION_SIZE );
   
   a_Quit();
 

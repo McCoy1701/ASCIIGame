@@ -8,7 +8,7 @@
 
 typedef struct
 {
-  char glyph;
+  uint16_t glyph;
   uint8_t temperature;
   uint8_t elevation;
   uint8_t is_passable;
@@ -17,18 +17,13 @@ typedef struct
 typedef struct
 {
   GameTile_t* tiles;
-} LocalCell_t;
-
-typedef struct
-{
-  LocalCell_t* cells;
-//  GameTile_t tile;
+  GameTile_t tile;
 } RegionCell_t;
 
 typedef struct
 {
   RegionCell_t* regions;
-//  GameTile_t tile;
+  GameTile_t tile;
 } World_t;
 
 typedef struct
@@ -48,6 +43,7 @@ typedef struct
 } FileHeader_t;
 
 World_t* init_world( void );
+void free_world( World_t* world, int world_index, int region_index );
 
 #endif
 
