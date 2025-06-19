@@ -56,6 +56,8 @@ void we_creation( void )
   w->hidden = 0;
   w = a_GetWidget( "z_height" );
   w->hidden = 0;
+  w = a_GetWidget( "generate" );
+  w->hidden = 0;
 
 }
 
@@ -75,7 +77,7 @@ static void we_CreationDoLoop( float dt )
 
 static void we_CreationRenderLoop( float dt )
 {
-  a_DrawFilledRect( 240, 240, 400, 250, 255, 0, 255, 255 );
+  a_DrawFilledRect( 240, 240, 400, 265, 255, 0, 255, 255 );
   
   a_DrawWidgets();
 

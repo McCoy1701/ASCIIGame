@@ -35,7 +35,7 @@ static void e_EntityEditorDoLoop( float dt )
     app.running = 0;
   }
   
-  if ( app.mouse.button == 1 )
+  if ( app.mouse.button == 2 )
   {
     app.mouse.button = 0;
     printf( "x: %d, y: %d\n", app.mouse.x, app.mouse.y );

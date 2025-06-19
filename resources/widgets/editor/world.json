@@ -35,8 +35,8 @@
   {
     "type"    : "WT_BUTTON",
     "name"    : "creation",
-    "x"       : 0,
-    "y"       : 650,
+    "x"       : 10,
+    "y"       : 670,
     "label"   : "Creation",
     "boxed"   : 1,
     "hidden"  : 0,
@@ -46,8 +46,8 @@
   {
     "type"    : "WT_BUTTON",
     "name"    : "edit",
-    "x"       : 140,
-    "y"       : 650,
+    "x"       : 150,
+    "y"       : 670,
     "label"   : "Edit",
     "boxed"   : 1,
     "hidden"  : 0,
@@ -57,8 +57,8 @@
   {
     "type"    : "WT_BUTTON",
     "name"    : "save",
-    "x"       : 210,
-    "y"       : 650,
+    "x"       : 220,
+    "y"       : 670,
     "label"   : "Save",
     "boxed"   : 1,
     "hidden"  : 0,
@@ -68,8 +68,8 @@
   {
     "type"    : "WT_BUTTON",
     "name"    : "load",
-    "x"       : 295,
-    "y"       : 650,
+    "x"       : 303,
+    "y"       : 670,
     "label"   : "Load",
     "boxed"   : 1,
     "hidden"  : 0,
@@ -139,5 +139,17 @@
       "Medium",
       "Large"
     ]
+  },
+  {
+    "type"    : "WT_BUTTON",
+    "name"    : "generate",
+    "x"       : 250,
+    "y"       : 450,
+    "label"   : "Generate",
+    "boxed"   : 1,
+    "hidden"  : 1,
+    "fg"      : [   0,   0,   0, 255 ],
+    "bg"      : [ 255, 255, 255, 255 ]
   }
 ]
+
