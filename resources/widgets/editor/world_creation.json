@@ -1,0 +1,67 @@
+[
+  {
+    "type"    : "WT_SELECT",
+    "name"    : "world_size",
+    "x"       : 250,
+    "y"       : 250,
+    "label"   : "World Size",
+    "boxed"   : 1,
+    "hidden"  : 0,
+    "fg"      : [   0,   0,   0, 255 ],
+    "bg"      : [ 255, 255, 255, 0 ],
+    "options" : [
+      "Small",
+      "Medium",
+      "Large"
+    ]
+  },
+  {
+    "type"    : "WT_SELECT",
+    "name"    : "region_size",
+    "x"       : 250,
+    "y"       : 300,
+    "label"   : "Region Size",
+    "boxed"   : 1,
+    "hidden"  : 0,
+    "fg"      : [   0,   0,   0, 255 ],
+    "bg"      : [ 255, 255, 255, 0 ],
+    "options" : [
+      "Small",
+      "Medium",
+      "Large"
+    ]
+  },
+  {
+    "type"    : "WT_SELECT",
+    "name"    : "local_size",
+    "x"       : 250,
+    "y"       : 350,
+    "label"   : "Local Size",
+    "boxed"   : 1,
+    "hidden"  : 0,
+    "fg"      : [   0,   0,   0, 255 ],
+    "bg"      : [ 255, 255, 255, 0 ],
+    "options" : [
+      "Small",
+      "Medium",
+      "Large"
+    ]
+  },
+  {
+    "type"    : "WT_SELECT",
+    "name"    : "z_height",
+    "x"       : 250,
+    "y"       : 400,
+    "label"   : "Z Height",
+    "boxed"   : 1,
+    "hidden"  : 0,
+    "fg"      : [   0,   0,   0, 255 ],
+    "bg"      : [ 255, 255, 255, 0 ],
+    "options" : [
+      "Small",
+      "Medium",
+      "Large"
+    ]
+  }
+]
+

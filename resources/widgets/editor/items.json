@@ -1,24 +1,36 @@
 [
   {
-    "type" : "WT_BUTTON",
-    "name" : "item",
-    "x" : 10,
-    "y" : 10,
-    "label" : "Item"
+    "type"   : "WT_BUTTON",
+    "name"   : "world",
+    "x"      : 10,
+    "y"      : 10,
+    "label"  : "World",
+    "boxed"  : 1,
+    "hidden" : 0,
+    "fg"     : [ 255, 255, 0, 255 ],
+    "bg"     : [   0, 255, 255, 0 ]
   },
   {
-    "type" : "WT_BUTTON",
-    "name" : "world",
-    "x" : 100,
-    "y" : 10,
-    "label" : "World"
+    "type"   : "WT_BUTTON",
+    "name"   : "item",
+    "x"      : 100,
+    "y"      : 10,
+    "label"  : "Item",
+    "boxed"  : 1,
+    "hidden" : 0,
+    "fg"     : [ 0, 255, 255, 255 ],
+    "bg"     : [ 255,   0, 255, 100 ]
   },
   {
-    "type" : "WT_BUTTON",
-    "name" : "entity",
-    "x" : 200,
-    "y" : 10,
-    "label" : "Entity"
+    "type"   : "WT_BUTTON",
+    "name"   : "entity",
+    "x"      : 175,
+    "y"      : 10,
+    "label"  : "Entity",
+    "boxed"  : 1,
+    "hidden" : 0,
+    "fg"     : [ 255, 0, 255, 255 ],
+    "bg"     : [ 255, 255,   0, 100 ]
   }
 ]
 

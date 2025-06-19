@@ -14,7 +14,7 @@ void e_InitItemsEditor( void )
   app.delegate.logic = e_ItemsEditorDoLoop;
   app.delegate.draw  = e_ItemsEditorRenderLoop;
   
-  a_InitWidgets( "resources/widgets/editor/editor.json" );
+  a_InitWidgets( "resources/widgets/editor/items.json" );
   
   app.active_widget = a_GetWidget( "item" );
   app.active_widget->action = e_InitItemsEditor;

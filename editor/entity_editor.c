@@ -14,7 +14,7 @@ void e_InitEntityEditor( void )
   app.delegate.logic = e_EntityEditorDoLoop;
   app.delegate.draw  = e_EntityEditorRenderLoop;
   
-  a_InitWidgets( "resources/widgets/editor/editor.json" );
+  a_InitWidgets( "resources/widgets/editor/entity.json" );
   
   app.active_widget = a_GetWidget( "entity" );
   app.active_widget->action = e_InitEntityEditor;
