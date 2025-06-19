@@ -1,0 +1,30 @@
+[
+  {
+    "type" : "WT_BUTTON",
+    "name" : "creation",
+    "x" : 0,
+    "y" : 650,
+    "label" : "Creation"
+  },
+  {
+    "type" : "WT_BUTTON",
+    "name" : "edit",
+    "x" : 100,
+    "y" : 650,
+    "label" : "Edit"
+  },
+  {
+    "type" : "WT_BUTTON",
+    "name" : "save",
+    "x" : 200,
+    "y" : 650,
+    "label" : "Save"
+  },
+  {
+    "type" : "WT_BUTTON",
+    "name" : "load",
+    "x" : 300,
+    "y" : 650,
+    "label" : "Load"
+  }
+]

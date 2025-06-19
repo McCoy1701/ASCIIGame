@@ -1,0 +1,24 @@
+[
+  {
+    "type" : "WT_BUTTON",
+    "name" : "item",
+    "x" : 10,
+    "y" : 10,
+    "label" : "Item"
+  },
+  {
+    "type" : "WT_BUTTON",
+    "name" : "world",
+    "x" : 100,
+    "y" : 10,
+    "label" : "World"
+  },
+  {
+    "type" : "WT_BUTTON",
+    "name" : "entity",
+    "x" : 200,
+    "y" : 10,
+    "label" : "Entity"
+  }
+]
+

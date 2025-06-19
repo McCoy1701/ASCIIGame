@@ -57,7 +57,16 @@ $(OBJ_DIR)/save_editor.o: $(EDITOR_DIR)/save_editor.c
 $(OBJ_DIR)/world_editor.o: $(EDITOR_DIR)/world_editor.c
 	$(CC) -c $< -o $@ -ggdb $(CFLAGS)
 
-$(BIN_DIR)/editor: $(OBJ_DIR)/world_editor.o $(OBJ_DIR)/init_editor.o
+$(OBJ_DIR)/items_editor.o: $(EDITOR_DIR)/items_editor.c
+	$(CC) -c $< -o $@ -ggdb $(CFLAGS)
+
+$(OBJ_DIR)/entity_editor.o: $(EDITOR_DIR)/entity_editor.c
+	$(CC) -c $< -o $@ -ggdb $(CFLAGS)
+
+$(OBJ_DIR)/editor.o: $(EDITOR_DIR)/editor.c
+	$(CC) -c $< -o $@ -ggdb $(CFLAGS)
+
+$(BIN_DIR)/editor: $(OBJ_DIR)/editor.o $(OBJ_DIR)/world_editor.o $(OBJ_DIR)/items_editor.o $(OBJ_DIR)/entity_editor.o $(OBJ_DIR)/init_editor.o
 	$(CC) $^ -ggdb -lArchimedes $(CFLAGS) -o $@
 
 

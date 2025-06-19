@@ -2,55 +2,36 @@
 
 #include "Archimedes.h"
 #include "defs.h"
+#include "structs.h"
 #include "init_editor.h"
-//#include "save_editor.h"
+#include "items_editor.h"
+#include "entity_editor.h"
 
-static void aDoLoop( float );
-static void aRenderLoop( float );
+static void e_WorldEditorDoLoop( float );
+static void e_WorldEditorRenderLoop( float );
+
+static aWidget_t* w;
 
 World_t* map;
 
-void aInitGame( void )
+void e_InitWorldEditor( void )
 {
-  app.delegate.logic = aDoLoop;
-  app.delegate.draw  = aRenderLoop;
+  app.delegate.logic = e_WorldEditorDoLoop;
+  app.delegate.draw  = e_WorldEditorRenderLoop;
   
-  map = init_world();
-
-
-  /*for ( int i = 0; i < WORLD_WIDTH * WORLD_HEIGHT; i++ )
-  {
-    for ( int j = 0; j < REGION_SIZE * REGION_SIZE; j++ )
-    {
-      for ( int k = 0; k < Z_HEIGHT * LOCAL_SIZE * LOCAL_SIZE; k++ )
-      {
-        map->regions[i].cells[j].tiles[k].glyph       = 'G';
-        map->regions[i].cells[j].tiles[k].is_passable = 1;
-        map->regions[i].cells[j].tiles[k].temperature = 20;
-        map->regions[i].cells[j].tiles[k].elevation   = 0;
-      }
-    }
-  }
-
-  SaveWorld( map, "resources/world/world_test.dat" );
-  map = LoadWorld( "resources/world/world_test.dat" );
+  a_InitWidgets( "resources/widgets/editor/editor.json" );
   
-  for ( int i = 0; i < WORLD_WIDTH * WORLD_HEIGHT; i++ )
-  {
-    for ( int j = 0; j < REGION_SIZE * REGION_SIZE; j++ )
-    {
-      for ( int k = 0; k < Z_HEIGHT * LOCAL_SIZE * LOCAL_SIZE; k++ )
-      {
-        printf( "%d, %d, %d, %c, %d, %d, %d\n", i, j, k, map->regions[i].cells[j].tiles[k].glyph,
-               map->regions[i].cells[j].tiles[k].temperature,
-               map->regions[i].cells[j].tiles[k].is_passable,
-               map->regions[i].cells[j].tiles[k].elevation );
-      }
-    }
-  }  */
+  app.active_widget = a_GetWidget( "world" );
+  app.active_widget->action = e_InitWorldEditor;
+
+  w = a_GetWidget( "item" );
+  w->action = e_InitItemsEditor;
+
+  w = a_GetWidget( "entity" );
+  w->action = e_InitEntityEditor;
 }
 
-static void aDoLoop( float dt )
+static void e_WorldEditorDoLoop( float dt )
 {
   a_DoInput();
   
@@ -58,38 +39,20 @@ static void aDoLoop( float dt )
   {
     app.running = 0;
   }
+
+  a_DoWidget();
 }
 
-static void aRenderLoop( float dt )
+static void e_WorldEditorRenderLoop( float dt )
 {
-  a_DrawFilledRect( 100, 100, 32, 32, blue );
-  a_DrawFilledRect( 300, 300, 32, 32, red );
+  a_DrawFilledRect( 100, 100, 32, 32, 255, 0, 255, 255 );
+  a_DrawFilledRect( 300, 300, 32, 32, 0, 255, 255, 255 );
+
+  a_DrawWidgets();
 }
 
-void aMainloop( void )
+void e_CleanUpWorldEditor( void )
 {
-  a_PrepareScene();
-
-  app.delegate.logic( a_GetDeltaTime() );
-  app.delegate.draw( a_GetDeltaTime() );
-  
-  a_PresentScene();
-}
-
-int main( void )
-{
-  a_Init( SCREEN_WIDTH, SCREEN_HEIGHT, "Archimedes" );
-
-  aInitGame();
-  
-  while( app.running ) {
-    aMainloop();
-  }
-
-  free_world( map, WORLD_WIDTH * WORLD_HEIGHT, REGION_SIZE * REGION_SIZE );
-  
-  a_Quit();
-
-  return 0;
+  free_world( map, map->world_size, map->region_size );
 }
 

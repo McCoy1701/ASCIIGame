@@ -13,50 +13,57 @@ typedef enum {
 } ItemType_t;
 
 // World Building Structs
-
-typedef struct // GameTile_t
+typedef struct
 {
-  char glyph;
+  uint16_t glyph;
   uint8_t temperature;
   uint8_t elevation;
   uint8_t is_passable;
 } GameTile_t;
 
-typedef struct // LocalCell_t
+typedef struct
 {
-    GameTile_t* tiles; //Z_HEIGHT * LOCAL_SIZE * LOCAL_SIZE
-    // There are too many local cells to warrant their own id/name/factors
-    // Each local cell will take the factors as the region and world cell it is nested in
-} LocalCell_t;
-
-typedef struct // RegionCell_t
-{
-  LocalCell_t* cells; //REGION_SIZE * REGION_SIZE
-
-  char name[MAX_NAME_LENGTH];
-  char id[MAX_ID_LENGTH]; // refer to in game tiles as 'world-id:region-id:x/y:x/y'
-
-  // float (1 is 100%, 0.5 is 50%, etc.)
+  GameTile_t* tiles;
+  GameTile_t tile;
+  
   float temperature_factor; // every local cell in this region
   float elevation_factor; // every local cell in this region
+  // float (1 is 100%, 0.5 is 50%, etc.)
 
 } RegionCell_t;
 
-typedef struct // World_t
+typedef struct
 {
-    RegionCell_t* regions; //WORLD_HEIGHT * WORLD_WIDTH
+  RegionCell_t* regions;
+  GameTile_t tile;
 
-    char name[MAX_NAME_LENGTH];
-    char id[MAX_ID_LENGTH]; // refer to in game tiles as 'world-id:region-id:x/y:x/y'
+  uint16_t world_size;
+  uint16_t region_size;
+  uint16_t local_size;
+  
+  // floats (1 is 100%, 0.5 is 50%, etc.)
+  float temperature_factor; // every region in this world cell
+  float elevation_factor; // every region in this world cell
 
-    // floats (1 is 100%, 0.5 is 50%, etc.)
-    float temperature_factor; // every region in this world cell
-    float elevation_factor; // every region in this world cell
+}World_t;
 
-} World_t;
+typedef struct
+{
+  char magic[8];
+  uint32_t version;
+  int32_t  world_x;
+  int32_t  world_y;
+  int32_t  region_x;
+  int32_t  region_y;
+  int32_t  local_x;
+  int32_t  local_y;
+  uint32_t world_size;
+  uint32_t region_size;
+  uint32_t local_size;
+  uint32_t z_height;
+} FileHeader_t;
 
 // World Position 'world-id:region-id:x/y:x/y'
-
 typedef struct // World_Position_t
 {
     char world_id[MAX_ID_LENGTH];
@@ -201,4 +208,6 @@ typedef struct
 
     uint8_t size;
 } Inventory_t;
+
 #endif
+
