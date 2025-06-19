@@ -4,21 +4,30 @@
     "name" : "world",
     "x" : 10,
     "y" : 10,
-    "label" : "World"
+    "label" : "World",
+    "boxed": 1,
+    "fg": [ 255, 255, 0, 255 ],
+    "bg": [   0, 255, 255, 0 ]
   },
   {
     "type" : "WT_BUTTON",
     "name" : "item",
     "x" : 100,
     "y" : 10,
-    "label" : "Item"
+    "label" : "Item",
+    "boxed": 1,
+    "fg": [ 0, 255, 255, 255 ],
+    "bg": [ 255,   0, 255, 100 ]
   },
   {
     "type" : "WT_BUTTON",
     "name" : "entity",
-    "x" : 200,
+    "x" : 175,
     "y" : 10,
-    "label" : "Entity"
+    "label" : "Entity",
+    "boxed": 1,
+    "fg": [ 255, 0, 255, 255 ],
+    "bg": [ 255, 255,   0, 100 ]
   }
 ]
 
