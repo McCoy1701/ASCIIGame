@@ -1,4 +1,6 @@
 #include "structs.h"
+#include "Daedalus.h"
+
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -46,7 +48,7 @@ Ammunition__Item_t* get_ammunition_data(Item_t* item);
 // =============================================================================
 
 // Material creation
-Material_t create_material(const char* name, MaterialProperties_t properties);
+Material_t create_material(const dString_t name, MaterialProperties_t properties);
 MaterialProperties_t create_default_material_properties(void);
 
 // Apply material effects to items
@@ -97,13 +99,13 @@ void destroy_inventory(Inventory_t* inventory);
 
 // Inventory operations
 bool add_item_to_inventory(Inventory_t* inventory, Item_t* item, uint8_t quantity);
-bool remove_item_from_inventory(Inventory_t* inventory, const char* item_id, uint8_t quantity);
-Inventory_slot_t* find_item_in_inventory(Inventory_t* inventory, const char* item_id);
+bool remove_item_from_inventory(Inventory_t* inventory, const dString_t item_id, uint8_t quantity);
+Inventory_slot_t* find_item_in_inventory(Inventory_t* inventory, const dString_t item_id);
 bool can_stack_items(const Item_t* item1, const Item_t* item2);
 
 // Equipment management
-bool equip_item(Inventory_t* inventory, const char* item_id);
-bool unequip_item(Inventory_t* inventory, const char* item_id);
+bool equip_item(Inventory_t* inventory, const dString_t item_id);
+bool unequip_item(Inventory_t* inventory, const dString_t item_id);
 Inventory_slot_t* get_equipped_weapon(Inventory_t* inventory);
 Inventory_slot_t* get_equipped_armor(Inventory_t* inventory);
 

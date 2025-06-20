@@ -4,11 +4,204 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+// =============================================================================
+// HELPER FUNCTIONS
+// =============================================================================
+
+/*
+ * Helper function to create and assign a dString_t field from a const char*
+ * Returns true on success, false on failure
+ */
+static bool _populate_string_field(dString_t* dest, const char* src) {
+    if (src == NULL || dest == NULL) {
+        return false;
+    }
+
+    dString_t* temp = d_InitString();
+    if (temp == NULL) {
+        return false;
+    }
+
+    d_AppendString(temp, src, 0);
+    *dest = *temp;  // Copy struct content
+    free(temp);     // Free wrapper, keep string data
+    return true;
+}
+
+/*
+ * Helper function to populate item description for weapons
+ */
+static bool _populate_weapon_desc(dString_t* dest, const Material_t* material) {
+    if (dest == NULL || material == NULL) {
+        return false;
+    }
+
+    dString_t* temp = d_InitString();
+    if (temp == NULL) {
+        return false;
+    }
+
+    d_AppendString(temp, "A weapon made of ", 0);
+    d_AppendString(temp, material->name, 0);
+    *dest = *temp;
+    free(temp);
+    return true;
+}
+
+/*
+ * Helper function to populate item description for armor
+ */
+static bool _populate_armor_desc(dString_t* dest, const Material_t* material) {
+    if (dest == NULL || material == NULL) {
+        return false;
+    }
+
+    dString_t* temp = d_InitString();
+    if (temp == NULL) {
+        return false;
+    }
+
+    d_AppendString(temp, "Armor made of ", 0);
+    d_AppendString(temp, material->name, 0);
+    *dest = *temp;
+    free(temp);
+    return true;
+}
+
+/*
+ * Helper function to populate item rarity
+ */
+static bool _populate_rarity(dString_t* dest, const char* rarity) {
+    if (dest == NULL || rarity == NULL) {
+        return false;
+    }
+
+    return _populate_string_field(dest, rarity);
+}
+/*
+ * Helper function to populate item description for keys
+ */
+static bool _populate_key_desc(dString_t* dest, const Lock_t* lock) {
+    if (dest == NULL || lock == NULL) {
+        return false;
+    }
+
+    dString_t* temp = d_InitString();
+    if (temp == NULL) {
+        return false;
+    }
+
+    d_AppendString(temp, "A key that opens: ", 0);
+    // Need to handle Lock_t's name field - assuming it's dString_t now
+    d_AppendString(temp, d_PeekString(&lock->name), 0);
+    *dest = *temp;
+    free(temp);
+    return true;
+}
+
+/*
+ * Helper function to create a default neutral material for keys
+ */
+static Material_t _create_default_material(void) {
+    Material_t material;
+
+    // Set material name using helper
+    if (!_populate_string_field(&material.name, "metal")) {
+        // If this fails, we have bigger problems, but set empty name
+        material.name.str = NULL;
+        material.name.len = 0;
+        material.name.alloced = 0;
+    }
+
+    // Initialize all properties to neutral (1.0f)
+    material.properties.weight_fact = 1.0f;
+    material.properties.value_coins_fact = 1.0f;
+    material.properties.durability_fact = 1.0f;
+    material.properties.min_damage_fact = 1.0f;
+    material.properties.max_damage_fact = 1.0f;
+    material.properties.armor_value_fact = 1.0f;
+    material.properties.evasion_value_fact = 1.0f;
+    material.properties.stealth_value_fact = 1.0f;
+    material.properties.enchant_value_fact = 1.0f;
+
+    return material;
+}
+/*
+* Helper function to create a default organic material for consumables
+*/
+static Material_t _create_consumable_material(void) {
+    Material_t material;
+
+    // Set material name to "organic" using helper
+    if (!_populate_string_field(&material.name, "organic")) {
+        // If this fails, we have bigger problems, but set empty name
+        material.name.str = NULL;
+        material.name.len = 0;
+        material.name.alloced = 0;
+    }
+
+    // Initialize all properties to neutral (1.0f)
+    material.properties.weight_fact = 1.0f;
+    material.properties.value_coins_fact = 1.0f;
+    material.properties.durability_fact = 1.0f;
+    material.properties.min_damage_fact = 1.0f;
+    material.properties.max_damage_fact = 1.0f;
+    material.properties.armor_value_fact = 1.0f;
+    material.properties.evasion_value_fact = 1.0f;
+    material.properties.stealth_value_fact = 1.0f;
+    material.properties.enchant_value_fact = 1.0f;
+
+    return material;
+}
+
+/*
+ * Helper function to populate item description for consumables with value info
+ */
+static bool _populate_consumable_desc(dString_t* dest, uint8_t value) {
+    if (dest == NULL) {
+        return false;
+    }
+
+    dString_t* temp = d_InitString();
+    if (temp == NULL) {
+        return false;
+    }
+
+    d_AppendString(temp, "A consumable item with magical properties (Potency: ", 0);
+    d_AppendInt(temp, value);
+    d_AppendChar(temp, ')');
+    *dest = *temp;
+    free(temp);
+    return true;
+}
+/*
+ * Helper function to populate item description for ammunition
+ */
+static bool _populate_ammunition_desc(dString_t* dest, const Material_t* material, uint8_t min_dmg, uint8_t max_dmg) {
+    if (dest == NULL || material == NULL) {
+        return false;
+    }
+
+    dString_t* temp = d_InitString();
+    if (temp == NULL) {
+        return false;
+    }
+
+    d_AppendString(temp, "Ammunition made of ", 0);
+    d_AppendString(temp, d_PeekString(&material->name), 0);
+    d_AppendString(temp, " (Damage: ", 0);
+    d_AppendInt(temp, min_dmg);
+    d_AppendChar(temp, '-');
+    d_AppendInt(temp, max_dmg);
+    d_AppendChar(temp, ')');
+    *dest = *temp;
+    free(temp);
+    return true;
+}
 
 // =============================================================================
 // ITEM CREATION & DESTRUCTION
 // =============================================================================
-
 Item_t* create_weapon(const char* name, const char* id, Material_t material,
                      uint8_t min_dmg, uint8_t max_dmg, uint8_t range, char glyph)
 {
@@ -24,12 +217,18 @@ Item_t* create_weapon(const char* name, const char* id, Material_t material,
     // Set item type
     item->type = ITEM_TYPE_WEAPON;
 
-    // Copy strings safely
-    strncpy(item->name, name, MAX_NAME_LENGTH - 1);
-    item->name[MAX_NAME_LENGTH - 1] = '\0';
+    // Populate name using helper
+    if (!_populate_string_field(&item->name, name)) {
+        free(item);
+        return NULL;
+    }
 
-    strncpy(item->id, id, MAX_ID_LENGTH - 1);
-    item->id[MAX_ID_LENGTH - 1] = '\0';
+    // Populate id using helper
+    if (!_populate_string_field(&item->id, id)) {
+        free(item->name.str);
+        free(item);
+        return NULL;
+    }
 
     // Set basic properties
     item->glyph = glyph;
@@ -51,13 +250,22 @@ Item_t* create_weapon(const char* name, const char* id, Material_t material,
     item->value_coins = min_dmg + max_dmg; // Base value
     item->stackable = 0; // Weapons don't stack
 
-    // Initialize description and rarity
-    strncpy(item->description, "A weapon made of ", MAX_DESCRIPTION_LENGTH - 1);
-    strncat(item->description, material.name, MAX_DESCRIPTION_LENGTH - strlen(item->description) - 1);
-    item->description[MAX_DESCRIPTION_LENGTH - 1] = '\0';
+    // Populate description using helper
+    if (!_populate_weapon_desc(&item->description, &material)) {
+        free(item->name.str);
+        free(item->id.str);
+        free(item);
+        return NULL;
+    }
 
-    strncpy(item->rarity, "common", MAX_ID_LENGTH - 1);
-    item->rarity[MAX_ID_LENGTH - 1] = '\0';
+    // Populate rarity using helper
+    if (!_populate_rarity(&item->rarity, "common")) {
+        free(item->name.str);
+        free(item->id.str);
+        free(item->description.str);
+        free(item);
+        return NULL;
+    }
 
     return item;
 }
@@ -77,12 +285,17 @@ Item_t* create_armor(const char* name, const char* id, Material_t material,
     // Set item type
     item->type = ITEM_TYPE_ARMOR;
 
-    // Copy strings safely
-    strncpy(item->name, name, MAX_NAME_LENGTH - 1);
-    item->name[MAX_NAME_LENGTH - 1] = '\0';
+    // Populate name and id using helpers
+    if (!_populate_string_field(&item->name, name)) {
+        free(item);
+        return NULL;
+    }
 
-    strncpy(item->id, id, MAX_ID_LENGTH - 1);
-    item->id[MAX_ID_LENGTH - 1] = '\0';
+    if (!_populate_string_field(&item->id, id)) {
+        free(item->name.str);
+        free(item);
+        return NULL;
+    }
 
     // Set basic properties
     item->glyph = glyph;
@@ -100,13 +313,22 @@ Item_t* create_armor(const char* name, const char* id, Material_t material,
     item->value_coins = armor_val + evasion_val; // Base value
     item->stackable = 0; // Armor doesn't stack
 
-    // Initialize description and rarity
-    strncpy(item->description, "Armor made of ", MAX_DESCRIPTION_LENGTH - 1);
-    strncat(item->description, material.name, MAX_DESCRIPTION_LENGTH - strlen(item->description) - 1);
-    item->description[MAX_DESCRIPTION_LENGTH - 1] = '\0';
+    // Populate description using helper
+    if (!_populate_armor_desc(&item->description, &material)) {
+        free(item->name.str);
+        free(item->id.str);
+        free(item);
+        return NULL;
+    }
 
-    strncpy(item->rarity, "common", MAX_ID_LENGTH - 1);
-    item->rarity[MAX_ID_LENGTH - 1] = '\0';
+    // Populate rarity using helper
+    if (!_populate_rarity(&item->rarity, "common")) {
+        free(item->name.str);
+        free(item->id.str);
+        free(item->description.str);
+        free(item);
+        return NULL;
+    }
 
     return item;
 }
@@ -125,43 +347,55 @@ Item_t* create_key(const char* name, const char* id, Lock_t lock, char glyph)
     // Set item type
     item->type = ITEM_TYPE_KEY;
 
-    // Copy strings safely
-    strncpy(item->name, name, MAX_NAME_LENGTH - 1);
-    item->name[MAX_NAME_LENGTH - 1] = '\0';
+    // Populate name and id using helpers
+    if (!_populate_string_field(&item->name, name)) {
+        free(item);
+        return NULL;
+    }
 
-    strncpy(item->id, id, MAX_ID_LENGTH - 1);
-    item->id[MAX_ID_LENGTH - 1] = '\0';
+    if (!_populate_string_field(&item->id, id)) {
+        free(item->name.str);
+        free(item);
+        return NULL;
+    }
 
     // Set basic properties
     item->glyph = glyph;
 
-    // Keys don't have materials, so initialize with neutral material
-    strncpy(item->material_data.name, "metal", MAX_NAME_LENGTH - 1);
-    item->material_data.name[MAX_NAME_LENGTH - 1] = '\0';
-    item->material_data.properties.weight_fact = 1.0f;
-    item->material_data.properties.min_damage_fact = 1.0f;
-    item->material_data.properties.max_damage_fact = 1.0f;
-    item->material_data.properties.armor_value_fact = 1.0f;
-    item->material_data.properties.evasion_value_fact = 1.0f;
-    item->material_data.properties.durability_fact = 1.0f;
-    item->material_data.properties.stealth_value_fact = 1.0f;
-    item->material_data.properties.enchant_value_fact = 1.0f;
+    // Keys don't have materials, so use default neutral material
+    item->material_data = _create_default_material();
 
     // Initialize key-specific data
     item->data.key.lock = lock;
 
     // Set default values
-    item->weight_kg = 0.0f; // Keys are light
+    item->weight_kg = 0.1f; // Keys are light but not weightless
     item->value_coins = 5; // Base value
-    item->stackable = 1; // Keys cannot stack
+    item->stackable = 1; // Keys cannot stack (though this seems like it should be 0?)
 
-    // Initialize description and rarity
-    strncpy(item->description, "A key that opens: ", MAX_DESCRIPTION_LENGTH - 1);
-    strncat(item->description, lock.name, MAX_DESCRIPTION_LENGTH - strlen(item->description) - 1);
-    item->description[MAX_DESCRIPTION_LENGTH - 1] = '\0';
+    // Populate description using helper
+    if (!_populate_key_desc(&item->description, &lock)) {
+        free(item->name.str);
+        free(item->id.str);
+        // Clean up material name if it was allocated
+        if (item->material_data.name.str != NULL) {
+            free(item->material_data.name.str);
+        }
+        free(item);
+        return NULL;
+    }
 
-    strncpy(item->rarity, "common", MAX_ID_LENGTH - 1);
-    item->rarity[MAX_ID_LENGTH - 1] = '\0';
+    // Populate rarity using helper
+    if (!_populate_rarity(&item->rarity, "common")) {
+        free(item->name.str);
+        free(item->id.str);
+        free(item->description.str);
+        if (item->material_data.name.str != NULL) {
+            free(item->material_data.name.str);
+        }
+        free(item);
+        return NULL;
+    }
 
     return item;
 }
@@ -181,27 +415,23 @@ Item_t* create_consumable(const char* name, const char* id, uint8_t value,
     // Set item type
     item->type = ITEM_TYPE_CONSUMABLE;
 
-    // Copy strings safely
-    strncpy(item->name, name, MAX_NAME_LENGTH - 1);
-    item->name[MAX_NAME_LENGTH - 1] = '\0';
+    // Populate name and id using helpers
+    if (!_populate_string_field(&item->name, name)) {
+        free(item);
+        return NULL;
+    }
 
-    strncpy(item->id, id, MAX_ID_LENGTH - 1);
-    item->id[MAX_ID_LENGTH - 1] = '\0';
+    if (!_populate_string_field(&item->id, id)) {
+        free(item->name.str);
+        free(item);
+        return NULL;
+    }
 
     // Set basic properties
     item->glyph = glyph;
 
-    // Consumables don't have materials, so initialize with neutral material
-    strncpy(item->material_data.name, "organic", MAX_NAME_LENGTH - 1);
-    item->material_data.name[MAX_NAME_LENGTH - 1] = '\0';
-    item->material_data.properties.weight_fact = 1.0f;
-    item->material_data.properties.min_damage_fact = 1.0f;
-    item->material_data.properties.max_damage_fact = 1.0f;
-    item->material_data.properties.evasion_value_fact = 1.0f;
-    item->material_data.properties.armor_value_fact = 1.0f;
-    item->material_data.properties.durability_fact = 1.0f;
-    item->material_data.properties.stealth_value_fact = 1.0f;
-    item->material_data.properties.enchant_value_fact = 1.0f;
+    // Consumables don't have materials, so use default organic material
+    item->material_data = _create_consumable_material();
 
     // Initialize consumable-specific data
     item->data.consumable.on_consume = on_consume;
@@ -211,19 +441,37 @@ Item_t* create_consumable(const char* name, const char* id, uint8_t value,
     item->data.consumable.duration_seconds = 0; // Instant effect by default
 
     // Set default values
-    item->weight_kg = 0.0f; // Consumables are light
-    item->value_coins = value; // Default Value based on effect strength
+    item->weight_kg = 0.1f; // Consumables are light but not weightless
+    item->value_coins = value; // Default value based on effect strength
     item->stackable = 16; // Can stack up to 16
 
-    // Initialize description and rarity
-    strncpy(item->description, "A consumable item with magical properties", MAX_DESCRIPTION_LENGTH - 1);
-    item->description[MAX_DESCRIPTION_LENGTH - 1] = '\0';
+    // Populate description using helper
+    if (!_populate_consumable_desc(&item->description, item->data.consumable.value)) {
+        free(item->name.str);
+        free(item->id.str);
+        // Clean up material name if it was allocated
+        if (item->material_data.name.str != NULL) {
+            free(item->material_data.name.str);
+        }
+        free(item);
+        return NULL;
+    }
 
-    strncpy(item->rarity, "common", MAX_ID_LENGTH - 1);
-    item->rarity[MAX_ID_LENGTH - 1] = '\0';
+    // Populate rarity using helper
+    if (!_populate_rarity(&item->rarity, "common")) {
+        free(item->name.str);
+        free(item->id.str);
+        free(item->description.str);
+        if (item->material_data.name.str != NULL) {
+            free(item->material_data.name.str);
+        }
+        free(item);
+        return NULL;
+    }
 
     return item;
 }
+
 
 Item_t* create_ammunition(const char* name, const char* id, Material_t material,
                          uint8_t min_dmg, uint8_t max_dmg, char glyph)
@@ -240,12 +488,17 @@ Item_t* create_ammunition(const char* name, const char* id, Material_t material,
     // Set item type
     item->type = ITEM_TYPE_AMMUNITION;
 
-    // Copy strings safely
-    strncpy(item->name, name, MAX_NAME_LENGTH - 1);
-    item->name[MAX_NAME_LENGTH - 1] = '\0';
+    // Populate name and id using helpers
+    if (!_populate_string_field(&item->name, name)) {
+        free(item);
+        return NULL;
+    }
 
-    strncpy(item->id, id, MAX_ID_LENGTH - 1);
-    item->id[MAX_ID_LENGTH - 1] = '\0';
+    if (!_populate_string_field(&item->id, id)) {
+        free(item->name.str);
+        free(item);
+        return NULL;
+    }
 
     // Set basic properties
     item->glyph = glyph;
@@ -256,20 +509,30 @@ Item_t* create_ammunition(const char* name, const char* id, Material_t material,
     item->data.ammo.max_damage = max_dmg;
 
     // Set default values (will be modified by material factors)
-    item->weight_kg = 0.0f; // Ammo takes no space
+    item->weight_kg = 0.05f; // Ammo is very light but not weightless
     item->value_coins = (min_dmg + max_dmg) / 2; // Base value
-    item->stackable = 255; // Ammo stacks well
+    item->stackable = 255; // Ammo stacks very well
 
-    // Initialize description and rarity
-    strncpy(item->description, "Ammunition made of ", MAX_DESCRIPTION_LENGTH - 1);
-    strncat(item->description, material.name, MAX_DESCRIPTION_LENGTH - strlen(item->description) - 1);
-    item->description[MAX_DESCRIPTION_LENGTH - 1] = '\0';
+    // Populate description using helper
+    if (!_populate_ammunition_desc(&item->description, &material, min_dmg, max_dmg)) {
+        free(item->name.str);
+        free(item->id.str);
+        free(item);
+        return NULL;
+    }
 
-    strncpy(item->rarity, "common", MAX_ID_LENGTH - 1);
-    item->rarity[MAX_ID_LENGTH - 1] = '\0';
+    // Populate rarity using helper
+    if (!_populate_rarity(&item->rarity, "common")) {
+        free(item->name.str);
+        free(item->id.str);
+        free(item->description.str);
+        free(item);
+        return NULL;
+    }
 
     return item;
 }
+
 
 void destroy_item(Item_t* item)
 {

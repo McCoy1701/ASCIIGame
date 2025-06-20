@@ -13,7 +13,7 @@ INDEX_DIR=index
 EDITOR_DIR=editor
 
 .PHONY: all
-all: always $(INDEX_DIR)/index
+all: always daedalus-lib $(INDEX_DIR)/index
 
 $(OBJ_DIR)/em_main.o: $(SRC_DIR)/main.c
 	$(ECC) -c $< $(CINC) $(EFLAGS) -o $@
@@ -21,19 +21,68 @@ $(OBJ_DIR)/em_main.o: $(SRC_DIR)/main.c
 $(OBJ_DIR)/em_game.o: $(SRC_DIR)/game.c
 	$(ECC) -c $< $(CINC) $(EFLAGS) -o $@
 
-$(INDEX_DIR)/index: $(OBJ_DIR)/em_main.o $(OBJ_DIR)/em_game.o $(LIB_DIR)/libArchimedes.a
+
+$(INDEX_DIR)/index: $(OBJ_DIR)/em_main.o $(OBJ_DIR)/em_game.o $(LIB_DIR)/libArchimedes.a $(LIB_DIR)/libDaedalus.a
 	mkdir -p $(INDEX_DIR)
-	# Create a deployment version of the template with corrected paths
+
+	# ========================================================================
+	# HTML TEMPLATE PATH TRANSFORMATION FOR DEPLOYMENT
+	# ========================================================================
+	# Problem: The template.html uses "../htmlTemplate/" paths which work during
+	# development but break when deployed because the directory structure changes.
+	#
+	# Solution: Use 'sed' (stream editor) to find and replace paths in the template:
+	#
+	# Transformation 1: Regular resources (CSS, JS files)
+	#   FROM: ../htmlTemplate/css/style.css
+	#   TO:   htmlTemplate/css/style.css
+	#   Why:  Removes "../" to make paths relative to deployment directory
+	#
+	# Transformation 2: ES6 Module imports (JavaScript modules)
+	#   FROM: from 'htmlTemplate/module_loader.mjs'
+	#   TO:   from './htmlTemplate/module_loader.mjs'
+	#   Why:  ES6 modules require explicit relative path indicators (./ or ../)
+	#         Without it, browsers treat "htmlTemplate/" as a bare specifier (package name)
+	#
+	# sed command breakdown:
+	#   -e: allows multiple expressions in one command
+	#   's|pattern|replacement|g': substitute pattern with replacement globally
+	#   |: delimiter (using | instead of / to avoid escaping forward slashes)
+	#   '\''': way to include single quotes in shell command (end quote, escaped quote, start quote)
+	# ========================================================================
 	sed -e 's|../htmlTemplate/|htmlTemplate/|g' -e 's|from '\''htmlTemplate/|from '\''./htmlTemplate/|g' htmlTemplate/template.html > $(INDEX_DIR)/template_deploy.html
+
+	# Compile C code to WebAssembly with the modified HTML template
 	$(ECC) $^ -s WASM=1 --shell-file $(INDEX_DIR)/template_deploy.html --preload-file resources/ -o $(INDEX_DIR)/index.html -sALLOW_MEMORY_GROWTH $(EFLAGS)
-	# Copy htmlTemplate directory
+	# Copy the htmlTemplate directory to deployment location
+	# This ensures all CSS, JS, and other assets are available at runtime
 	cp -r htmlTemplate $(INDEX_DIR)/
-	# Clean up temporary template
+
+	# Clean up the temporary modified template file
 	rm $(INDEX_DIR)/template_deploy.html
 
 
+# =============================================================================
+# DAEDALUS LIBRARY INTEGRATION
+# =============================================================================
+.PHONY: daedalus-lib
+daedalus-lib:
+	@echo "Building Daedalus library..."
+	@(cd ../Daedalus && make EM)
+	@mkdir -p $(LIB_DIR)
+	@cp ../Daedalus/bin/libDaedalus.a $(LIB_DIR)/
+	@cp ../Daedalus/include/Daedalus.h $(INC_DIR)/
+
+.PHONY: daedalus-lib-native
+daedalus-lib-native:
+	@echo "Building Daedalus library for native..."
+	@(cd ../Daedalus && make shared)
+	@mkdir -p $(LIB_DIR)
+	@cp ../Daedalus/bin/libDaedalus.so $(LIB_DIR)/
+	@cp ../Daedalus/include/Daedalus.h $(INC_DIR)/
+
 .PHONY: native
-native: always $(BIN_DIR)/native
+native: always daedalus-lib-native $(BIN_DIR)/native
 
 $(OBJ_DIR)/main.o: $(SRC_DIR)/main.c
 	$(CC) -c $< -o $@ -ggdb $(CFLAGS)
@@ -41,8 +90,8 @@ $(OBJ_DIR)/main.o: $(SRC_DIR)/main.c
 $(OBJ_DIR)/game.o: $(SRC_DIR)/game.c
 	$(CC) -c $< -o $@ -ggdb $(CFLAGS)
 
-$(BIN_DIR)/native: $(OBJ_DIR)/main.o $(OBJ_DIR)/game.o
-	$(CC) $^ -ggdb -lArchimedes $(CFLAGS) -o $@
+$(BIN_DIR)/native: $(OBJ_DIR)/main.o $(OBJ_DIR)/game.o $(LIB_DIR)/libDaedalus.so
+	$(CC) $^ -ggdb -lArchimedes $(CFLAGS) -L$(LIB_DIR) -lDaedalus -o $@
 
 
 .PHONY: editor
@@ -116,6 +165,9 @@ test-items-inventory: always $(OBJ_DIR)/items.o
 test-items-usage: always $(OBJ_DIR)/items.o
 	$(CC) $(TEST_CFLAGS) -o $(BIN_DIR)/test_items_usage $(TEST_DIR)/items/test_items_usage.c $(OBJ_DIR)/items.o -lm
 
+.PHONY: test-items-helper-functions
+test-items-helper-functions: always $(OBJ_DIR)/items.o
+	$(CC) $(TEST_CFLAGS) -o $(BIN_DIR)/test_items_helper_functions $(TEST_DIR)/items/test_items_helper_functions.c $(OBJ_DIR)/items.o -lm
 
 # Compile items.c as object file for testing
 $(OBJ_DIR)/items.o: $(SRC_DIR)/items.c
@@ -150,6 +202,10 @@ run-test-items-inventory: test-items-inventory
 run-test-items-usage: test-items-usage
 	@./$(BIN_DIR)/test_items_usage
 
+.PHONY: run-test-items-helper-functions
+run-test-items-helper-functions: test-items-helper-functions
+	@./$(BIN_DIR)/test_items_helper_functions
+
 # Global test runner (summary output)
 .PHONY: test
 test:
@@ -167,4 +223,5 @@ test-help:
 	@echo "  make run-test-items-durability            - Run item durability tests (detailed)"
 	@echo "  make run-test-items-inventory             - Run inventory management tests (detailed)"
 	@echo "  make run-test-items-usage                 - Run item usage & effects tests (detailed)"
+	@echo "  make run-test-items-helper-functions      - Run item helper functions tests (detailed)"
 	@echo "  make test-help                         - Show this help message"
