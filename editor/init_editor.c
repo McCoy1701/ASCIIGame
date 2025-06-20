@@ -2,6 +2,7 @@
 #include <stdio.h>
 
 #include "structs.h"
+#include "init_editor.h"
 
 World_t* init_world( const int world_size, const int region_size, const int local_size )
 {

@@ -1,8 +1,8 @@
-#include "defs.h"
-#include <stdint.h>
-
 #ifndef __STRUCTS_H__
 #define __STRUCTS_H__
+
+#include <stdint.h>
+#include "defs.h"
 
 typedef enum {
     ITEM_TYPE_WEAPON,
@@ -29,7 +29,6 @@ typedef struct
   float temperature_factor; // every local cell in this region
   float elevation_factor; // every local cell in this region
   // float (1 is 100%, 0.5 is 50%, etc.)
-
 } RegionCell_t;
 
 typedef struct
@@ -44,40 +43,33 @@ typedef struct
   // floats (1 is 100%, 0.5 is 50%, etc.)
   float temperature_factor; // every region in this world cell
   float elevation_factor; // every region in this world cell
-
-}World_t;
+} World_t;
 
 typedef struct
 {
   char magic[8];
   uint32_t version;
-  int32_t  world_x;
-  int32_t  world_y;
-  int32_t  region_x;
-  int32_t  region_y;
-  int32_t  local_x;
-  int32_t  local_y;
-  uint32_t world_size;
-  uint32_t region_size;
+  uint16_t world_index;
+  uint16_t region_index;
+  uint32_t local_index;
+  int32_t  local_x, local_y, local_z;
+  uint16_t world_size;
+  uint16_t region_size;
   uint32_t local_size;
-  uint32_t z_height;
+  uint16_t z_height;
 } FileHeader_t;
 
 // World Position 'world-id:region-id:x/y:x/y'
 typedef struct // World_Position_t
 {
-    char world_id[MAX_ID_LENGTH];
-    char region_id[MAX_ID_LENGTH];
-    // refer to in game tiles as 'world-id:region-id:x/y:x/y'
-    int16_t local_x;
-    int16_t local_y;
-    // refer to in game tiles as 'world-id:region-id:x/y:x/y'
-    int16_t game_x;
-    int16_t game_y;
+  uint16_t world_index;
+  uint16_t region_index;
+  uint32_t local_index;
+  // refer to in game tiles as 'world-id:region-id:x/y:x/y'
+  int16_t local_x, local_y, local_z;
 } World_Position_t;
 
 // World Objects
-
 typedef struct // WorldObject_t
 {
     char name[MAX_NAME_LENGTH];

@@ -3,10 +3,12 @@
 #include "Archimedes.h"
 #include "defs.h"
 #include "structs.h"
+#include "editor.h"
 #include "world_editor.h"
 #include "init_editor.h"
-#include "items_editor.h"
+#include "item_editor.h"
 #include "entity_editor.h"
+#include "color_editor.h"
 
 static void e_WorldEditorDoLoop( float );
 static void e_WorldEditorRenderLoop( float );
@@ -28,10 +30,13 @@ void e_InitWorldEditor( void )
   app.active_widget->action = e_InitWorldEditor;
 
   w = a_GetWidget( "item" );
-  w->action = e_InitItemsEditor;
+  w->action = e_InitItemEditor;
 
   w = a_GetWidget( "entity" );
   w->action = e_InitEntityEditor;
+  
+  w = a_GetWidget( "colors" );
+  w->action = e_InitColorEditor;
   
   w = a_GetWidget( "creation" );
   w->action = we_creation;
@@ -104,7 +109,8 @@ static void e_WorldEditorDoLoop( float dt )
   
   if ( app.keyboard[ SDL_SCANCODE_ESCAPE ] == 1 )
   {
-    app.running = 0;
+    app.keyboard[SDL_SCANCODE_ESCAPE] = 0;
+    e_InitEditor();
   }
 
   a_DoWidget();

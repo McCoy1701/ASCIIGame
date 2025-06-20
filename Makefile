@@ -13,16 +13,16 @@ INDEX_DIR=index
 EDITOR_DIR=editor
 
 .PHONY: all
-all: always $(INDEX_DIR)/index
+all: $(INDEX_DIR)/index
 
-$(OBJ_DIR)/em_main.o: $(SRC_DIR)/main.c
-	$(ECC) -c $< $(CINC) $(EFLAGS) -o $@
+EMS_OBJS =\
+					$(OBJ_DIR)/main.o\
+					$(OBJ_DIR)/game.o
 
-$(OBJ_DIR)/em_game.o: $(SRC_DIR)/game.c
-	$(ECC) -c $< $(CINC) $(EFLAGS) -o $@
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_DIR)
+	$(CC) -c $< -o $@ -ggdb $(CFLAGS)
 
-$(INDEX_DIR)/index: $(OBJ_DIR)/em_main.o $(OBJ_DIR)/em_game.o $(LIB_DIR)/libArchimedes.a
-	mkdir -p $(INDEX_DIR)
+$(INDEX_DIR)/index: $(EMS_OBJS) $(LIB_DIR)/libArchimedes.a | $(INDEX_DIR)
 	# Create a deployment version of the template with corrected paths
 	sed -e 's|../htmlTemplate/|htmlTemplate/|g' -e 's|from '\''htmlTemplate/|from '\''./htmlTemplate/|g' htmlTemplate/template.html > $(INDEX_DIR)/template_deploy.html
 	$(ECC) $^ -s WASM=1 --shell-file $(INDEX_DIR)/template_deploy.html --preload-file resources/ -o $(INDEX_DIR)/index.html -sALLOW_MEMORY_GROWTH $(EFLAGS)
@@ -33,42 +33,45 @@ $(INDEX_DIR)/index: $(OBJ_DIR)/em_main.o $(OBJ_DIR)/em_game.o $(LIB_DIR)/libArch
 
 
 .PHONY: native
-native: always $(BIN_DIR)/native
+native: $(BIN_DIR)/native
 
-$(OBJ_DIR)/main.o: $(SRC_DIR)/main.c
+NATIVE_OBJS = \
+							$(OBJ_DIR)/main.o\
+							$(OBJ_DIR)/game.o
+
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_DIR)
 	$(CC) -c $< -o $@ -ggdb $(CFLAGS)
 
-$(OBJ_DIR)/game.o: $(SRC_DIR)/game.c
-	$(CC) -c $< -o $@ -ggdb $(CFLAGS)
-
-$(BIN_DIR)/native: $(OBJ_DIR)/main.o $(OBJ_DIR)/game.o
+$(BIN_DIR)/native: $(NATIVE_OBJS) | $(BIN_DIR)
 	$(CC) $^ -ggdb -lArchimedes $(CFLAGS) -o $@
 
 
 .PHONY: editor
-editor: always $(BIN_DIR)/editor
+editor: $(BIN_DIR)/editor
 
-$(OBJ_DIR)/init_editor.o: $(EDITOR_DIR)/init_editor.c
+EDITOR_OBJS = \
+							$(OBJ_DIR)/editor.o\
+							$(OBJ_DIR)/init_editor.o\
+							$(OBJ_DIR)/world_editor.o\
+							$(OBJ_DIR)/items_editor.o\
+							$(OBJ_DIR)/entity_editor.o\
+							$(OBJ_DIR)/color_editor.o\
+							#$(OBJ_DIR)/save_editor.o
+
+$(OBJ_DIR)/%.o: $(EDITOR_DIR)/%.c | $(OBJ_DIR)
 	$(CC) -c $< -o $@ -ggdb $(CFLAGS)
 
-$(OBJ_DIR)/save_editor.o: $(EDITOR_DIR)/save_editor.c
-	$(CC) -c $< -o $@ -ggdb $(CFLAGS)
-
-$(OBJ_DIR)/world_editor.o: $(EDITOR_DIR)/world_editor.c
-	$(CC) -c $< -o $@ -ggdb $(CFLAGS)
-
-$(OBJ_DIR)/items_editor.o: $(EDITOR_DIR)/items_editor.c
-	$(CC) -c $< -o $@ -ggdb $(CFLAGS)
-
-$(OBJ_DIR)/entity_editor.o: $(EDITOR_DIR)/entity_editor.c
-	$(CC) -c $< -o $@ -ggdb $(CFLAGS)
-
-$(OBJ_DIR)/editor.o: $(EDITOR_DIR)/editor.c
-	$(CC) -c $< -o $@ -ggdb $(CFLAGS)
-
-$(BIN_DIR)/editor: $(OBJ_DIR)/editor.o $(OBJ_DIR)/world_editor.o $(OBJ_DIR)/items_editor.o $(OBJ_DIR)/entity_editor.o $(OBJ_DIR)/init_editor.o
+$(BIN_DIR)/editor: $(EDITOR_OBJS)  | $(BIN_DIR)
 	$(CC) $^ -ggdb -lArchimedes $(CFLAGS) -o $@
 
+$(OBJ_DIR):
+	mkdir -p $(OBJ_DIR)
+
+$(BIN_DIR):
+	mkdir -p $(BIN_DIR)
+
+$(INDEX_DIR):
+	mkdir -p $(INDEX_DIR)
 
 .PHONY: bear
 bear:

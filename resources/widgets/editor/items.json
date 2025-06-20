@@ -7,6 +7,7 @@
     "label"  : "World",
     "boxed"  : 1,
     "hidden" : 0,
+    "padding": 1,
     "fg"     : [ 255, 255, 0, 255 ],
     "bg"     : [   0, 255, 255, 0 ]
   },
@@ -18,6 +19,7 @@
     "label"  : "Item",
     "boxed"  : 1,
     "hidden" : 0,
+    "padding": 1,
     "fg"     : [ 0, 255, 255, 255 ],
     "bg"     : [ 255,   0, 255, 100 ]
   },
@@ -29,6 +31,19 @@
     "label"  : "Entity",
     "boxed"  : 1,
     "hidden" : 0,
+    "padding": 1,
+    "fg"     : [ 255, 0, 255, 255 ],
+    "bg"     : [ 255, 255,   0, 100 ]
+  },
+  {
+    "type"   : "WT_BUTTON",
+    "name"   : "colors",
+    "x"      : 280,
+    "y"      : 10,
+    "label"  : "Colors",
+    "boxed"  : 1,
+    "hidden" : 0,
+    "padding": 1,
     "fg"     : [ 255, 0, 255, 255 ],
     "bg"     : [ 255, 255,   0, 100 ]
   }
