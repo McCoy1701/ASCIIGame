@@ -9,6 +9,7 @@
 #include "item_editor.h"
 #include "entity_editor.h"
 #include "color_editor.h"
+#include "ui_editor.h"
 
 static void e_WorldEditorDoLoop( float );
 static void e_WorldEditorRenderLoop( float );
@@ -37,6 +38,9 @@ void e_InitWorldEditor( void )
   
   w = a_GetWidget( "colors" );
   w->action = e_InitColorEditor;
+  
+  w = a_GetWidget( "ui" );
+  w->action = e_InitUIEditor;
   
   w = a_GetWidget( "creation" );
   w->action = we_creation;

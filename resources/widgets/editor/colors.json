@@ -20,7 +20,7 @@
       "label"  : "World",
       "boxed"  : 1,
       "hidden" : 0,
-      "padding": 0,
+      "padding": 1,
       "fg"     : [ 255, 255, 0, 255 ],
       "bg"     : [   0, 255, 255, 0 ]
     },

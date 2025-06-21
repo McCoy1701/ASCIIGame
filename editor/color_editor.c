@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 
 #include "Archimedes.h"
 #include "editor.h"
@@ -24,7 +25,27 @@ void e_InitColorEditor( void )
   aContainerWidget_t* container = ( aContainerWidget_t* )app.active_widget->data;
   for ( int i = 0; i < container->num_components; i++ )
   {
-    container->components[i].action = e_InitEditor;
+    aWidget_t* current = &container->components[i];
+
+    if ( strncmp( current->name, "world", sizeof( current->name ) ) == 0 )
+    {
+      current->action = e_InitWorldEditor;
+    }
+    
+    if ( strncmp( current->name, "item", sizeof( current->name ) ) == 0 )
+    {
+      current->action = e_InitItemEditor;
+    }
+    
+    if ( strncmp( current->name, "entity", sizeof( current->name ) ) == 0 )
+    {
+      current->action = e_InitEntityEditor;
+    }
+    
+    if ( strncmp( current->name, "colors", sizeof( current->name ) ) == 0 )
+    {
+      current->action = e_InitColorEditor;
+    }
   }
 
 }

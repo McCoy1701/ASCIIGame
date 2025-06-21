@@ -56,6 +56,7 @@ EDITOR_OBJS = \
 							$(OBJ_DIR)/items_editor.o\
 							$(OBJ_DIR)/entity_editor.o\
 							$(OBJ_DIR)/color_editor.o\
+							$(OBJ_DIR)/ui_editor.o\
 							#$(OBJ_DIR)/save_editor.o
 
 $(OBJ_DIR)/%.o: $(EDITOR_DIR)/%.c | $(OBJ_DIR)

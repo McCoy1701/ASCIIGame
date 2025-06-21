@@ -5,6 +5,7 @@
 #include "item_editor.h"
 #include "entity_editor.h"
 #include "color_editor.h"
+#include "ui_editor.h"
 
 static void eDoLoop( float );
 static void eRenderLoop( float );
@@ -29,6 +30,9 @@ void e_InitEditor( void )
   
   w = a_GetWidget( "colors" );
   w->action = e_InitColorEditor;
+  
+  w = a_GetWidget( "ui" );
+  w->action = e_InitUIEditor;
   
 }
 
