@@ -1,7 +1,10 @@
-#include "../../include/tests.h"
-#include "../../include/items.h"
-#include "../../include/structs.h"
-#include "../../include/defs.h"
+#define LOG( msg ) printf( "%s | File: %s, Line: %d\n", msg, __FILE__, __LINE__ )
+#include "tests.h"
+#include "items.h"
+#include "structs.h"
+#include "defs.h"
+#include "Daedalus.h"
+#include "Archimedes.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -15,10 +18,10 @@ int tests_failed = 0;
 Material_t create_test_material(void)
 {
     Material_t material;
-    strncpy(material.name, "iron", MAX_NAME_LENGTH - 1);
-    material.name[MAX_NAME_LENGTH - 1] = '\0';
 
-    // CORRECTED: Access the nested 'properties' struct
+    material.name = d_InitString();
+    d_AppendString(material.name, "Test Material", 0);
+
     material.properties.weight_fact = 1.2f;
     material.properties.value_coins_fact = 1.1f;
     material.properties.durability_fact = 0.9f;
@@ -36,13 +39,7 @@ Material_t create_test_material(void)
 // Helper function to create a test lock
 Lock_t create_test_lock(void)
 {
-    Lock_t lock;
-    strncpy(lock.name, "test_lock", MAX_NAME_LENGTH - 1);
-    lock.name[MAX_NAME_LENGTH - 1] = '\0';
-    strncpy(lock.description, "A lock for testing", MAX_DESCRIPTION_LENGTH - 1);
-    lock.description[MAX_DESCRIPTION_LENGTH - 1] = '\0';
-    lock.pick_difficulty = 50;
-    lock.jammed_seconds = 0;
+    Lock_t lock = create_lock("Test Lock", "test_lock", 50, 0);
     return lock;
 }
 
@@ -65,15 +62,22 @@ int test_create_weapon(void)
 
     TEST_ASSERT(weapon != NULL, "Weapon should be created successfully");
     TEST_ASSERT(weapon->type == ITEM_TYPE_WEAPON, "Item type should be WEAPON");
-    TEST_ASSERT(strcmp(weapon->name, "Iron Sword") == 0, "Weapon name should match");
-    TEST_ASSERT(strcmp(weapon->id, "iron_sword") == 0, "Weapon ID should match");
+    TEST_ASSERT(strcmp(weapon->name->str, "Iron Sword") == 0, "Weapon name should match");
+    TEST_ASSERT(strcmp(weapon->id->str, "iron_sword") == 0, "Weapon ID should match");
     TEST_ASSERT(weapon->glyph == 's', "Weapon glyph should be 's'");
     TEST_ASSERT(weapon->data.weapon.min_damage == 10, "Min damage should be 10");
     TEST_ASSERT(weapon->data.weapon.max_damage == 15, "Max damage should be 15");
     TEST_ASSERT(weapon->data.weapon.range_tiles == 0, "Range should be 0 (melee)");
     TEST_ASSERT(weapon->data.weapon.durability == 255, "Durability should be 100% (255)");
     TEST_ASSERT(weapon->stackable == 0, "Weapons should not be stackable");
-    TEST_ASSERT(strcmp(weapon->material_data.name, "iron") == 0, "Material name should match");
+
+    dString_t* log_message = d_InitString();
+    d_AppendString(log_message, "Weapon Material Name: ", 0);
+    d_AppendString(log_message, weapon->material_data.name->str, 0);
+    LOG(log_message->str);
+    d_DestroyString(log_message);
+
+    TEST_ASSERT(strcmp(weapon->material_data.name->str, "Test Material") == 0, "Material name should match");
 
     destroy_item(weapon);
 
@@ -96,14 +100,14 @@ int test_create_armor(void)
 
     TEST_ASSERT(armor != NULL, "Armor should be created successfully");
     TEST_ASSERT(armor->type == ITEM_TYPE_ARMOR, "Item type should be ARMOR");
-    TEST_ASSERT(strcmp(armor->name, "Iron Chestplate") == 0, "Armor name should match");
-    TEST_ASSERT(strcmp(armor->id, "iron_chest") == 0, "Armor ID should match");
+    TEST_ASSERT(strcmp(armor->name->str, "Iron Chestplate") == 0, "Armor name should match");
+    TEST_ASSERT(strcmp(armor->id->str, "iron_chest") == 0, "Armor ID should match");
     TEST_ASSERT(armor->glyph == 'A', "Armor glyph should be 'A'");
     TEST_ASSERT(armor->data.armor.armor_value == 20, "Armor value should be 20");
     TEST_ASSERT(armor->data.armor.evasion_value == 5, "Evasion value should be 5");
     TEST_ASSERT(armor->data.armor.durability == 255, "Durability should be 100% (255)");
     TEST_ASSERT(armor->stackable == 0, "Armor should not be stackable");
-    TEST_ASSERT(strcmp(armor->material_data.name, "iron") == 0, "Material name should match");
+    TEST_ASSERT(strcmp(armor->material_data.name->str, "Test Material") == 0, "Material name should match");
 
     destroy_item(armor);
 
@@ -123,12 +127,20 @@ int test_create_key(void)
 
     TEST_ASSERT(key != NULL, "Key should be created successfully");
     TEST_ASSERT(key->type == ITEM_TYPE_KEY, "Item type should be KEY");
-    TEST_ASSERT(strcmp(key->name, "Iron Key") == 0, "Key name should match");
-    TEST_ASSERT(strcmp(key->id, "iron_key") == 0, "Key ID should match");
+    TEST_ASSERT(strcmp(key->name->str, "Iron Key") == 0, "Key name should match");
+    TEST_ASSERT(strcmp(key->id->str, "iron_key") == 0, "Key ID should match");
     TEST_ASSERT(key->glyph == 'k', "Key glyph should be 'k'");
     TEST_ASSERT(key->stackable == 1, "Keys should not be stackable");
-    TEST_ASSERT(key->weight_kg == 0, "Keys should be light (weight 0)");
-    TEST_ASSERT(strcmp(key->data.key.lock.name, "test_lock") == 0, "Lock name should match");
+    TEST_ASSERT(key->weight_kg == 0.1f, "Keys should be light (weight 0.1)");
+
+    dString_t* log_message = d_InitString();
+    d_AppendString(log_message, "Key Lock Name: ", 0);
+    d_AppendString(log_message, key->data.key.lock.name->str, 0);
+    LOG(log_message->str);
+    d_DestroyString(log_message);
+
+
+    TEST_ASSERT(strcmp(key->data.key.lock.name->str, "Test Lock") == 0, "Lock name should match");
     TEST_ASSERT(key->data.key.lock.pick_difficulty == 50, "Lock difficulty should match");
 
     destroy_item(key);
@@ -147,13 +159,13 @@ int test_create_consumable(void)
 
     TEST_ASSERT(potion != NULL, "Consumable should be created successfully");
     TEST_ASSERT(potion->type == ITEM_TYPE_CONSUMABLE, "Item type should be CONSUMABLE");
-    TEST_ASSERT(strcmp(potion->name, "Health Potion") == 0, "Consumable name should match");
-    TEST_ASSERT(strcmp(potion->id, "health_pot") == 0, "Consumable ID should match");
+    TEST_ASSERT(strcmp(potion->name->str, "Health Potion") == 0, "Consumable name should match");
+    TEST_ASSERT(strcmp(potion->id->str, "health_pot") == 0, "Consumable ID should match");
     TEST_ASSERT(potion->glyph == 'h', "Consumable glyph should be 'h'");
     TEST_ASSERT(potion->data.consumable.value == 25, "Consumable value should be 25");
     TEST_ASSERT(potion->data.consumable.on_consume == test_heal_effect, "Callback should match");
     TEST_ASSERT(potion->stackable == 16, "Consumables should stack to 16");
-    TEST_ASSERT(potion->weight_kg == 0, "Consumables should be light (weight 0)");
+    TEST_ASSERT(potion->weight_kg == 0.1f, "Consumables should be light (weight 0.1)");
     TEST_ASSERT(potion->value_coins == 25, "Consumables default value_coins should be based on its effect value");
     TEST_ASSERT(potion->data.consumable.duration_seconds == 0, "Default duration should be 0");
 
@@ -175,14 +187,14 @@ int test_create_ammunition(void)
 
     TEST_ASSERT(arrow != NULL, "Ammunition should be created successfully");
     TEST_ASSERT(arrow->type == ITEM_TYPE_AMMUNITION, "Item type should be AMMUNITION");
-    TEST_ASSERT(strcmp(arrow->name, "Iron Arrow") == 0, "Ammunition name should match");
-    TEST_ASSERT(strcmp(arrow->id, "iron_arrow") == 0, "Ammunition ID should match");
+    TEST_ASSERT(strcmp(arrow->name->str, "Iron Arrow") == 0, "Ammunition name should match");
+    TEST_ASSERT(strcmp(arrow->id->str, "iron_arrow") == 0, "Ammunition ID should match");
     TEST_ASSERT(arrow->glyph == 'i', "Ammunition glyph should be 'i'");
     TEST_ASSERT(arrow->data.ammo.min_damage == 3, "Min damage should be 3");
     TEST_ASSERT(arrow->data.ammo.max_damage == 7, "Max damage should be 7");
     TEST_ASSERT(arrow->stackable == 255, "Ammunition should stack to 255");
-    TEST_ASSERT(arrow->weight_kg == 0, "Ammunition should be light (weight 0)");
-    TEST_ASSERT(strcmp(arrow->material_data.name, "iron") == 0, "Material name should match");
+    TEST_ASSERT(arrow->weight_kg == 0.05f, "Ammunition should be light (weight 0.05)");
+    TEST_ASSERT(strcmp(arrow->material_data.name->str, "Test Material") == 0, "Material name should match");
 
     destroy_item(arrow);
 

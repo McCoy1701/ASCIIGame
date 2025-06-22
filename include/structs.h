@@ -75,14 +75,14 @@ typedef struct // World_Position_t
 
 typedef struct // WorldObject_t
 {
-    dString_t name;
-    dString_t description;
+    dString_t* name;
+    dString_t* description;
 } WorldObject_t;
 
 typedef struct // Lock_t
 {
-  dString_t name;
-  dString_t description;
+  dString_t* name;
+  dString_t* description;
 
   uint8_t pick_difficulty; // if its 255 it is unpickable
   // TODO: make a timer system and integrate jammed
@@ -107,7 +107,7 @@ typedef struct // Material_t
 {
     // Every Item in our game will have a Material
     // The material will effect properties like weight, damage, armor, stealth, and enchantment
-    dString_t name;
+    dString_t* name;
 
     MaterialProperties_t properties;
 } Material_t;
@@ -176,10 +176,10 @@ typedef struct
 
     char glyph;
 
-    dString_t description;
-    dString_t name;
-    dString_t id;
-    dString_t rarity;
+    dString_t* description;
+    dString_t* name;
+    dString_t* id;
+    dString_t* rarity;
 
     float weight_kg;
 

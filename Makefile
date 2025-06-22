@@ -13,7 +13,7 @@ INDEX_DIR=index
 EDITOR_DIR=editor
 
 .PHONY: all
-all: always daedalus-lib $(INDEX_DIR)/index
+all: always $(INDEX_DIR)/index
 
 $(OBJ_DIR)/em_main.o: $(SRC_DIR)/main.c
 	$(ECC) -c $< $(CINC) $(EFLAGS) -o $@
@@ -61,28 +61,8 @@ $(INDEX_DIR)/index: $(OBJ_DIR)/em_main.o $(OBJ_DIR)/em_game.o $(LIB_DIR)/libArch
 	# Clean up the temporary modified template file
 	rm $(INDEX_DIR)/template_deploy.html
 
-
-# =============================================================================
-# DAEDALUS LIBRARY INTEGRATION
-# =============================================================================
-.PHONY: daedalus-lib
-daedalus-lib:
-	@echo "Building Daedalus library..."
-	@(cd ../Daedalus && make EM)
-	@mkdir -p $(LIB_DIR)
-	@cp ../Daedalus/bin/libDaedalus.a $(LIB_DIR)/
-	@cp ../Daedalus/include/Daedalus.h $(INC_DIR)/
-
-.PHONY: daedalus-lib-native
-daedalus-lib-native:
-	@echo "Building Daedalus library for native..."
-	@(cd ../Daedalus && make shared)
-	@mkdir -p $(LIB_DIR)
-	@cp ../Daedalus/bin/libDaedalus.so $(LIB_DIR)/
-	@cp ../Daedalus/include/Daedalus.h $(INC_DIR)/
-
 .PHONY: native
-native: always daedalus-lib-native $(BIN_DIR)/native
+native: always $(BIN_DIR)/native
 
 $(OBJ_DIR)/main.o: $(SRC_DIR)/main.c
 	$(CC) -c $< -o $@ -ggdb $(CFLAGS)
@@ -139,35 +119,42 @@ TEST_CFLAGS = -Wall -Wextra -ggdb $(CINC)
 # Individual test targets
 .PHONY: test-items-creation-destruction
 test-items-creation-destruction: always $(OBJ_DIR)/items.o
-	$(CC) $(TEST_CFLAGS) -o $(BIN_DIR)/test_items_creation_destruction $(TEST_DIR)/items/test_items_creation_destruction.c $(OBJ_DIR)/items.o
+	$(CC) $(TEST_CFLAGS) -o $(BIN_DIR)/test_items_creation_destruction $(TEST_DIR)/items/test_items_creation_destruction.c $(OBJ_DIR)/items.o -lm -lDaedalus -lArchimedes
+
 
 .PHONY: test-items-type-checking
 test-items-type-checking: always $(OBJ_DIR)/items.o
-	$(CC) $(TEST_CFLAGS) -o $(BIN_DIR)/test_items_type_checking $(TEST_DIR)/items/test_items_type_checking_and_access.c $(OBJ_DIR)/items.o
+	$(CC) $(TEST_CFLAGS) -o $(BIN_DIR)/test_items_type_checking $(TEST_DIR)/items/test_items_type_checking_and_access.c $(OBJ_DIR)/items.o -lm -lDaedalus -lArchimedes
+
 
 .PHONY: test-items-material-system
 test-items-material-system: always $(OBJ_DIR)/items.o
-	$(CC) $(TEST_CFLAGS) -o $(BIN_DIR)/test_items_material_system $(TEST_DIR)/items/test_items_material_system.c $(OBJ_DIR)/items.o -lm
+	$(CC) $(TEST_CFLAGS) -o $(BIN_DIR)/test_items_material_system $(TEST_DIR)/items/test_items_material_system.c $(OBJ_DIR)/items.o -lm -lDaedalus -lArchimedes
+
 
 .PHONY: test-items-properties
 test-items-properties: always $(OBJ_DIR)/items.o
-	$(CC) $(TEST_CFLAGS) -o $(BIN_DIR)/test_items_properties $(TEST_DIR)/items/test_items_properties.c $(OBJ_DIR)/items.o -lm
+	$(CC) $(TEST_CFLAGS) -o $(BIN_DIR)/test_items_properties $(TEST_DIR)/items/test_items_properties.c $(OBJ_DIR)/items.o -lm -lDaedalus -lArchimedes
+
 
 .PHONY: test-items-durability
 test-items-durability: always $(OBJ_DIR)/items.o
-	$(CC) $(TEST_CFLAGS) -o $(BIN_DIR)/test_items_durability $(TEST_DIR)/items/test_items_durability.c $(OBJ_DIR)/items.o -lm
+	$(CC) $(TEST_CFLAGS) -o $(BIN_DIR)/test_items_durability $(TEST_DIR)/items/test_items_durability.c $(OBJ_DIR)/items.o -lm -lDaedalus -lArchimedes
+
 
 .PHONY: test-items-inventory
 test-items-inventory: always $(OBJ_DIR)/items.o
-	$(CC) $(TEST_CFLAGS) -o $(BIN_DIR)/test_items_inventory $(TEST_DIR)/items/test_items_inventory.c $(OBJ_DIR)/items.o -lm
+	$(CC) $(TEST_CFLAGS) -o $(BIN_DIR)/test_items_inventory $(TEST_DIR)/items/test_items_inventory.c $(OBJ_DIR)/items.o -lm -lDaedalus -lArchimedes
+
 
 .PHONY: test-items-usage
 test-items-usage: always $(OBJ_DIR)/items.o
-	$(CC) $(TEST_CFLAGS) -o $(BIN_DIR)/test_items_usage $(TEST_DIR)/items/test_items_usage.c $(OBJ_DIR)/items.o -lm
+	$(CC) $(TEST_CFLAGS) -o $(BIN_DIR)/test_items_usage $(TEST_DIR)/items/test_items_usage.c $(OBJ_DIR)/items.o -lm -lDaedalus -lArchimedes
+
 
 .PHONY: test-items-helper-functions
 test-items-helper-functions: always $(OBJ_DIR)/items.o
-	$(CC) $(TEST_CFLAGS) -o $(BIN_DIR)/test_items_helper_functions $(TEST_DIR)/items/test_items_helper_functions.c $(OBJ_DIR)/items.o -lm
+	$(CC) $(TEST_CFLAGS) -o $(BIN_DIR)/test_items_helper_functions $(TEST_DIR)/items/test_items_helper_functions.c $(OBJ_DIR)/items.o -lm -lDaedalus -lArchimedes
 
 # Compile items.c as object file for testing
 $(OBJ_DIR)/items.o: $(SRC_DIR)/items.c

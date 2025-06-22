@@ -1,3 +1,5 @@
+#define LOG( msg ) printf( "%s | File: %s, Line: %d\n", msg, __FILE__, __LINE__ )
+#include "Daedalus.h"
 #include "items.h"
 #include "structs.h"
 #include "defs.h"
@@ -7,7 +9,6 @@
 // =============================================================================
 // HELPER FUNCTIONS
 // =============================================================================
-
 /*
  * Helper function to create and assign a dString_t field from a const char*
  * Returns true on success, false on failure
@@ -27,7 +28,6 @@ static bool _populate_string_field(dString_t* dest, const char* src) {
     free(temp);     // Free wrapper, keep string data
     return true;
 }
-
 /*
  * Helper function to populate item description for weapons
  */
@@ -42,12 +42,11 @@ static bool _populate_weapon_desc(dString_t* dest, const Material_t* material) {
     }
 
     d_AppendString(temp, "A weapon made of ", 0);
-    d_AppendString(temp, material->name, 0);
+    d_AppendString(temp, material->name->str, 0);
     *dest = *temp;
     free(temp);
     return true;
 }
-
 /*
  * Helper function to populate item description for armor
  */
@@ -62,12 +61,11 @@ static bool _populate_armor_desc(dString_t* dest, const Material_t* material) {
     }
 
     d_AppendString(temp, "Armor made of ", 0);
-    d_AppendString(temp, material->name, 0);
+    d_AppendString(temp, material->name->str, 0);
     *dest = *temp;
     free(temp);
     return true;
 }
-
 /*
  * Helper function to populate item rarity
  */
@@ -81,23 +79,26 @@ static bool _populate_rarity(dString_t* dest, const char* rarity) {
 /*
  * Helper function to populate item description for keys
  */
-static bool _populate_key_desc(dString_t* dest, const Lock_t* lock) {
-    if (dest == NULL || lock == NULL) {
-        return false;
-    }
+ static bool _populate_key_desc(dString_t* dest, const Lock_t* lock) {
+     LOG("Entering _populate_key_desc");
+     if (dest == NULL || lock == NULL) {
+         LOG("Error: NULL pointer passed to _populate_key_desc");
+         return false;
+     }
 
-    dString_t* temp = d_InitString();
-    if (temp == NULL) {
-        return false;
-    }
+     // Check if lock->name is valid
+     if (lock->name == NULL || lock->name->str == NULL) {
+         LOG("Error: Lock name is NULL");
+         return false;
+     }
 
-    d_AppendString(temp, "A key that opens: ", 0);
-    // Need to handle Lock_t's name field - assuming it's dString_t now
-    d_AppendString(temp, d_PeekString(&lock->name), 0);
-    *dest = *temp;
-    free(temp);
-    return true;
-}
+     // Directly populate the destination string
+     d_AppendString(dest, "A key that opens: ", 0);
+     d_AppendString(dest, lock->name->str, 0);
+
+     return true;
+ }
+
 
 /*
  * Helper function to create a default neutral material for keys
@@ -105,13 +106,8 @@ static bool _populate_key_desc(dString_t* dest, const Lock_t* lock) {
 static Material_t _create_default_material(void) {
     Material_t material;
 
-    // Set material name using helper
-    if (!_populate_string_field(&material.name, "metal")) {
-        // If this fails, we have bigger problems, but set empty name
-        material.name.str = NULL;
-        material.name.len = 0;
-        material.name.alloced = 0;
-    }
+    material.name = d_InitString();
+    d_AppendString(material.name, "default", 0);
 
     // Initialize all properties to neutral (1.0f)
     material.properties.weight_fact = 1.0f;
@@ -133,11 +129,16 @@ static Material_t _create_consumable_material(void) {
     Material_t material;
 
     // Set material name to "organic" using helper
-    if (!_populate_string_field(&material.name, "organic")) {
-        // If this fails, we have bigger problems, but set empty name
-        material.name.str = NULL;
-        material.name.len = 0;
-        material.name.alloced = 0;
+    material.name = d_InitString();
+    if (!material.name) {
+        LOG("Consumable creation failed; Failed to allocate memory for material name");
+        return material;
+    }
+    if (!_populate_string_field(material.name, "organic")) {
+        LOG("Consumable creation failed; Failed to populate material name");
+        free(material.name->str);
+        free(material.name);
+        return material;
     }
 
     // Initialize all properties to neutral (1.0f)
@@ -188,7 +189,7 @@ static bool _populate_ammunition_desc(dString_t* dest, const Material_t* materia
     }
 
     d_AppendString(temp, "Ammunition made of ", 0);
-    d_AppendString(temp, d_PeekString(&material->name), 0);
+    d_AppendString(temp, material->name->str, 0);
     d_AppendString(temp, " (Damage: ", 0);
     d_AppendInt(temp, min_dmg);
     d_AppendChar(temp, '-');
@@ -198,19 +199,21 @@ static bool _populate_ammunition_desc(dString_t* dest, const Material_t* materia
     free(temp);
     return true;
 }
-
 // =============================================================================
 // ITEM CREATION & DESTRUCTION
 // =============================================================================
 Item_t* create_weapon(const char* name, const char* id, Material_t material,
                      uint8_t min_dmg, uint8_t max_dmg, uint8_t range, char glyph)
 {
+
     if (name == NULL || id == NULL) {
+        LOG("Invalid Weapon name or ID provided");
         return NULL;
     }
 
     Item_t* item = (Item_t*)malloc(sizeof(Item_t));
     if (item == NULL) {
+        LOG("Failed to allocate memory for Weapon");
         return NULL;
     }
 
@@ -218,14 +221,18 @@ Item_t* create_weapon(const char* name, const char* id, Material_t material,
     item->type = ITEM_TYPE_WEAPON;
 
     // Populate name using helper
-    if (!_populate_string_field(&item->name, name)) {
+    item->name = d_InitString();
+    if (!_populate_string_field(item->name, name)) {
         free(item);
+        LOG("Failed to allocate memory for Weapon name");
         return NULL;
     }
 
     // Populate id using helper
-    if (!_populate_string_field(&item->id, id)) {
-        free(item->name.str);
+    item->id = d_InitString();
+    if (!_populate_string_field(item->id, id)) {
+        LOG("Failed to allocate memory for Weapon ID");
+        free(item->name->str);
         free(item);
         return NULL;
     }
@@ -251,18 +258,22 @@ Item_t* create_weapon(const char* name, const char* id, Material_t material,
     item->stackable = 0; // Weapons don't stack
 
     // Populate description using helper
-    if (!_populate_weapon_desc(&item->description, &material)) {
-        free(item->name.str);
-        free(item->id.str);
+    item->description = d_InitString();
+    if (!_populate_weapon_desc(item->description, &material)) {
+        LOG("Failed to allocate memory for Weapon Description");
+        free(item->name->str);
+        free(item->id->str);
         free(item);
         return NULL;
     }
 
     // Populate rarity using helper
-    if (!_populate_rarity(&item->rarity, "common")) {
-        free(item->name.str);
-        free(item->id.str);
-        free(item->description.str);
+    item->rarity = d_InitString();
+    if (!_populate_rarity(item->rarity, "common")) {
+        LOG("Failed to allocate memory for Rarity");
+        free(item->name->str);
+        free(item->id->str);
+        free(item->description->str);
         free(item);
         return NULL;
     }
@@ -274,11 +285,13 @@ Item_t* create_armor(const char* name, const char* id, Material_t material,
                     uint8_t armor_val, uint8_t evasion_val, char glyph)
 {
     if (name == NULL || id == NULL) {
+        LOG("Invalid name or id provided");
         return NULL;
     }
 
     Item_t* item = (Item_t*)malloc(sizeof(Item_t));
     if (item == NULL) {
+        LOG("Failed to allocate memory for Armor");
         return NULL;
     }
 
@@ -286,14 +299,18 @@ Item_t* create_armor(const char* name, const char* id, Material_t material,
     item->type = ITEM_TYPE_ARMOR;
 
     // Populate name and id using helpers
-    if (!_populate_string_field(&item->name, name)) {
+    item->name = d_InitString();
+    if (!_populate_string_field(item->name, name)) {
         free(item);
+        LOG("Failed to allocate memory for name");
         return NULL;
     }
 
-    if (!_populate_string_field(&item->id, id)) {
-        free(item->name.str);
+    item->id = d_InitString();
+    if (!_populate_string_field(item->id, id)) {
+        free(item->name->str);
         free(item);
+        LOG("Failed to allocate memory for id");
         return NULL;
     }
 
@@ -314,19 +331,23 @@ Item_t* create_armor(const char* name, const char* id, Material_t material,
     item->stackable = 0; // Armor doesn't stack
 
     // Populate description using helper
-    if (!_populate_armor_desc(&item->description, &material)) {
-        free(item->name.str);
-        free(item->id.str);
+    item->description = d_InitString();
+    if (!_populate_armor_desc(item->description, &material)) {
+        free(item->name->str);
+        free(item->id->str);
         free(item);
+        LOG("Failed to allocate memory for description");
         return NULL;
     }
 
     // Populate rarity using helper
-    if (!_populate_rarity(&item->rarity, "common")) {
-        free(item->name.str);
-        free(item->id.str);
-        free(item->description.str);
+    item->rarity = d_InitString();
+    if (!_populate_rarity(item->rarity, "common")) {
+        free(item->name->str);
+        free(item->id->str);
+        free(item->description->str);
         free(item);
+        LOG("Failed to allocate memory for rarity");
         return NULL;
     }
 
@@ -335,38 +356,77 @@ Item_t* create_armor(const char* name, const char* id, Material_t material,
 
 Item_t* create_key(const char* name, const char* id, Lock_t lock, char glyph)
 {
+    dString_t* log_message = d_InitString();
+    d_AppendString(log_message, "Creating key: ", 0);
+    d_AppendString(log_message, name, 0);
+    d_AppendString(log_message, " (", 0);
+    d_AppendString(log_message, id, 0);
+    d_AppendString(log_message, ")", 0);
+    LOG(log_message->str);
+    d_DestroyString(log_message);
+
     if (name == NULL || id == NULL) {
+        LOG("Invalid name or id provided for key");
         return NULL;
     }
 
     Item_t* item = (Item_t*)malloc(sizeof(Item_t));
     if (item == NULL) {
+        LOG("Failed to allocate memory for key");
         return NULL;
     }
 
     // Set item type
     item->type = ITEM_TYPE_KEY;
 
-    // Populate name and id using helpers
-    if (!_populate_string_field(&item->name, name)) {
-        free(item);
-        return NULL;
-    }
+    LOG("Item->type = ITEM_TYPE_KEY");
 
-    if (!_populate_string_field(&item->id, id)) {
-        free(item->name.str);
+    // Populate name and id using helpers
+    item->name = d_InitString();
+    if (!_populate_string_field(item->name, name)) {
+        LOG("Failed to allocate memory for key name");
         free(item);
         return NULL;
     }
+    dString_t* log_message2 = d_InitString();
+    d_AppendString(log_message2, "Item->name = ", 0);
+    d_AppendString(log_message2, item->name->str, 0);
+    LOG(log_message2->str);
+    d_DestroyString(log_message2);
+
+    item->id = d_InitString();
+    if (!_populate_string_field(item->id, id)) {
+        LOG("Failed to allocate memory for key id");
+        free(item->name->str);
+        free(item);
+        return NULL;
+    }
+    dString_t* log_message3 = d_InitString();
+    d_AppendString(log_message3, "Item->id = ", 0);
+    d_AppendString(log_message3, item->id->str, 0);
+    LOG(log_message3->str);
+    d_DestroyString(log_message3);
 
     // Set basic properties
     item->glyph = glyph;
 
     // Keys don't have materials, so use default neutral material
     item->material_data = _create_default_material();
+    dString_t* log_message4 = d_InitString();
+    d_AppendString(log_message4, "Item->material_data = ", 0);
+    d_AppendString(log_message4, item->material_data.name->str, 0);
+    LOG(log_message4->str);
+    d_DestroyString(log_message4);
 
-    // Initialize key-specific data
-    item->data.key.lock = lock;
+    // Initialize key-specific data - DEEP COPY the lock
+    item->data.key.lock.name = d_InitString();
+    d_AppendString(item->data.key.lock.name, lock.name->str, 0);
+
+    item->data.key.lock.description = d_InitString();
+    d_AppendString(item->data.key.lock.description, lock.description->str, 0);
+
+    item->data.key.lock.pick_difficulty = lock.pick_difficulty;
+    item->data.key.lock.jammed_seconds = lock.jammed_seconds;
 
     // Set default values
     item->weight_kg = 0.1f; // Keys are light but not weightless
@@ -374,24 +434,28 @@ Item_t* create_key(const char* name, const char* id, Lock_t lock, char glyph)
     item->stackable = 1; // Keys cannot stack (though this seems like it should be 0?)
 
     // Populate description using helper
-    if (!_populate_key_desc(&item->description, &lock)) {
-        free(item->name.str);
-        free(item->id.str);
+    item->description = d_InitString();
+    if (!_populate_key_desc(item->description, &lock)) {
+        LOG("Failed to allocate memory for key description");
+        free(item->name->str);
+        free(item->id->str);
         // Clean up material name if it was allocated
-        if (item->material_data.name.str != NULL) {
-            free(item->material_data.name.str);
+        if (item->material_data.name->str != NULL) {
+            free(item->material_data.name->str);
         }
         free(item);
         return NULL;
     }
 
     // Populate rarity using helper
-    if (!_populate_rarity(&item->rarity, "common")) {
-        free(item->name.str);
-        free(item->id.str);
-        free(item->description.str);
-        if (item->material_data.name.str != NULL) {
-            free(item->material_data.name.str);
+    item->rarity = d_InitString();
+    if (!_populate_rarity(item->rarity, "common")) {
+        LOG("Failed to allocate memory for key rarity");
+        free(item->name->str);
+        free(item->id->str);
+        free(item->description->str);
+        if (item->material_data.name->str != NULL) {
+            free(item->material_data.name->str);
         }
         free(item);
         return NULL;
@@ -400,15 +464,79 @@ Item_t* create_key(const char* name, const char* id, Lock_t lock, char glyph)
     return item;
 }
 
+Lock_t create_lock(const char* name, const char* description, uint8_t pick_difficulty, uint8_t jammed_seconds)
+{
+    Lock_t lock;
+
+    // Initialize dString_t fields
+    lock.name = d_InitString();
+    if (lock.name == NULL) {
+        LOG("Lock name string initialization failed");
+        // Return empty lock on allocation failure
+        Lock_t empty_lock = {0};
+        return empty_lock;
+    }
+
+    lock.description = d_InitString();
+    if (lock.description == NULL) {
+        LOG("Lock description string initialization failed");
+        // Clean up and return empty lock
+        d_DestroyString(lock.name);
+        Lock_t empty_lock = {0};
+        return empty_lock;
+    }
+
+    // Populate string fields
+    if (name != NULL) {
+        d_AppendString(lock.name, name, 0);
+    }
+
+    if (description != NULL) {
+        d_AppendString(lock.description, description, 0);
+    }
+
+    // Set numeric properties
+    lock.pick_difficulty = pick_difficulty;
+    lock.jammed_seconds = jammed_seconds;
+
+    return lock;
+}
+
+/*
+ * Destroys a lock and frees its memory
+ */
+void destroy_lock(Lock_t* lock)
+{
+    if (lock == NULL) {
+        LOG("Destruction Failed; Lock is NULL");
+        return;
+    }
+
+    if (lock->name != NULL) {
+        d_DestroyString(lock->name);
+        lock->name = NULL;
+    }
+
+    if (lock->description != NULL) {
+        d_DestroyString(lock->description);
+        lock->description = NULL;
+    }
+
+    lock->pick_difficulty = 0;
+    lock->jammed_seconds = 0;
+}
+
 Item_t* create_consumable(const char* name, const char* id, uint8_t value,
                          void (*on_consume)(uint8_t), char glyph)
 {
     if (name == NULL || id == NULL || on_consume == NULL) {
+        LOG("Consumable creation failed; Invalid parameters");
         return NULL;
     }
 
     Item_t* item = (Item_t*)malloc(sizeof(Item_t));
     if (item == NULL) {
+        LOG("Consumable creation failed; Memory allocation failed");
         return NULL;
     }
 
@@ -416,13 +544,17 @@ Item_t* create_consumable(const char* name, const char* id, uint8_t value,
     item->type = ITEM_TYPE_CONSUMABLE;
 
     // Populate name and id using helpers
-    if (!_populate_string_field(&item->name, name)) {
+    item->name = d_InitString();
+    if (!_populate_string_field(item->name, name)) {
+        LOG("Consumable creation failed; Failed to populate name");
         free(item);
         return NULL;
     }
 
-    if (!_populate_string_field(&item->id, id)) {
-        free(item->name.str);
+    item->id = d_InitString();
+    if (!_populate_string_field(item->id, id)) {
+        LOG("Consumable creation failed; Failed to populate id");
+        free(item->name->str);
         free(item);
         return NULL;
     }
@@ -446,24 +578,28 @@ Item_t* create_consumable(const char* name, const char* id, uint8_t value,
     item->stackable = 16; // Can stack up to 16
 
     // Populate description using helper
-    if (!_populate_consumable_desc(&item->description, item->data.consumable.value)) {
-        free(item->name.str);
-        free(item->id.str);
+    item->description = d_InitString();
+    if (!_populate_consumable_desc(item->description, item->data.consumable.value)) {
+        LOG("Consumable creation failed; Failed to populate description");
+        free(item->name->str);
+        free(item->id->str);
         // Clean up material name if it was allocated
-        if (item->material_data.name.str != NULL) {
-            free(item->material_data.name.str);
+        if (item->material_data.name->str != NULL) {
+            free(item->material_data.name->str);
         }
         free(item);
         return NULL;
     }
 
     // Populate rarity using helper
-    if (!_populate_rarity(&item->rarity, "common")) {
-        free(item->name.str);
-        free(item->id.str);
-        free(item->description.str);
-        if (item->material_data.name.str != NULL) {
-            free(item->material_data.name.str);
+    item->rarity = d_InitString();
+    if (!_populate_rarity(item->rarity, "common")) {
+        LOG("Consumable creation failed; Failed to populate rarity");
+        free(item->name->str);
+        free(item->id->str);
+        free(item->description->str);
+        if (item->material_data.name->str != NULL) {
+            free(item->material_data.name->str);
         }
         free(item);
         return NULL;
@@ -472,16 +608,17 @@ Item_t* create_consumable(const char* name, const char* id, uint8_t value,
     return item;
 }
 
-
 Item_t* create_ammunition(const char* name, const char* id, Material_t material,
                          uint8_t min_dmg, uint8_t max_dmg, char glyph)
 {
     if (name == NULL || id == NULL) {
+        LOG("Create ammunition failed; Invalid name or id");
         return NULL;
     }
 
     Item_t* item = (Item_t*)malloc(sizeof(Item_t));
     if (item == NULL) {
+        LOG("Create ammunition failed; Failed to allocate memory");
         return NULL;
     }
 
@@ -489,13 +626,17 @@ Item_t* create_ammunition(const char* name, const char* id, Material_t material,
     item->type = ITEM_TYPE_AMMUNITION;
 
     // Populate name and id using helpers
-    if (!_populate_string_field(&item->name, name)) {
+    item->name = d_InitString();
+    if (!_populate_string_field(item->name, name)) {
+        LOG("Create ammunition failed; Failed to allocate memory for name");
         free(item);
         return NULL;
     }
 
-    if (!_populate_string_field(&item->id, id)) {
-        free(item->name.str);
+    item->id = d_InitString();
+    if (!_populate_string_field(item->id, id)) {
+        LOG("Create ammunition failed; Failed to allocate memory for id");
+        free(item->name->str);
         free(item);
         return NULL;
     }
@@ -514,18 +655,22 @@ Item_t* create_ammunition(const char* name, const char* id, Material_t material,
     item->stackable = 255; // Ammo stacks very well
 
     // Populate description using helper
-    if (!_populate_ammunition_desc(&item->description, &material, min_dmg, max_dmg)) {
-        free(item->name.str);
-        free(item->id.str);
+    item->description = d_InitString();
+    if (!_populate_ammunition_desc(item->description, &material, min_dmg, max_dmg)) {
+        LOG("Create ammunition failed; Failed to allocate memory for description");
+        free(item->name->str);
+        free(item->id->str);
         free(item);
         return NULL;
     }
 
     // Populate rarity using helper
-    if (!_populate_rarity(&item->rarity, "common")) {
-        free(item->name.str);
-        free(item->id.str);
-        free(item->description.str);
+    item->rarity = d_InitString();
+    if (!_populate_rarity(item->rarity, "common")) {
+        LOG("Create ammunition failed; Failed to allocate memory for rarity");
+        free(item->name->str);
+        free(item->id->str);
+        free(item->description->str);
         free(item);
         return NULL;
     }
@@ -635,18 +780,17 @@ Ammunition__Item_t* get_ammunition_data(Item_t* item)
 Material_t create_material(const char* name, MaterialProperties_t properties)
 {
     Material_t material;
-
+    material.name = d_InitString();
     if (name == NULL) {
+        LOG("Material name is NULL");
         // Return a default material if name is NULL
-        strncpy(material.name, "unknown", MAX_NAME_LENGTH - 1);
-        material.name[MAX_NAME_LENGTH - 1] = '\0';
+        _populate_string_field(material.name, "Default Material");
         material.properties = create_default_material_properties();
         return material;
     }
 
     // Copy name safely
-    strncpy(material.name, name, MAX_NAME_LENGTH - 1);
-    material.name[MAX_NAME_LENGTH - 1] = '\0';
+    _populate_string_field(material.name, name);
 
     // Set the properties
     material.properties = properties;
@@ -1137,7 +1281,7 @@ bool remove_item_from_inventory(Inventory_t* inventory, const char* item_id, uin
     // Find and remove items with matching ID
     for (uint8_t i = 0; i < inventory->size && remaining_to_remove > 0; i++) {
         if (inventory->slots[i].quantity > 0 &&
-            strcmp(inventory->slots[i].item.id, item_id) == 0) {
+            strcmp(inventory->slots[i].item.id->str, item_id) == 0) {
 
             if (inventory->slots[i].quantity <= remaining_to_remove) {
                 // Remove entire stack
@@ -1164,7 +1308,7 @@ Inventory_slot_t* find_item_in_inventory(Inventory_t* inventory, const char* ite
 
     for (uint8_t i = 0; i < inventory->size; i++) {
         if (inventory->slots[i].quantity > 0 &&
-            strcmp(inventory->slots[i].item.id, item_id) == 0) {
+            strcmp(inventory->slots[i].item.id->str, item_id) == 0) {
             return &inventory->slots[i];
         }
     }
@@ -1180,7 +1324,7 @@ bool can_stack_items(const Item_t* item1, const Item_t* item2)
     }
 
     // Items can stack if they have the same ID and are stackable
-    return (strcmp(item1->id, item2->id) == 0) && is_item_stackable(item1);
+    return (strcmp(item1->id->str, item2->id->str) == 0) && is_item_stackable(item1);
 }
 
 bool equip_item(Inventory_t* inventory, const char* item_id)
@@ -1416,5 +1560,5 @@ bool can_key_open_lock(const Item_t* key, const Lock_t* lock)
     const Lock_t* key_lock = &key->data.key.lock;
 
     // Keys can open locks with matching names
-    return strcmp(key_lock->name, lock->name) == 0;
+    return strcmp(key_lock->name->str, lock->name->str) == 0;
 }
