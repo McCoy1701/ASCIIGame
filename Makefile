@@ -193,6 +193,15 @@ run-test-items-usage: test-items-usage
 run-test-items-helper-functions: test-items-helper-functions
 	@./$(BIN_DIR)/test_items_helper_functions
 
+# Demo test for framework improvements
+.PHONY: test-framework-demo
+test-framework-demo: always
+	$(CC) $(TEST_CFLAGS) -o $(BIN_DIR)/test_framework_demo test_framework_demo.c -lm
+
+.PHONY: run-test-framework-demo
+run-test-framework-demo: test-framework-demo
+	@./$(BIN_DIR)/test_framework_demo
+
 # Global test runner (summary output)
 .PHONY: test
 test:
@@ -203,6 +212,7 @@ test:
 test-help:
 	@echo "Available test commands:"
 	@echo "  make test                              - Run all tests with global summary"
+	@echo "  make run-test-framework-demo           - Run test framework demo (shows new features)"
 	@echo "  make run-test-items-creation-destruction - Run item creation/destruction tests (detailed)"
 	@echo "  make run-test-items-type-checking        - Run type checking/access tests (detailed)"
 	@echo "  make run-test-items-material-system      - Run material system tests (detailed)"

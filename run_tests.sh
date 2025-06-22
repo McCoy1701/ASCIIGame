@@ -5,7 +5,7 @@
 # It should also provide a thematic experience within the world of Greek mythology.
 # The Sisyphus legend serves as a metaphor for perseverance and the pursuit of perfection.
 
-# Set environment variable to indicate this is a full test run (1/4 XP, no achievements)
+# Set environment variable to indicate this is a full test run (1/N XP where N = successfully run files, no achievements)
 export SISYPHUS_FULL_TEST_MODE=1
 
 RED='\033[0;31m'
@@ -27,9 +27,58 @@ SISYPHUS_LEGEND="sisyphus.legend"  # Permanent lifetime stats
 FADED='\033[2;3m'  # Faded italic text
 GRAY='\033[2m'     # Dim/faded text
 
+# Function to format numbers with commas (e.g., 107020 -> 107,020)
+format_number_with_commas() {
+    local number="$1"
+    echo "$number" | sed ':a;s/\B[0-9]\{3\}\>/,&/;ta'
+}
+
+# Function to map make targets to correct test file paths
+# Used for generating clickable hyperlinks in terminal output
+
+map_target_to_file_path() {
+    local target="$1"
+    case "$target" in
+        "run-test-items-creation-destruction")
+            echo "tests/items/test_items_creation_destruction.c"
+            ;;
+        "run-test-items-type-checking")
+            echo "tests/items/test_items_type_checking_and_access.c"
+            ;;
+        "run-test-items-material-system")
+            echo "tests/items/test_items_material_system.c"
+            ;;
+        "run-test-items-properties")
+            echo "tests/items/test_items_properties.c"
+            ;;
+        "run-test-items-durability")
+            echo "tests/items/test_items_durability.c"
+            ;;
+        "run-test-items-inventory")
+            echo "tests/items/test_items_inventory.c"
+            ;;
+        "run-test-items-usage")
+            echo "tests/items/test_items_usage.c"
+            ;;
+        "run-test-items-helper-functions")
+            echo "tests/items/test_items_helper_functions.c"
+            ;;
+        *)
+            # Fallback for unknown targets
+            echo "tests/${target#*test-}.c"
+            ;;
+    esac
+}
+# Function to copy text to clipboard using OSC 52 (works in many terminals)
+copy_to_clipboard() {
+    local text="$1"
+    # OSC 52 sequence to copy to clipboard
+    printf '\e]52;c;%s\e\\' "$(printf '%s' "$text" | base64 | tr -d '\n')"
+}
+
 # Greek Mythology-themed Sisyphus messages for dopamine-driven development
 LEGENDARY_MESSAGES=(
-    "⚡ ZEUS HIMSELF APPLAUDS! Your boulder has reached Olympus!"
+    "✨ ZEUS HIMSELF APPLAUDS! Your boulder has reached Olympus!"
     "👑 DIVINE ASCENSION! You've earned the respect of the gods!"
     "🏛️ LEGENDARY TRIUMPH! Sisyphus weeps with joy at your mastery!"
     "🌟 IMMORTAL ACHIEVEMENT! Your name shall echo through eternity!"
@@ -57,10 +106,10 @@ ENCOURAGEMENT_MESSAGES=(
     "🎪 ODYSSEY CONTINUES! Every hero faces trials before triumph!"
     "🦾 TITAN STRENGTH! Growing mightier with each challenge!"
     "🧩 SPHINX'S RIDDLE! You love solving the impossible, don't you?"
-    "⚔️ SPARTAN SPIRIT! This code shall not pass without a fight!"
+    "✨ SPARTAN SPIRIT! This code shall not pass without a fight!"
     "🏛️ EPICTETUS REMINDS! 'It's not what happens, but how you react!'"
     "📚 SENECA'S WISDOM! 'Every new beginning comes from some other beginning's end!'"
-    "⚡ MARCUS AURELIUS! 'The impediment to action advances action. What stands in the way becomes the way!'"
+    "✨ MARCUS AURELIUS! 'The impediment to action advances action. What stands in the way becomes the way!'"
     "🎯 ARISTOTLE'S VIRTUE! Excellence is not an act, but a habit - keep coding!"
     "🌟 SOCRATIC METHOD! Question everything, improve iteratively!"
 )
@@ -80,7 +129,7 @@ STABLE_MESSAGES=(
 )
 
 ACHIEVEMENT_BADGES=(
-    "🏺 AMPHORA" "⚡ THUNDERBOLT" "🏛️ TEMPLE" "👑 LAUREL" "🔱 TRIDENT"
+    "🏺 AMPHORA" "✨ THUNDERBOLT" "🏛️ TEMPLE" "👑 LAUREL" "🔱 TRIDENT"
     "🔥 TORCH" "🌟 CONSTELLATION" "🚀 PEGASUS" "💪 HERCULES" "🎯 ARTEMIS"
 )
 
@@ -138,11 +187,13 @@ update_legend_stats() {
     local curr_streak="$4"
     local is_perfect_run="$5"
     local curr_challenge="$6"
+    local session_xp="${7:-0}"
 
     # Read current legend stats
     local legend_line="$(read_legend_stats)"
     IFS='|' read -r total_runs total_quests hydra_beasts blueprint_flaws oracle_mysteries divine_streaks longest_streak perfect_ascensions first_quest total_project_xp project_level <<< "$legend_line"
-
+    # CRITICAL FIX: Actually add session XP to total project XP!
+    total_project_xp=$((total_project_xp + session_xp))
     # Get previous run stats for intelligent quest tracking
     local prev_stats_line="$(read_previous_stats)"
     IFS='|' read -r prev_errors prev_passes prev_failures prev_compile_errors prev_runtime_errors prev_efficiency_ratio prev_pure_test_time prev_improvement_streak prev_current_challenge prev_timestamp <<< "$prev_stats_line"
@@ -222,7 +273,7 @@ update_legend_stats() {
     local correct_project_level=1
     local cumulative_xp=0
     while true; do
-        local xp_needed=$(( 200 + (correct_project_level * correct_project_level * correct_project_level * 50) + (correct_project_level * correct_project_level * 150) ))
+        local xp_needed=$(( 1000 + (correct_project_level * correct_project_level * correct_project_level * 200) + (correct_project_level * correct_project_level * 600) + (correct_project_level * 300) ))
         if [ $((cumulative_xp + xp_needed)) -gt $total_project_xp ]; then
             break
         fi
@@ -494,7 +545,7 @@ view_sisyphus_history() {
     local count=${1:-10}
 
     if [ ! -d "$SISYPHUS_DIR" ]; then
-        echo -e "${RED}❌ No Sisyphus archive found${NC}"
+        echo -e "${RED}🔴 No Sisyphus archive found${NC}"
         return 1
     fi
 
@@ -564,7 +615,7 @@ show_archive_stats() {
         echo -e "${PURPLE}📊 LEGENDARY STATISTICS${NC}"
         echo -e "  🏛️ Total Quests: $total_runs"
         echo -e "  💎 Perfect Runs: $perfect_runs ($success_rate%)"
-        echo -e "  ⚡ Peak Efficiency: ${max_efficiency}x"
+        echo -e "  ✨ Peak Efficiency: ${max_efficiency}x"
         echo -e "  🧪 Total Tests Passed: $total_tests"
     fi
 }
@@ -612,11 +663,29 @@ EOF
     cleanup_archive
 
     # Update lifetime legend stats
-    local is_perfect_run="false"
-    if [ "$total_errors" -eq 0 ]; then
-        is_perfect_run="true"
-    fi
-    update_legend_stats "$RUNTIME_ERRORS" "$COMPILE_ERRORS" "$FAILED_INDIVIDUAL_TESTS" "$improvement_streak" "$is_perfect_run" "$CURRENT_CHALLENGE"
+        local is_perfect_run="false"
+        if [ "$total_errors" -eq 0 ]; then
+            is_perfect_run="true"
+        fi
+        # Calculate final XP: apply bulk mode reduction first, then penalties
+        local final_xp=$TOTAL_SESSION_XP
+        # Apply bulk mode reduction first (makes failures more punishing)
+        if [ "$SISYPHUS_FULL_TEST_MODE" = "1" ] && [ "$SUCCESSFULLY_RUN_FILES" -gt 0 ]; then
+            final_xp=$((final_xp / SUCCESSFULLY_RUN_FILES))
+        fi
+        # Then apply failure penalties
+        if [ "$TOTAL_BULK_FAILURES" -gt 0 ]; then
+            final_xp=$((final_xp > BULK_FAILURE_PENALTY ? final_xp - BULK_FAILURE_PENALTY : 0))
+        fi
+
+        # Debug XP calculation
+        echo -e "${GRAY}[DEBUG] Session XP: $TOTAL_SESSION_XP, Bulk mode: 1/$SUCCESSFULLY_RUN_FILES, Failures: $TOTAL_BULK_FAILURES, Penalty: $BULK_FAILURE_PENALTY, Final: $final_xp${NC}" >&2
+        # Temporarily set TOTAL_SESSION_XP for legend update
+        local saved_session_xp=$TOTAL_SESSION_XP
+        TOTAL_SESSION_XP=$final_xp
+        update_legend_stats "$RUNTIME_ERRORS" "$COMPILE_ERRORS" "$FAILED_INDIVIDUAL_TESTS" "$improvement_streak" "$is_perfect_run" "$CURRENT_CHALLENGE" "$final_xp"
+        # Restore original value
+        TOTAL_SESSION_XP=$saved_session_xp
 }
 
 # Function to show legend achievements
@@ -627,7 +696,7 @@ show_legend_achievements() {
     # Only show if we have significant achievements
     if [ "$total_quests" -ge 5 ] || [ "$perfect_ascensions" -ge 1 ] || [ "$longest_streak" -ge 3 ]; then
         echo ""
-        echo -e "${PURPLE}⚔️ ETERNAL LEGEND STATUS${NC}"
+        echo -e "${PURPLE}🏛️ ETERNAL LEGEND STATUS${NC}"
         echo -e "    ${FADED}your immortal achievements since ${first_quest:-'the beginning'}${NC}"
 
         if [ "$perfect_ascensions" -gt 0 ]; then
@@ -646,8 +715,8 @@ show_legend_achievements() {
             echo -e "${CYAN}⚒️ Blueprint Flaws Fixed: $blueprint_flaws${NC}"
         fi
 
-        if [ "$labyrinth_corridors_explored" -gt 0 ]; then
-            echo -e "${BLUE}🔮 Labyrinth Corridors Explored: $labyrinth_corridors_explored${NC}"
+        if [ "$oracle_mysteries" -gt 0 ]; then
+            echo -e "${BLUE}🔮 Labyrinth Corridors Explored: $oracle_mysteries${NC}"
         fi
     fi
 }
@@ -781,7 +850,7 @@ show_progress() {
 echo -e "${BLUE}🔧 Building test dependencies...${NC}"
 build_start=$(date +%s.%N)
 if ! make -s always > /dev/null 2>&1; then
-    echo -e "${RED}❌ Failed to build test dependencies${NC}"
+    echo -e "${RED}🔴 Failed to build test dependencies${NC}"
     exit 1
 fi
 build_end=$(date +%s.%N)
@@ -794,6 +863,7 @@ PASSED_FILES=0
 FAILED_FILES=()
 COMPILE_ERROR_FILES=()
 RUNTIME_ERROR_FILES=()
+SUCCESSFULLY_RUN_FILES=0  # Files that ran tests (no compile/runtime errors)
 
 # Counter variables for individual tests
 TOTAL_INDIVIDUAL_TESTS=0
@@ -808,18 +878,34 @@ RUNTIME_ERRORS=0
 TOTAL_TEST_TIME=0
 TOTAL_SHELL_OVERHEAD=0
 
+# XP tracking for overall test run (will be calculated from project XP difference)
+TOTAL_SESSION_XP=0
+SESSION_XP_FROM_TESTS=0
+SESSION_XP_FROM_COMBOS=0
+SESSION_XP_FROM_ACHIEVEMENTS=0
+TOTAL_BULK_FAILURES=0
+BULK_FAILURE_PENALTY=0
+
+# Read starting project XP to calculate session XP later
+STARTING_LEGEND_LINE="$(read_legend_stats)"
+IFS='|' read -r _start_runs _start_quests _start_hydra _start_blueprint _start_oracle _start_divine _start_longest _start_perfect _start_first_quest STARTING_PROJECT_XP _start_level <<< "$STARTING_LEGEND_LINE"
+
+# Debug XP initialization
+echo -e "${GRAY}[DEBUG] XP tracking initialized. Bulk mode: Dynamic (1/N where N = successfully run files), Starting Project XP: $STARTING_PROJECT_XP${NC}" >&2
+
 # Function to extract test counts from output
 extract_test_counts() {
     local output="$1"
 
-    # Extract counts using grep and sed
-    local total=$(echo "$output" | grep -o "Total Tests: [0-9]*" | grep -o "[0-9]*" || echo "0")
-    local passed=$(echo "$output" | grep -o "✅ Passed: [0-9]*" | grep -o "[0-9]*" || echo "0")
-    local failed=$(echo "$output" | grep -o "❌ Failed: [0-9]*" | grep -o "[0-9]*" || echo "0")
+    # Look for the Sisyphus test summary line: "🧪 Test Functions Executed: 6 | 🏆 Won: 4 | 💀 Lost: 2"
+    local total=$(echo "$output" | grep -o "Test Functions Executed: [0-9]*" | grep -o "[0-9]*" || echo "0")
+    local passed=$(echo "$output" | grep -o "🏆 Won: [0-9]*" | grep -o "[0-9]*" || echo "0")
+    local failed=$(echo "$output" | grep -o "💀 Lost: [0-9]*" | grep -o "[0-9]*" || echo "0")
 
     # Return as space-separated values
     echo "$total $passed $failed"
 }
+
 
 # Function to detect error type from output
 detect_error_type() {
@@ -832,25 +918,26 @@ detect_error_type() {
         return
     fi
 
-    # Check for runtime errors
+    # Check for test failures BEFORE checking for runtime errors
+    # Look for the Sisyphus test output patterns
+    if echo "$output" | grep -q "FINAL COLOSSEUM STATS"; then
+        # It's a test run that completed - check if tests failed
+        if echo "$output" | grep -q "💀 Lost: [1-9]"; then
+            echo "TEST_FAILURE"
+            return
+        elif echo "$output" | grep -q "🏆 Won:"; then
+            echo "SUCCESS"
+            return
+        fi
+    fi
+
+    # Check for runtime errors (actual crashes)
     if echo "$output" | grep -q -E "(Segmentation fault|core dumped|Aborted|Bus error|Floating point exception)"; then
         echo "RUNTIME_ERROR"
         return
     fi
 
-    # Check for test failures (tests ran but some failed)
-    if echo "$output" | grep -q "❌ Failed: [1-9]"; then
-        echo "TEST_FAILURE"
-        return
-    fi
-
-    # Check if it looks like successful execution but exit code indicates failure
-    if [ "$exit_code" -ne 0 ] && echo "$output" | grep -q "Total Tests:"; then
-        echo "TEST_FAILURE"
-        return
-    fi
-
-    # If exit code is non-zero but we can't classify it, it's probably a runtime error
+    # If exit code is non-zero but we can't classify it
     if [ "$exit_code" -ne 0 ]; then
         echo "RUNTIME_ERROR"
         return
@@ -858,6 +945,7 @@ detect_error_type() {
 
     echo "SUCCESS"
 }
+
 
 # Function to run a test
 run_test() {
@@ -900,12 +988,26 @@ run_test() {
             PASSED_INDIVIDUAL_TESTS=$((PASSED_INDIVIDUAL_TESTS + file_passed))
             FAILED_INDIVIDUAL_TESTS=$((FAILED_INDIVIDUAL_TESTS + file_failed))
 
+            # Extract Suite XP from the progress bar line: "🎯 Suite XP [...] 928/2100 (Level 1)"
+            session_xp=$(echo "$test_output" | grep -o "Suite XP \[.*\] [0-9]*/[0-9]*" | grep -o "[0-9]*/" | grep -o "[0-9]*" | head -1 || echo "0")
+            # Extract XP breakdowns from: "💰 XP from tests: 935, XP from combos: 213, XP from achievements: 80"
+            tests_xp=$(echo "$test_output" | grep -o "XP from tests: [0-9]*" | grep -o "[0-9]*" | tail -1 || echo "0")
+            combos_xp=$(echo "$test_output" | grep -o "XP from combos: [0-9]*" | grep -o "[0-9]*" | tail -1 || echo "0")
+            achievements_xp=$(echo "$test_output" | grep -o "XP from achievements: [0-9]*" | grep -o "[0-9]*" | tail -1 || echo "0")
+
+            # Add to session totals
+            TOTAL_SESSION_XP=$((TOTAL_SESSION_XP + session_xp))
+            SESSION_XP_FROM_TESTS=$((SESSION_XP_FROM_TESTS + tests_xp))
+            SESSION_XP_FROM_COMBOS=$((SESSION_XP_FROM_COMBOS + combos_xp))
+            SESSION_XP_FROM_ACHIEVEMENTS=$((SESSION_XP_FROM_ACHIEVEMENTS + achievements_xp))
+
             TOTAL_TEST_TIME=$(echo "$TOTAL_TEST_TIME + $actual_test_time" | bc -l)
             TOTAL_SHELL_OVERHEAD=$(echo "$TOTAL_SHELL_OVERHEAD + $shell_overhead" | bc -l)
 
             echo -e " ${BOLD_WHITE}(Test: $(printf "%.6f" $actual_test_time)s | Shell: $(printf "%.3f" $shell_overhead)s)${NC}"
             echo -e "  ${GREEN}✅ $test_name: All $file_total tests passed${NC}"
             PASSED_FILES=$((PASSED_FILES + 1))
+            SUCCESSFULLY_RUN_FILES=$((SUCCESSFULLY_RUN_FILES + 1))
             ;;
 
         "TEST_FAILURE")
@@ -926,12 +1028,26 @@ run_test() {
             PASSED_INDIVIDUAL_TESTS=$((PASSED_INDIVIDUAL_TESTS + file_passed))
             FAILED_INDIVIDUAL_TESTS=$((FAILED_INDIVIDUAL_TESTS + file_failed))
 
+            # Extract Suite XP from the progress bar line: "🎯 Suite XP [...] 928/2100 (Level 1)"
+            session_xp=$(echo "$test_output" | grep -o "Suite XP \[.*\] [0-9]*/[0-9]*" | grep -o "[0-9]*/" | grep -o "[0-9]*" | head -1 || echo "0")
+            # Extract XP breakdowns from: "💰 XP from tests: 935, XP from combos: 213, XP from achievements: 80"
+            tests_xp=$(echo "$test_output" | grep -o "XP from tests: [0-9]*" | grep -o "[0-9]*" | tail -1 || echo "0")
+            combos_xp=$(echo "$test_output" | grep -o "XP from combos: [0-9]*" | grep -o "[0-9]*" | tail -1 || echo "0")
+            achievements_xp=$(echo "$test_output" | grep -o "XP from achievements: [0-9]*" | grep -o "[0-9]*" | tail -1 || echo "0")
+
+            # Add to session totals
+            TOTAL_SESSION_XP=$((TOTAL_SESSION_XP + session_xp))
+            SESSION_XP_FROM_TESTS=$((SESSION_XP_FROM_TESTS + tests_xp))
+            SESSION_XP_FROM_COMBOS=$((SESSION_XP_FROM_COMBOS + combos_xp))
+            SESSION_XP_FROM_ACHIEVEMENTS=$((SESSION_XP_FROM_ACHIEVEMENTS + achievements_xp))
+
             TOTAL_TEST_TIME=$(echo "$TOTAL_TEST_TIME + $actual_test_time" | bc -l)
             TOTAL_SHELL_OVERHEAD=$(echo "$TOTAL_SHELL_OVERHEAD + $shell_overhead" | bc -l)
 
             echo -e " ${BOLD_WHITE}(Test: $(printf "%.6f" $actual_test_time)s | Shell: $(printf "%.3f" $shell_overhead)s)${NC}"
             echo -e "  ${YELLOW}⚠️  $test_name: $file_passed/$file_total tests passed, $file_failed failed${NC}"
             FAILED_FILES+=("$test_name:$make_target:TEST_FAILURE")
+            SUCCESSFULLY_RUN_FILES=$((SUCCESSFULLY_RUN_FILES + 1))
             ;;
 
         "COMPILE_ERROR")
@@ -979,6 +1095,32 @@ if [[ "$TOTAL_TEST_TIME" =~ ^\. ]]; then
 fi
 
 # Calculate efficiency ratio before calling show_progress
+# Set bulk failures to total individual test failures across all test files
+TOTAL_BULK_FAILURES=$FAILED_INDIVIDUAL_TESTS
+
+# Calculate bulk failure penalty - exponential: -100, -200, -300, etc.
+if [ "$TOTAL_BULK_FAILURES" -gt 0 ]; then
+    for ((i=1; i<=TOTAL_BULK_FAILURES; i++)); do
+        penalty=$((i * 100))
+        BULK_FAILURE_PENALTY=$((BULK_FAILURE_PENALTY + penalty))
+    done
+fi
+
+# Write stats first to update the legend file with all XP earned from tests
+write_current_stats "$TOTAL_FILE_ERRORS" "$PASSED_INDIVIDUAL_TESTS" "$FAILED_INDIVIDUAL_TESTS" "$COMPILE_ERRORS" "$RUNTIME_ERRORS" "$EFFICIENCY_RATIO" "$TOTAL_TEST_TIME" "$IMPROVEMENT_STREAK" "$CURRENT_CHALLENGE"
+
+# Now calculate actual session XP as the difference between ending and starting project XP
+ENDING_LEGEND_LINE="$(read_legend_stats)"
+IFS='|' read -r _end_runs _end_quests _end_hydra _end_blueprint _end_oracle _end_divine _end_longest _end_perfect _end_first_quest ENDING_PROJECT_XP _end_level <<< "$ENDING_LEGEND_LINE"
+TOTAL_SESSION_XP=$((ENDING_PROJECT_XP - STARTING_PROJECT_XP))
+
+# Store original XP totals for display (never modify the originals)
+original_session_xp=$TOTAL_SESSION_XP
+
+# Debug final totals before display
+echo -e "${GRAY}[DEBUG] Final totals - Starting XP: $STARTING_PROJECT_XP, Ending XP: $ENDING_PROJECT_XP, Session XP: $TOTAL_SESSION_XP, Successfully run files: $SUCCESSFULLY_RUN_FILES, Failed tests: $FAILED_INDIVIDUAL_TESTS, Bulk penalty: $BULK_FAILURE_PENALTY${NC}" >&2
+
+# Determine efficiency ratio only if we have test time
 EFFICIENCY_RATIO=0
 if (( $(echo "$TOTAL_TEST_TIME > 0" | bc -l) )); then
     EFFICIENCY_RATIO=$(echo "scale=0; $TOTAL_SHELL_OVERHEAD / $TOTAL_TEST_TIME" | bc -l)
@@ -1043,30 +1185,27 @@ if [ -d "$SISYPHUS_DIR" ] || [ -f "$SISYPHUS_FILE" ]; then
     fi
 fi
 
-# Set current challenge based on remaining issues
+# Set current challenge based on remaining issues (Epic Mythological Themes)
 if [ "$COMPILE_ERRORS" -gt 0 ]; then
-    CURRENT_CHALLENGE="🔨 Compilation Errors (${COMPILE_ERRORS} syntax/build issues to fix)"
+    CURRENT_CHALLENGE="🏗️ Daedalus' Workshop Crisis (${COMPILE_ERRORS} blueprint flaws - undefined symbols, missing headers, linker failures)"
 elif [ "$RUNTIME_ERRORS" -gt 0 ]; then
-    CURRENT_CHALLENGE="💥 Runtime Crashes (${RUNTIME_ERRORS} segfaults/memory errors to debug)"
+    CURRENT_CHALLENGE="🐲 Hydra Beasts Rampage (${RUNTIME_ERRORS} runtime errors - segfaults, buffer overflows, null dereferences)"
 elif [ ${#FAILED_FILES[@]} -gt 0 ]; then
     if [ ${#FAILED_FILES[@]} -eq 12 ]; then
-        CURRENT_CHALLENGE="🎯 Major Refactor Needed (${#FAILED_FILES[@]} test suites failing)"
+        CURRENT_CHALLENGE="🌊 Poseidon's Twelve Trials (${#FAILED_FILES[@]} assertion storms - systematic logic validation required)"
     elif [ ${#FAILED_FILES[@]} -eq 1 ]; then
-        CURRENT_CHALLENGE="🔧 Final Fix Required (${#FAILED_FILES[@]} remaining test failure)"
+        CURRENT_CHALLENGE="👑 Minos' Final Requiem (${#FAILED_FILES[@]} labyrinth exit - one critical test failure blocking ascension)"
     else
-        CURRENT_CHALLENGE="🐛 Multiple Test Failures (${#FAILED_FILES[@]} test suites need debugging)"
+        CURRENT_CHALLENGE="🏛️ Minotaur's Labyrinth (${#FAILED_FILES[@]} twisted corridors - failed assertions, logic errors, boundary conditions)"
     fi
 elif [ "$TOTAL_FILE_ERRORS" -gt 0 ]; then
-    CURRENT_CHALLENGE="⚠️ Mixed Issues (${TOTAL_FILE_ERRORS} various problems detected)"
+    CURRENT_CHALLENGE="✨ Zeus's Divine Judgment (${TOTAL_FILE_ERRORS} compilation warnings elevated to olympian standards)"
 else
-    CURRENT_CHALLENGE="✅ All Tests Passing (code quality achieved)"
+    CURRENT_CHALLENGE="🏛️ Mount Olympus Achieved - All tests pass, Daedalus' labyrinth conquered"
 fi
 
 # Show progress comparison before final summary
 show_progress "$TOTAL_FILE_ERRORS" "$PASSED_INDIVIDUAL_TESTS" "$FAILED_INDIVIDUAL_TESTS" "$COMPILE_ERRORS" "$RUNTIME_ERRORS" "$EFFICIENCY_RATIO" "$TOTAL_TEST_TIME"
-
-# Write current stats to .sisyphus file
-write_current_stats "$TOTAL_FILE_ERRORS" "$PASSED_INDIVIDUAL_TESTS" "$FAILED_INDIVIDUAL_TESTS" "$COMPILE_ERRORS" "$RUNTIME_ERRORS" "$EFFICIENCY_RATIO" "$TOTAL_TEST_TIME" "$IMPROVEMENT_STREAK" "$CURRENT_CHALLENGE"
 
 # Final Summary
 SUCCESSFUL_FILES=$((PASSED_FILES))
@@ -1079,10 +1218,10 @@ legend_line="$(read_legend_stats)"
 IFS='|' read -r total_runs total_quests hydra_beasts blueprint_flaws oracle_mysteries divine_streaks longest_streak perfect_ascensions first_quest total_project_xp project_level <<< "$legend_line"
 
 # Calculate XP progress within current level using C header formula
-# XP formula: 200 + (level^3 * 50) + (level^2 * 150)
+# XP formula: 1000 + (level^3 * 200) + (level^2 * 600) + (level * 300)
 get_xp_for_level() {
     local level=$1
-    echo $(( 200 + (level * level * level * 50) + (level * level * 150) ))
+    echo $(( 1000 + (level * level * level * 200) + (level * level * 600) + (level * 300) ))
 }
 
 get_current_level_from_xp() {
@@ -1137,14 +1276,17 @@ if [ "$TOTAL_INDIVIDUAL_TESTS" -gt 0 ]; then
 fi
 
 echo ""
-echo -e "${CYAN}⚡ Performance Analysis:${NC}"
-echo -e "${BOLD_WHITE}⏱️  Pure Test Time:     $(printf "%10.5f" $TOTAL_TEST_TIME) seconds${NC}"
-echo -e "${BOLD_WHITE}🐚 Shell Overhead:     $(printf "%10.3f" $TOTAL_SHELL_OVERHEAD) seconds${NC}"
-echo -e "${BOLD_WHITE}🕒 Total Runtime:      $(printf "%10.4f" $overall_time) seconds${NC}"
-
-# Calculate and display code efficiency
+echo -e "${CYAN}✨ Performance Analysis:${NC}"
 if (( $(echo "$TOTAL_TEST_TIME > 0" | bc -l) )); then
+    echo -e "${BOLD_WHITE}⏱️  Pure Test Time:     $(printf "%10.5f" $TOTAL_TEST_TIME) seconds${NC}"
+    echo -e "${BOLD_WHITE}🐚 Shell Overhead:     $(printf "%10.3f" $TOTAL_SHELL_OVERHEAD) seconds${NC}"
+    echo -e "${BOLD_WHITE}🕒 Total Runtime:      $(printf "%10.4f" $overall_time) seconds${NC}"
     echo -e "${BOLD_WHITE}🚀 Code Efficiency: Your Code is ${GREEN}${EFFICIENCY_RATIO}x${BOLD_WHITE} faster than the Sisyphus Framework!${NC}"
+else
+    echo -e "${BOLD_WHITE}💥 Runtime Crashes Detected: Tests failed to execute${NC}"
+    echo -e "${BOLD_WHITE}🐚 Shell Overhead:     $(printf "%10.3f" $TOTAL_SHELL_OVERHEAD) seconds${NC}"
+    echo -e "${BOLD_WHITE}🕒 Total Runtime:      $(printf "%10.4f" $overall_time) seconds${NC}"
+    echo -e "${BOLD_WHITE}🔧 Fix segfaults to measure actual test performance${NC}"
 fi
 
 
@@ -1156,34 +1298,42 @@ if [ ${#COMPILE_ERROR_FILES[@]} -gt 0 ] || [ ${#RUNTIME_ERROR_FILES[@]} -gt 0 ] 
 
     if [ ${#COMPILE_ERROR_FILES[@]} -gt 0 ]; then
         echo ""
-        echo -e "${RED}🔨 Compilation Errors:${NC}"
+        echo -e "${RED}🏗️ DAEDALUS' WORKSHOP CRISIS - Blueprint Corruption Detected:${NC}"
         for error_file in "${COMPILE_ERROR_FILES[@]}"; do
             name=$(echo "$error_file" | cut -d':' -f1)
             target=$(echo "$error_file" | cut -d':' -f2)
-            echo -e "  ${RED}• $name${NC} - Fix compilation issues"
-            echo -e "    Run: ${YELLOW}make $target${NC} to see compiler errors"
+            echo -e "  ${RED}• $name${NC} - Architectural flaws in the labyrinth design"
+            echo -e "    ${GRAY}Common causes: missing headers, undefined symbols, linker dependencies${NC}"
+            file_path=$(map_target_to_file_path "$target")
+            echo -e "    Debug: ${YELLOW}make $target${NC} | ${CYAN}View Test:${NC} \e]8;;file://$(pwd)/$file_path\e\\Click Here\e]8;;\e\\"
         done
     fi
 
     if [ ${#RUNTIME_ERROR_FILES[@]} -gt 0 ]; then
-        echo -e "${ORANGE}💥 Runtime Errors (Segfaults/Crashes):${NC}"
+        echo ""
+        echo -e "${ORANGE}🐲 HYDRA HEADS RAMPAGE - Memory Corruption Unleashed:${NC}"
         for error_file in "${RUNTIME_ERROR_FILES[@]}"; do
             name=$(echo "$error_file" | cut -d':' -f1)
             target=$(echo "$error_file" | cut -d':' -f2)
-            echo -e "  ${ORANGE}• $name${NC} - Segfault or crash during execution"
-            echo -e "    Run: ${YELLOW}make $target${NC} to see crash details"
+            echo -e "  ${ORANGE}• $name${NC} - Hydra head strikes: segmentation fault, buffer overflow, or null pointer"
+            echo -e "    ${GRAY}Memory beasts detected: check malloc/free pairs, array bounds, pointer initialization${NC}"
+            file_path=$(map_target_to_file_path "$target")
+            echo -e "    Debug: ${YELLOW}make $target${NC} | ${CYAN}View Test:${NC} \e]8;;file://$(pwd)/$file_path\e\\Click Here\e]8;;\e\\"
         done
     fi
 
     if [ ${#FAILED_FILES[@]} -gt 0 ]; then
         echo ""
-        echo -e "${YELLOW}⚠️  Test Failures (Code ran but tests failed):${NC}"
+        echo -e "${YELLOW}🏛️ MINOTAUR'S LABYRINTH - Logic Paths Blocked:${NC}"
         for failed in "${FAILED_FILES[@]}"; do
             name=$(echo "$failed" | cut -d':' -f1)
             target=$(echo "$failed" | cut -d':' -f2)
-            echo -e "  ${YELLOW}• $name${NC} - Tests executed but some failed"
-            echo -e "    Run: ${YELLOW}make $target${NC} to see detailed failures"
+            echo -e "  ${YELLOW}• $name${NC} - Minotaur guards this corridor: assertion failures, logic errors detected"
+            echo -e "    ${GRAY}Navigate maze: check expected vs actual values, boundary conditions, algorithm correctness${NC}"
+            file_path=$(map_target_to_file_path "$target")
+            echo -e "    Explore: ${YELLOW}make $target${NC} | ${CYAN}View Test:${NC} \e]8;;file://$(pwd)/$file_path\e\\Click Here\e]8;;\e\\"
         done
+
     fi
 fi
 
@@ -1227,68 +1377,68 @@ show_motivational_message() {
 
     # Create arrays of greetings for different times and contexts
     declare -a dawn_greetings=(
-        "🌅 AURORA'S CHARIOT|goddess of dawn guides early risers to victory"
-        "🏺 AMPHORA FILLING|like Athenian potters beginning their daily craft"
-        "⚡ ZEUS AWAKENS|king of gods stirs from Mount Olympus slumber"
-        "🦉 ATHENA'S WISDOM|owl of wisdom hoots - knowledge comes to night owls"
-        "🌊 POSEIDON'S TIDE|god of seas brings fresh waves of inspiration"
-        "🔥 PROMETHEUS SPARK|fire-bringer ignites the forge of creation"
-        "🏃 MARATHON RUNNER|like Pheidippides racing from Marathon to Athens"
-        "🎭 DIONYSUS DREAMS|god of inspiration whispers through morning mist"
+        "🌅 DAWN GODDESS AURORA|Roman goddess of dawn (Greek Eos) painted the sky each morning"
+        "🏺 EARLY POTTERY CRAFT|Athenian craftsmen began their work at first light - discipline builds mastery"
+        "✨ ZEUS MORNING WATCH|King of Greek gods awakened on Mount Olympus as dawn broke"
+        "🦉 NIGHT OWL WISDOM|Athena's owl sees clearly in darkness - late-night coding brings insight"
+        "🌊 MORNING TIDE INSPIRATION|Poseidon, god of seas, brought fresh creative waves each dawn"
+        "🔥 PROMETHEUS DAWN SPARK|Titan who stole fire from gods to help humanity - innovation at sunrise"
+        "🏃 MARATHON DAWN RUN|Pheidippides ran 26 miles from Marathon to Athens with victory news"
+        "🏛️ AGORA SUNRISE GATHERING|Athenian democracy began with citizens meeting at dawn in the marketplace"
     )
 
     declare -a morning_greetings=(
-        "☀️ HELIOS ASCENDANT|sun god drives his golden chariot across the sky"
-        "🏛️ AGORA GATHERING|citizens assemble in the marketplace of ideas"
-        "📜 SOCRATIC CIRCLE|philosophers debate in the Academy gardens"
-        "⚔️ SPARTAN TRAINING|warriors hone their skills at dawn's first light"
-        "🏺 DELPHIC ORACLE|pythia breathes sacred vapors of prophecy"
-        "🎯 OLYMPIC GAMES|athletes prepare for contests of divine skill"
-        "🌿 APOLLO'S LAUREL|god of music and prophecy crowns the worthy"
-        "⚖️ ATHENIAN COURT|justice flows like honey from democratic debate"
-        "🏛️ PARTHENON RISING|master builders craft monuments to eternity"
-        "🌊 AEGEAN VOYAGES|ships set sail for distant shores of discovery"
+        "☀️ MORNING SUNRISE|Ancient Greeks believed Helios drove the sun across the sky each day"
+        "🎭 DIONYSUS DREAMS|god of inspiration whispers through morning mist"
+        "🏛️ DAWN ASSEMBLY|Like Athenian citizens gathering in the agora marketplace at sunrise"
+        "📜 EARLY PHILOSOPHY|Morning study sessions - Socrates taught that wisdom begins at dawn"
+        "✨ SPARTAN DAWN TRAINING|Ancient warriors started training at first light for discipline"
+        "🏺 MORNING ORACLE|The Oracle at Delphi gave prophecies in the morning sacred hours"
+        "🎯 OLYMPIC MORNING PREP|Ancient athletes trained at dawn for the Olympic Games"
+        "🌿 APOLLO'S MORNING LIGHT|Greek god of music, healing, and knowledge - patron of morning wisdom"
+        "⚖️ MORNING COURT SESSION|Athenian democracy - citizens debated justice at dawn assemblies"
+        "🏛️ BUILDERS AT SUNRISE|Master craftsmen began work on the Parthenon at first light"
+        "🌊 MORNING VOYAGE|Greek sailors departed at dawn to catch favorable winds across the Aegean"
     )
 
     declare -a afternoon_greetings=(
-        "⚡ ZEUS COMMANDS|king of gods surveys his domain from Olympus peak"
-        "🏃 PHILIPPIDES RUN|messenger races with news of victory at Marathon"
-        "🎭 THEATER CHORUS|tragic and comic masks dance in amphitheater"
-        "🔱 POSEIDON'S REALM|earth-shaker rules the wine-dark sea"
-        "💪 HERACLES LABORS|hero tackles twelve impossible tasks"
-        "🏛️ PERICLES GOLDEN AGE|Athens shines in her greatest glory"
-        "📚 LIBRARY OF ALEXANDRIA|scholars gather infinite scrolls of wisdom"
-        "⚔️ TROJAN SIEGE|heroes battle for ten legendary years"
-        "🎯 ARTEMIS HUNT|goddess of the hunt tracks through sacred groves"
-        "🌋 HEPHAESTUS FORGE|god of fire shapes metal in volcanic workshop"
-        "🏺 SYMPOSIUM FEAST|philosophers drink wine and debate eternal truths"
-        "🚢 ODYSSEY VOYAGE|hero navigates treacherous waters toward home"
+        "✨ MIDDAY POWER|Zeus ruled from Mount Olympus during the sun's peak hours"
+        "🏃 AFTERNOON MARATHON|Pheidippides ran 26 miles from Marathon to Athens with victory news"
+        "🎭 THEATER MATINEE|Greek dramas were performed in outdoor amphitheaters during daylight"
+        "🔱 AFTERNOON SEAS|Poseidon controlled the Mediterranean during active sailing hours"
+        "🏛️ GOLDEN AGE ATHENS|Pericles led Athens to greatness during the 5th century BCE"
+        "📚 LIBRARY STUDY TIME|Alexandria's scholars researched during peak afternoon hours"
+        "✨ TROJAN WAR BATTLES|Homer's Iliad - warriors fought during the heat of the day"
+        "🎯 ARTEMIS AFTERNOON HUNT|Goddess of the hunt tracked prey through sacred forests"
+        "🌋 FORGE WORK HOURS|Hephaestus crafted weapons and tools in his volcanic workshop"
+        "🏺 SYMPOSIUM DISCUSSION|Greek philosophers debated over wine in afternoon gatherings"
+        "🚢 ODYSSEY SAILING|Odysseus navigated home during favorable afternoon winds"
     )
 
     declare -a evening_greetings=(
-        "🌆 HESTIA'S HEARTH|goddess of home tends the sacred fire"
-        "🌙 ARTEMIS SILVER BOW|moon goddess hunts through starlit forests"
-        "🎭 DIONYSUS FESTIVAL|god of wine celebrates harvest mysteries"
-        "🔮 SIBYL'S PROPHECY|oracle speaks riddles by flickering torchlight"
-        "📜 HOMER'S RECITAL|blind bard sings tales of gods and heroes"
-        "🏛️ ACADEMY EVENING|Plato's students contemplate forms and shadows"
-        "🍇 DIONYSIAC RITES|sacred mysteries celebrated under cover of darkness"
-        "🌟 NAVIGATOR'S STARS|sailors read celestial maps across the Mediterranean"
-        "🦉 ATHENA'S NIGHT WATCH|wisdom goddess protects the learned city"
-        "🔥 SACRED FLAME|eternal fire burns in temple of Vesta"
+        "🌆 EVENING HEARTH|Hestia tended the sacred fire as families gathered for dinner"
+        "🌙 MOONRISE HUNT|Artemis hunted by moonlight - evening was her sacred time"
+        "🎭 DIONYSUS EVENING RITES|Wine god's festivals celebrated harvest under starlight"
+        "🔮 EVENING PROPHECY|Oracles gave their most powerful predictions by torchlight"
+        "📜 HOMER'S EVENING TALES|Blind poet recited epic stories around evening fires"
+        "🏛️ PLATO'S EVENING ACADEMY|Students discussed philosophy as the sun set over Athens"
+        "🍇 HARVEST EVENING MYSTERIES|Secret religious ceremonies held after sunset"
+        "🌟 NAVIGATION BY STARS|Ancient sailors used constellations to guide evening voyages"
+        "🦉 ATHENA'S NIGHT WISDOM|Owl goddess saw truth most clearly in evening darkness"
+        "🔥 SACRED EVENING FLAME|Temple fires burned brightest during twilight prayers"
     )
 
     declare -a late_night_greetings=(
-        "🌙 NYX'S DOMINION|primordial goddess of night embraces the world"
-        "💫 HYPNOS REALM|god of sleep brings dreams to weary minds"
-        "🔮 HECATE'S CROSSROADS|triple goddess guides through dark passages"
-        "⭐ CASSANDRA'S VISIONS|prophetic dreams reveal hidden truths"
-        "🌌 ORPHEUS DESCENT|poet-musician journeys to underworld's depths"
-        "🦉 NOCTURNAL WISDOM|Athena's owl sees clearly in darkness"
-        "🔥 ETERNAL FLAME|sacred fire of knowledge burns through the night"
-        "💀 HADES COUNSEL|lord of underworld offers profound insights"
-        "🌙 ENDYMION'S SLEEP|eternal dreamer receives lunar inspiration"
-        "⚡ MIDNIGHT THUNDER|Zeus sends divine signals through darkness"
+        "🌙 MIDNIGHT GODDESS|Nyx ruled the night - ancient Greeks respected the power of darkness"
+        "💫 SLEEP GOD'S REALM|Hypnos brought dreams and rest to tired minds after midnight"
+        "🔮 CROSSROADS MAGIC|Hecate guided travelers at night crossroads with torchlight"
+        "⭐ LATE NIGHT ORACLE|Apollo's prophecies were strongest during the deepest night hours"
+        "🌌 ZEUS'S NIGHT WATCH|King of gods observed mortals from Mount Olympus after midnight"
+        "🦉 NOCTURNAL WISDOM|Athena's owl represents wisdom that comes in quiet night hours"
+        "🔥 ETERNAL NIGHT FLAME|Sacred fires burned continuously through the darkest hours"
+        "💀 UNDERWORLD COUNSEL|Hades offered deep insights during the realm of sleep"
+        "🌙 DREAMER'S INSPIRATION|Endymion received divine dreams during eternal slumber"
+        "✨ MIDNIGHT THUNDER|Zeus sent his most powerful messages through night storms"
     )
 
     # Seasonal and date-based special greetings
@@ -1354,7 +1504,7 @@ show_motivational_message() {
     elif [ "$month" -eq 8 ] && [ "$day" -eq 1 ]; then
         selected_greeting="🏛️ ATHENIAN DEMOCRACY|birth of democratic ideals shapes the world"
     elif [ "$month" -eq 9 ] && [ "$day" -eq 2 ]; then
-        selected_greeting="⚔️ BATTLE OF ACTIUM|Octavian's victory reshapes the ancient world"
+        selected_greeting="✨ BATTLE OF ACTIUM|Octavian's victory reshapes the ancient world"
     elif [ "$month" -eq 10 ] && [ "$day" -eq 19 ]; then
         selected_greeting="🍇 OSCHOPHORIA FESTIVAL|Athenian harvest celebration honors Dionysus"
     elif [ "$month" -eq 11 ] && [ "$day" -eq 8 ]; then
@@ -1373,7 +1523,7 @@ show_motivational_message() {
     # Calculate XP progress within current level using C header formula
     get_xp_for_level() {
         local level=$1
-        echo $(( 200 + (level * level * level * 50) + (level * level * 150) ))
+        echo $(( 1000 + (level * level * level * 200) + (level * level * 600) + (level * 300) ))
     }
 
     get_current_level_from_xp() {
@@ -1412,7 +1562,7 @@ show_motivational_message() {
     local width=20
     local filled=$(( current_level_xp * width / (xp_needed_for_next > 0 ? xp_needed_for_next : 1) ))
     echo ""
-    echo -n -e "${CYAN}🎯 Project XP [${NC}"
+    echo -n -e "${CYAN}🎯 ${BOLD_WHITE}$(format_number_with_commas $total_project_xp)${NC} ${CYAN}Project XP [${NC}"
     for ((i=0; i<width; i++)); do
         if [ $i -lt $filled ]; then
             echo -n "█"
@@ -1420,14 +1570,42 @@ show_motivational_message() {
             echo -n "░"
         fi
     done
-    echo -e "${CYAN}] $current_level_xp/$xp_needed_for_next ${BOLD_WHITE}(Level $actual_project_level)${NC}"
+    echo -e "${CYAN}] $(format_number_with_commas $current_level_xp)/$(format_number_with_commas $xp_needed_for_next) ${BOLD_WHITE}(Level $actual_project_level)${NC}"
+    # Apply bulk mode XP reduction (1/4 XP in bulk mode) BEFORE penalties
+    local display_tests_xp=$SESSION_XP_FROM_TESTS
+    local display_combos_xp=$SESSION_XP_FROM_COMBOS
+    local display_achievements_xp=$SESSION_XP_FROM_ACHIEVEMENTS
+    local display_bulk_penalty=$BULK_FAILURE_PENALTY
+    local display_original_xp=$original_session_xp
+
+    if [ "$SISYPHUS_FULL_TEST_MODE" = "1" ] && [ "$SUCCESSFULLY_RUN_FILES" -gt 0 ]; then
+        display_tests_xp=$((SESSION_XP_FROM_TESTS / SUCCESSFULLY_RUN_FILES))
+        display_combos_xp=$((SESSION_XP_FROM_COMBOS / SUCCESSFULLY_RUN_FILES))
+        display_achievements_xp=$((SESSION_XP_FROM_ACHIEVEMENTS / SUCCESSFULLY_RUN_FILES))
+        display_original_xp=$((original_session_xp / SUCCESSFULLY_RUN_FILES))
+        # Penalty is NOT divided - it's applied after bulk reduction, making it harsh
+    fi
+
+    # Calculate final display XP after penalty
+    local display_total_xp=$((display_original_xp > display_bulk_penalty ? display_original_xp - display_bulk_penalty : 0))
+
+    # Always show XP breakdown with failures section
+    if [ "$TOTAL_BULK_FAILURES" -gt 0 ]; then
+        echo -e "💰 Session XP: ${YELLOW}$(format_number_with_commas $display_total_xp)${NC} | 🧪 From Tests: ${GREEN}$(format_number_with_commas $display_tests_xp)${NC} | 🔥 From Combos: ${ORANGE}$(format_number_with_commas $display_combos_xp)${NC} | 💀 From Failures: ${RED}-$(format_number_with_commas $display_bulk_penalty)${NC}"
+        if [ "$display_original_xp" -gt 0 ] && [ "$display_bulk_penalty" -gt 0 ]; then
+            echo -e "${GRAY}   Original XP: $(format_number_with_commas $display_original_xp) → Final XP: $(format_number_with_commas $display_total_xp) (${TOTAL_BULK_FAILURES} failures penalty)${NC}"
+        fi
+    else
+        # No failures - show 0 penalty instead of achievements
+        echo -e "💰 Session XP: ${YELLOW}$(format_number_with_commas $display_total_xp)${NC} | 🧪 From Tests: ${GREEN}$(format_number_with_commas $display_tests_xp)${NC} | 🔥 From Combos: ${ORANGE}$(format_number_with_commas $display_combos_xp)${NC} | 💀 From Failures: ${RED}-0${NC}"
+    fi
     echo -e "${PURPLE}$greeting...${NC}"
     echo -e "    $greeting_context"
 
     # Analyze test results and provide technical feedback with thematic presentation
     if [ "$prev_timestamp" = "never" ]; then
         # First run - Initialize tracking
-        echo -e "${CYAN}⚔️  TEST FRAMEWORK INITIALIZED${NC}"
+        echo -e "${CYAN}✨ TEST FRAMEWORK INITIALIZED${NC}"
         echo -e "    ${FADED}Sisyphus continuous improvement tracking started${NC}"
 
         if [ "$total_curr_issues" -eq 0 ]; then
@@ -1468,7 +1646,7 @@ show_motivational_message() {
             echo -e "${PURPLE}🔥 CONSISTENCY MASTER! $current_streak consecutive improvement sessions${NC}"
             echo -e "    ${FADED}Sustained debugging excellence - maintaining high development velocity${NC}"
         elif [ "$current_streak" -ge 3 ]; then
-            echo -e "${CYAN}⚡ MOMENTUM BUILDING! $current_streak improvements in a row${NC}"
+            echo -e "${CYAN}✨ MOMENTUM BUILDING! $current_streak improvements in a row${NC}"
             echo -e "    ${FADED}Strong problem-solving rhythm - effective debugging workflow established${NC}"
         elif [ "$current_streak" -ge 2 ]; then
             echo -e "${YELLOW}🎯 IMPROVEMENT STREAK! $current_streak consecutive fixes${NC}"
@@ -1496,7 +1674,7 @@ show_motivational_message() {
         if [ "$setback" -le 2 ]; then
             echo -e "${CYAN}🌊 MINOR SETBACK! $setback new issue(s) detected${NC}"
             echo -e "    ${FADED}Small regression - normal part of iterative development process${NC}"
-            echo -e "${BOLD_WHITE}⚡ DEBUGGING OPPORTUNITY: Quick fixes can restore stability${NC}"
+            echo -e "${BOLD_WHITE}✨ DEBUGGING OPPORTUNITY: Quick fixes can restore stability${NC}"
         elif [ "$setback" -le 5 ]; then
             echo -e "${ORANGE}🐍 MODERATE REGRESSION! $setback new issues require attention${NC}"
             echo -e "    ${FADED}Code changes introduced complications - systematic debugging needed${NC}"
@@ -1513,22 +1691,22 @@ show_motivational_message() {
             echo -e "    ${FADED}Some functionality enhanced - mixed development session${NC}"
         fi
         if [ "$efficiency_change" -gt 0 ]; then
-            echo -e "${PURPLE}⚡ PERFORMANCE GAIN! +${efficiency_change}x speed improvement${NC}"
+            echo -e "${PURPLE}✨ PERFORMANCE GAIN! +${efficiency_change}x speed improvement${NC}"
             echo -e "    ${FADED}Execution efficiency improved - optimization work paying off${NC}"
         fi
     else
-        # NO CHANGE - Stability analysis
-        echo -e "${CYAN}📊 STABLE STATE: No change in issue count detected${NC}"
+        # NO CHANGE - Mythological stability analysis
+        echo -e "${CYAN}🏛️ ETERNAL VIGILANCE: The Oracle's vision remains unchanged${NC}"
 
         if [ "$total_curr_issues" -eq 0 ]; then
-            echo -e "${GREEN}👑 PERFECT STABILITY! All tests passing, zero issues detected${NC}"
-            echo -e "    ${FADED}Excellent code quality maintained - no action required${NC}"
+            echo -e "${GREEN}🌟 OLYMPIAN PERFECTION! The gods bless your flawless code${NC}"
+            echo -e "    ${FADED}Divine harmony achieved - continue this blessed state${NC}"
         elif [ "$total_curr_issues" -le 3 ]; then
-            echo -e "${BLUE}🎯 CONTROLLED STATE! Only $total_curr_issues issues remaining${NC}"
-            echo -e "    ${FADED}Near-perfect stability - minor cleanup opportunities available${NC}"
+            echo -e "${BLUE}⚖️ ATHENA'S WISDOM! Only $total_curr_issues minor trials remain${NC}"
+            echo -e "    ${FADED}Near-divine mastery - the finish line beckons heroically${NC}"
         else
-            echo -e "${PURPLE}🧠 ANALYSIS PHASE! $total_curr_issues issues unchanged${NC}"
-            echo -e "    ${FADED}No progress detected - may need different debugging approach${NC}"
+            echo -e "${PURPLE}🔮 ORACLE'S PROPHECY! $total_curr_issues challenges persist${NC}"
+            echo -e "    ${FADED}Prophetic dreams reveal: $COMPILE_ERRORS compiler errors, $RUNTIME_ERRORS memory faults, ${#FAILED_FILES[@]} logic failures${NC}"
         fi
     fi
 
@@ -1537,22 +1715,21 @@ show_motivational_message() {
         echo -e "${GREEN}🚀 EXTREME OPTIMIZATION! +${efficiency_change}x execution speed improvement${NC}"
         echo -e "    ${FADED}Massive performance gain - algorithmic optimization breakthrough${NC}"
     elif [ "$efficiency_change" -gt 1000 ]; then
-        echo -e "${GREEN}⚡ MAJOR SPEEDUP! +${efficiency_change}x faster execution detected${NC}"
+        echo -e "${GREEN}✨ MAJOR SPEEDUP! +${efficiency_change}x faster execution detected${NC}"
         echo -e "    ${FADED}Significant performance improvement - code efficiency enhanced${NC}"
     elif [ "$efficiency_change" -gt 100 ]; then
         echo -e "${GREEN}🔥 PERFORMANCE BOOST! +${efficiency_change}x speed increase${NC}"
         echo -e "    ${FADED}Notable efficiency gain - optimization work successful${NC}"
     fi
 
-    # Final mythological inspiration
     local final_messages=(
         "🏛️ The Fates weave victory into your thread of destiny!"
-        "⚔️ Your code is your Sword, your logic your Shield!"
+        "✨ Your code is your Sword, your logic your Shield!"
         "🌟 Each keystroke echoes through the halls of Olympus!"
         "💎 You forge digital ambrosia, food of the coding gods!"
         "🏆 Heroes are born in moments of impossible triumph!"
         "🔥 Prometheus gifted fire - you gift elegant solutions!"
-        "⚡ Type with the fury of Zeus, debug with Athena's wisdom!"
+        "🔥 Type with the fury of Zeus, debug with Athena's wisdom!"
         "📜 'Know thyself' - Socrates speaks through your structured code!"
         "🧘 'You have power over your mind' - Marcus Aurelius guides your focus!"
         "⚖️ 'The unexamined code is not worth running' - Socratic programming!"
@@ -1564,8 +1741,10 @@ show_motivational_message() {
         "⚖️ 'Justice is the advantage of the stronger' - but your code protects the weak!"
         "🌊 'No man ever steps in the same river twice' - Heraclitean flow!"
         "💎 'Virtue is its own reward' - Stoic satisfaction in clean code!"
+        "🎭 'The unexamined life is not worth living' - Socratic self-reflection!"
+        "🌱 'The best time to plant a tree was 20 years ago' - Chinese wisdom for coders!"
         "🏺 'The whole is greater than the sum of its parts' - Aristotelian architecture!"
-        "⚡ 'Think like a mountain' - Marcus Aurelius teaches patient debugging!"
+        "✨ 'Think like a mountain' - Marcus Aurelius teaches patient debugging!"
         "🦉 'The fox knows many things, but the hedgehog knows one big thing' - Archilochus!"
         "🛡️ 'Fortune favors the bold' - but preparation favors the coder!"
         "🏛️ 'The measure of a man is what he does with power' - Plato's responsibility!"
@@ -1576,22 +1755,36 @@ show_motivational_message() {
     if [ "$total_curr_issues" -eq 0 ]; then
         echo -e "${GREEN}🎉 PERFECT TEST SUITE! All tests passing, zero issues detected${NC}"
         echo -e "    ${FADED}Excellent code quality - ready for production deployment${NC}"
-        echo -e "${BOLD_WHITE}👑 ACHIEVEMENT UNLOCKED: Code Quality Master${NC}"
+        echo -e "${BOLD_WHITE}🏛️ ASCENSION TO OLYMPUS! You have achieved divine coding mastery!${NC}"
     elif [ "$total_curr_issues" -le 3 ]; then
-        echo -e "${CYAN}🏔️ NEAR PERFECTION! Only $total_curr_issues issue(s) remaining${NC}"
-        echo -e "    ${FADED}Excellent stability - minor cleanup will achieve perfection${NC}"
+        echo -e "${CYAN}🌟 HEROIC TRIUMPH APPROACHES! Only $total_curr_issues final trials remain${NC}"
+        echo -e "    ${FADED}The summit of Mount Olympus beckons - one last heroic push!${NC}"
     elif [ "$total_curr_issues" -le 5 ]; then
-        echo -e "${PURPLE}💪 GOOD PROGRESS! $total_curr_issues issues need attention${NC}"
-        echo -e "    ${FADED}Manageable issue count - focused debugging session recommended${NC}"
+        echo -e "${PURPLE}✨ VALIANT PROGRESS! $total_curr_issues challenges await your blade${NC}"
+        echo -e "    ${FADED}Code analysis shows: stack overflows, uninitialized variables, or assertion failures detected${NC}"
     else
-        echo -e "${RED}🔥 WORK REQUIRED! $total_curr_issues issues detected across test suites${NC}"
-        echo -e "    ${FADED}Significant debugging needed - systematic approach recommended${NC}"
+        echo -e "${RED}🐲 TRIALS AHEAD! $total_curr_issues beasts roam the realm${NC}"
+        echo -e "    ${FADED}The Labyrinth calls: $COMPILE_ERRORS build errors, $RUNTIME_ERRORS crashes, ${#FAILED_FILES[@]} test failures${NC}"
     fi
 
     # Display current development focus if there are issues
     if [ "$total_curr_issues" -gt 0 ] && [ -n "$curr_challenge" ]; then
-        echo -e "${YELLOW}🎯 PRIORITY TARGET: $curr_challenge${NC}"
-        echo -e "    ${FADED}Recommended next debugging focus for maximum impact${NC}"
+        if [[ "$curr_challenge" == *"Final Requiem"* ]]; then
+            echo -e "${YELLOW}👑 MINOS' DECREE: $curr_challenge${NC}"
+            echo -e "    ${FADED}By King Minos' final command: one last trial blocks your ascension to Mount Olympus${NC}"
+        elif [[ "$curr_challenge" == *"Workshop Crisis"* ]]; then
+            echo -e "${YELLOW}🏗️ DAEDALUS SPEAKS: $curr_challenge${NC}"
+            echo -e "    ${FADED}Master architect whispers: check include paths, verify function signatures, resolve missing dependencies${NC}"
+        elif [[ "$curr_challenge" == *"Hydra Beasts"* ]]; then
+            echo -e "${YELLOW}🗡️  SLAY THE BEASTS: $curr_challenge${NC}"
+            echo -e "    ${FADED}Memory corruption detected: run valgrind, check array bounds, initialize all pointers to NULL${NC}"
+        elif [[ "$curr_challenge" == *"Labyrinth"* ]]; then
+            echo -e "${YELLOW}🏛️ LABYRINTH EXPLORATION: $curr_challenge${NC}"
+            echo -e "    ${FADED}Navigate the twisting corridors: follow failed assertion breadcrumbs, map logic paths, escape the Minotaur${NC}"
+        else
+            echo -e "${YELLOW}✨ ZEUS' TRIAL: $curr_challenge${NC}"
+            echo -e "    ${FADED}Divine judgment awaits: debug with systematic analysis, trace execution flow, validate assumptions${NC}"
+        fi
     fi
 
     # Check for historical milestones
@@ -1705,7 +1898,7 @@ if [ -d "$SISYPHUS_DIR" ]; then
             elif [ "$streak_count" -ge 1 ]; then
                 echo -e "${GREEN}📈 Recent trend: 🚀 ASCENDING TRAJECTORY - $((streak_count + 1)) consecutive improvements!${NC}"
             elif [ "$runtime_progress" -ge 1 ]; then
-                echo -e "${CYAN}📈 Recent trend: ⚔️ HYDRA SLAYER - eliminated $runtime_progress runtime beasts!${NC}"
+                echo -e "${CYAN}📈 Recent trend: 🐲 HYDRA SLAYER - eliminated $runtime_progress segmentation faults & memory corruptions!${NC}"
             elif [ "$test_growth" -ge 3 ]; then
                 echo -e "${YELLOW}📈 Recent trend: 🏗️ CODE ARCHITECT - expanded test suite by $test_growth tests!${NC}"
             else
@@ -1719,7 +1912,7 @@ if [ -d "$SISYPHUS_DIR" ]; then
                 elif [ "$last_total" -lt "$first_total" ]; then
                     echo -e "${CYAN}📈 Recent trend: 📉 GRADUAL MASTERY - slowly conquering challenges!${NC}"
                 else
-                    echo -e "${ORANGE}📈 Recent trend: ⚡ PHOENIX RISING - transforming trials into wisdom!${NC}"
+                    echo -e "${ORANGE}📈 Recent trend: ✨ PHOENIX RISING - transforming trials into wisdom!${NC}"
                 fi
             fi
         fi
@@ -1754,7 +1947,7 @@ elif [ "$1" = "help" ] || [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
     echo -e "  Archive keeps last 30 runs for historical analysis"
     echo -e "  Milestone achievements unlock based on your journey"
     echo ""
-    echo -e "${GREEN}⚡ Pro Tip: Run tests regularly to build epic improvement streaks!${NC}"
+    echo -e "${GREEN}✨ Pro Tip: Run tests regularly to build epic improvement streaks!${NC}"
     exit 0
 fi
 
