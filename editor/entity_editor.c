@@ -5,6 +5,7 @@
 #include "world_editor.h"
 #include "item_editor.h"
 #include "color_editor.h"
+#include "ui_editor.h"
 
 static void e_EntityEditorDoLoop( float );
 static void e_EntityEditorRenderLoop( float );
@@ -18,17 +19,38 @@ void e_InitEntityEditor( void )
   
   a_InitWidgets( "resources/widgets/editor/entity.json" );
   
-  app.active_widget = a_GetWidget( "entity" );
-  app.active_widget->action = e_InitEntityEditor;
+  app.active_widget = a_GetWidget( "tab_bar" );
 
-  w = a_GetWidget( "item" );
-  w->action = e_InitItemEditor;
+  aContainerWidget_t* container = ( aContainerWidget_t* )app.active_widget->data;
+  for ( int i = 0; i < container->num_components; i++ )
+  {
+    aWidget_t* current = &container->components[i];
 
-  w = a_GetWidget( "world" );
-  w->action = e_InitWorldEditor;
-  
-  w = a_GetWidget( "colors" );
-  w->action = e_InitColorEditor;
+    if ( strcmp( current->name, "world" ) == 0 )
+    {
+      current->action = e_InitWorldEditor;
+    }
+    
+    if ( strcmp( current->name, "item" ) == 0 )
+    {
+      current->action = e_InitItemEditor;
+    }
+    
+    if ( strcmp( current->name, "entity" ) == 0 )
+    {
+      current->action = e_InitEntityEditor;
+    }
+    
+    if ( strcmp( current->name, "colors" ) == 0 )
+    {
+      current->action = e_InitColorEditor;
+    }
+    
+    if ( strcmp( current->name, "ui" ) == 0 )
+    {
+      current->action = e_InitUIEditor;
+    }
+  }
   
 }
 

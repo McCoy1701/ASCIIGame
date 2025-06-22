@@ -1,14 +1,15 @@
 [
   {
     "type"       : "WT_CONTAINER",
-    "name"       : "menu_bar",
+    "name"       : "tab_bar",
     "x"          : 10,
     "y"          : 10,
-    "label"      : "Menu",
+    "label"      : "Tabs",
     "boxed"      : 1,
     "hidden"     : 0,
     "padding"    : 6,
     "flex"       : 1,
+    "spacing"    : 10,
     "fg"         : [ 255, 255,   0, 255 ],
     "bg"         : [ 255, 255, 255, 0 ],
     "components" : [
@@ -57,6 +58,18 @@
       "boxed"  : 1,
       "hidden" : 0,
       "padding": 0,
+      "fg"     : [ 255, 0, 255, 255 ],
+      "bg"     : [ 255, 255,   0, 100 ]
+    },
+    {
+      "type"   : "WT_BUTTON",
+      "name"   : "ui",
+      "x"      : 390,
+      "y"      : 10,
+      "label"  : "UI",
+      "boxed"  : 1,
+      "hidden" : 0,
+      "padding": 1,
       "fg"     : [ 255, 0, 255, 255 ],
       "bg"     : [ 255, 255,   0, 100 ]
     }

@@ -32,24 +32,29 @@ void e_InitUIEditor( void )
   {
     aWidget_t* current = &container->components[i];
 
-    if ( strncmp( current->name, "world", sizeof( current->name ) ) == 0 )
+    if ( strcmp( current->name, "world" ) == 0 )
     {
       current->action = e_InitWorldEditor;
     }
     
-    if ( strncmp( current->name, "item", sizeof( current->name ) ) == 0 )
+    if ( strcmp( current->name, "item" ) == 0 )
     {
       current->action = e_InitItemEditor;
     }
     
-    if ( strncmp( current->name, "entity", sizeof( current->name ) ) == 0 )
+    if ( strcmp( current->name, "entity" ) == 0 )
     {
       current->action = e_InitEntityEditor;
     }
     
-    if ( strncmp( current->name, "colors", sizeof( current->name ) ) == 0 )
+    if ( strcmp( current->name, "colors" ) == 0 )
     {
       current->action = e_InitColorEditor;
+    }
+    
+    if ( strcmp( current->name, "ui" ) == 0 )
+    {
+      current->action = e_InitUIEditor;
     }
   }
 

@@ -27,29 +27,66 @@ void e_InitWorldEditor( void )
   
   a_InitWidgets( "resources/widgets/editor/world.json" );
   
-  app.active_widget = a_GetWidget( "world" );
-  app.active_widget->action = e_InitWorldEditor;
+  app.active_widget = a_GetWidget( "tab_bar" );
 
-  w = a_GetWidget( "item" );
-  w->action = e_InitItemEditor;
+  aContainerWidget_t* container = ( aContainerWidget_t* )app.active_widget->data;
+  for ( int i = 0; i < container->num_components; i++ )
+  {
+    aWidget_t* current = &container->components[i];
 
-  w = a_GetWidget( "entity" );
-  w->action = e_InitEntityEditor;
+    if ( strcmp( current->name, "world" ) == 0 )
+    {
+      current->action = e_InitWorldEditor;
+    }
+    
+    if ( strcmp( current->name, "item" ) == 0 )
+    {
+      current->action = e_InitItemEditor;
+    }
+    
+    if ( strcmp( current->name, "entity" ) == 0 )
+    {
+      current->action = e_InitEntityEditor;
+    }
+    
+    if ( strcmp( current->name, "colors" ) == 0 )
+    {
+      current->action = e_InitColorEditor;
+    }
+    
+    if ( strcmp( current->name, "ui" ) == 0 )
+    {
+      current->action = e_InitUIEditor;
+    }
+  }
   
-  w = a_GetWidget( "colors" );
-  w->action = e_InitColorEditor;
-  
-  w = a_GetWidget( "ui" );
-  w->action = e_InitUIEditor;
-  
-  w = a_GetWidget( "creation" );
-  w->action = we_creation;
-  w = a_GetWidget( "edit" );
-  w->action = we_edit;
-  w = a_GetWidget( "save" );
-  w->action = we_save;
-  w = a_GetWidget( "load" );
-  w->action = we_load;
+  w = a_GetWidget( "menu_bar" );
+  container = ( aContainerWidget_t* )w->data;
+  for ( int i = 0; i < container->num_components; i++ )
+  {
+    aWidget_t* current = &container->components[i];
+
+    if ( strcmp( current->name, "creation" ) == 0 )
+    {
+      current->action = we_creation;
+    }
+    
+    if ( strcmp( current->name, "edit" ) == 0 )
+    {
+      current->action = we_edit;
+    }
+    
+    if ( strcmp( current->name, "save" ) == 0 )
+    {
+      current->action = we_save;
+    }
+    
+    if ( strcmp( current->name, "load" ) == 0 )
+    {
+      current->action = we_load;
+    }
+  }
+
 }
 
 void we_creation( void )
@@ -57,16 +94,16 @@ void we_creation( void )
   app.delegate.logic = we_CreationDoLoop;
   app.delegate.draw  = we_CreationRenderLoop;
   
-  app.active_widget = a_GetWidget( "world_size" );
+  
+  app.active_widget = a_GetWidget( "generation_menu" );
+  aContainerWidget_t* container = ( aContainerWidget_t* )app.active_widget->data;
   app.active_widget->hidden = 0;
-  w = a_GetWidget( "region_size" );
-  w->hidden = 0;
-  w = a_GetWidget( "local_size" );
-  w->hidden = 0;
-  w = a_GetWidget( "z_height" );
-  w->hidden = 0;
-  w = a_GetWidget( "generate" );
-  w->hidden = 0;
+  
+  for ( int i = 0; i < container->num_components; i++ )
+  {
+    aWidget_t* current = &container->components[i];
+    current->hidden = 0;
+  }
 
 }
 
@@ -86,7 +123,7 @@ static void we_CreationDoLoop( float dt )
 
 static void we_CreationRenderLoop( float dt )
 {
-  a_DrawFilledRect( 240, 240, 400, 265, 255, 0, 255, 255 );
+  //a_DrawFilledRect( 240, 240, 400, 265, 255, 0, 255, 255 );
   
   a_DrawWidgets();
 
