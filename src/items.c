@@ -31,22 +31,50 @@ static bool _populate_string_field(dString_t* dest, const char* src) {
 /*
  * Helper function to populate item description for weapons
  */
-static bool _populate_weapon_desc(dString_t* dest, const Material_t* material) {
-    if (dest == NULL || material == NULL) {
-        return false;
-    }
+ static bool _populate_weapon_desc(dString_t* dest, const Material_t* material) {
+     if (dest == NULL || material == NULL) {
+         return false;
+     }
 
-    dString_t* temp = d_InitString();
-    if (temp == NULL) {
-        return false;
-    }
+     // BUG FIX: Check if material->name is NULL
+     if (material->name == NULL) {
+         return false;  // or provide a default description
+     }
 
-    d_AppendString(temp, "A weapon made of ", 0);
-    d_AppendString(temp, material->name->str, 0);
-    *dest = *temp;
-    free(temp);
-    return true;
-}
+     dString_t* temp = d_InitString();
+     if (temp == NULL) {
+         return false;
+     }
+
+     d_AppendString(temp, "A weapon made of ", 0);
+     d_AppendString(temp, material->name->str, 0);  // Now safe!
+     *dest = *temp;
+     free(temp);
+     return true;
+ }
+ // Helper function to determine if item resists durability loss
+ // Returns true if item should NOT lose durability
+ static bool item_resists_durability_loss(const Item_t* item)
+ {
+     if (item == NULL) {
+         return false;
+     }
+
+     // Base chance is 5% to avoid durability loss
+     float base_chance = 0.05f;
+     float resistance_chance = base_chance * item->material_data.properties.durability_fact;
+
+     // Cap at 95% maximum resistance (always have some chance of wear)
+     if (resistance_chance > 0.95f) {
+         resistance_chance = 0.95f;
+     }
+
+     // Generate random number between 0.0 and 1.0
+     float random_roll = (float)rand() / (float)RAND_MAX;
+
+     return random_roll < resistance_chance;
+ }
+
 /*
  * Helper function to populate item description for armor
  */
@@ -282,7 +310,8 @@ Item_t* create_weapon(const char* name, const char* id, Material_t material,
 }
 
 Item_t* create_armor(const char* name, const char* id, Material_t material,
-                    uint8_t armor_val, uint8_t evasion_val, char glyph)
+                    uint8_t armor_val, uint8_t evasion_val, char glyph,
+                    uint8_t stealth_val, uint8_t enchant_val)
 {
     if (name == NULL || id == NULL) {
         LOG("Invalid name or id provided");
@@ -321,8 +350,8 @@ Item_t* create_armor(const char* name, const char* id, Material_t material,
     // Initialize armor-specific data
     item->data.armor.armor_value = armor_val;
     item->data.armor.evasion_value = evasion_val;
-    item->data.armor.stealth_value = 0;
-    item->data.armor.enchant_value = 0;
+    item->data.armor.stealth_value = stealth_val;
+    item->data.armor.enchant_value = enchant_val;
     item->data.armor.durability = 255; // 100% durability
 
     // Set default values (will be modified by material factors)
@@ -814,8 +843,6 @@ MaterialProperties_t create_default_material_properties(void)
     return props;
 }
 
-
-
 void apply_material_to_weapon(Item_t* item)
 {
     if (item == NULL || item->type != ITEM_TYPE_WEAPON) {
@@ -828,14 +855,18 @@ void apply_material_to_weapon(Item_t* item)
     // Apply material factors to weapon stats
     weapon->min_damage = (uint8_t)(weapon->min_damage * material->properties.min_damage_fact);
     weapon->max_damage = (uint8_t)(weapon->max_damage * material->properties.max_damage_fact);
-    weapon->durability = (uint8_t)(weapon->durability * material->properties.durability_fact);
+    // NOTE: Durability is no longer modified by material - stays at 255
     weapon->stealth_value = (uint8_t)(weapon->stealth_value * material->properties.stealth_value_fact);
     weapon->enchant_value = (uint8_t)(weapon->enchant_value * material->properties.enchant_value_fact);
 
-    // Apply to base item properties
-    item->weight_kg = (float)(item->weight_kg * material->properties.weight_fact);
-    item->value_coins = (uint8_t)(item->value_coins * material->properties.value_coins_fact);
+    // Apply to base item properties with bounds checking
+    float new_weight = item->weight_kg * material->properties.weight_fact;
+    item->weight_kg = (new_weight < 0.0f) ? 0.0f : new_weight;
+
+    float new_value = item->value_coins * material->properties.value_coins_fact;
+    item->value_coins = (new_value < 0.0f) ? 0 : (uint8_t)new_value;
 }
+
 
 void apply_material_to_armor(Item_t* item)
 {
@@ -853,15 +884,39 @@ void apply_material_to_armor(Item_t* item)
     armor->stealth_value = (uint8_t)(armor->stealth_value * material->properties.stealth_value_fact);
     armor->enchant_value = (uint8_t)(armor->enchant_value * material->properties.enchant_value_fact);
 
-    // Apply to base item properties
-    item->weight_kg = (float)(item->weight_kg * material->properties.weight_fact);
-    item->value_coins = (uint8_t)(item->value_coins * material->properties.value_coins_fact);
+    // Apply to base item properties with bounds checking
+    float new_weight = item->weight_kg * material->properties.weight_fact;
+    item->weight_kg = (new_weight < 0.0f) ? 0.0f : new_weight;
+
+    float new_value = item->value_coins * material->properties.value_coins_fact;
+    item->value_coins = (new_value < 0.0f) ? 0 : (uint8_t)new_value;
+}
+
+void apply_material_to_ammunition(Item_t* item)
+{
+    if (item == NULL || item->type != ITEM_TYPE_AMMUNITION) {
+        return;
+    }
+
+    Ammunition__Item_t* ammo = &item->data.ammo;
+    Material_t* material = &item->material_data;
+
+    // Apply material factors to ammunition stats
+    ammo->min_damage = (uint8_t)(ammo->min_damage * material->properties.min_damage_fact);
+    ammo->max_damage = (uint8_t)(ammo->max_damage * material->properties.max_damage_fact);
+
+    // Apply to base item properties with bounds checking
+    float new_weight = item->weight_kg * material->properties.weight_fact;
+    item->weight_kg = (new_weight < 0.0f) ? 0.0f : new_weight;
+
+    float new_value = item->value_coins * material->properties.value_coins_fact;
+    item->value_coins = (new_value < 0.0f) ? 0 : (uint8_t)new_value;
 }
 
 float calculate_final_weight(const Item_t* item)
 {
     if (item == NULL) {
-        // TODO: Implement logging errors on NULL check
+        LOG("calculate_final_weight: Item is NULL");
         return 0.0f;
     }
 
@@ -872,7 +927,7 @@ float calculate_final_weight(const Item_t* item)
 uint8_t calculate_final_value(const Item_t* item)
 {
     if (item == NULL) {
-        // TODO: Implement logging errors on NULL check
+        LOG("calculate_final_value: Item is NULL");
         return 0;
     }
 
@@ -888,7 +943,7 @@ uint8_t calculate_final_value(const Item_t* item)
 uint8_t get_weapon_min_damage(const Item_t* item)
 {
     if (item == NULL || item->type != ITEM_TYPE_WEAPON) {
-        // TODO: Implement logging errors on NULL check
+        LOG("get_weapon_min_damage: Item is NULL or not a weapon");
         return 0;
     }
     return item->data.weapon.min_damage;
@@ -897,16 +952,33 @@ uint8_t get_weapon_min_damage(const Item_t* item)
 uint8_t get_weapon_max_damage(const Item_t* item)
 {
     if (item == NULL || item->type != ITEM_TYPE_WEAPON) {
-        // TODO: Implement logging errors on NULL check
+        LOG("get_weapon_max_damage: Item is NULL or not a weapon");
         return 0;
     }
     return item->data.weapon.max_damage;
+}
+uint8_t get_ammunition_min_damage(const Item_t* item)
+{
+    if (item == NULL || item->type != ITEM_TYPE_AMMUNITION) {
+        LOG("get_ammunition_min_damage: Item is NULL or not ammunition");
+        return 0;
+    }
+    return item->data.ammo.min_damage;
+}
+
+uint8_t get_ammunition_max_damage(const Item_t* item)
+{
+    if (item == NULL || item->type != ITEM_TYPE_AMMUNITION) {
+        LOG("get_ammunition_max_damage: Item is NULL or not ammunition");
+        return 0;
+    }
+    return item->data.ammo.max_damage;
 }
 
 uint8_t get_weapon_range(const Item_t* item)
 {
     if (item == NULL || item->type != ITEM_TYPE_WEAPON) {
-        // TODO: Implement logging errors on NULL check
+        LOG("get_weapon_range: Item is NULL or not a weapon");
         return 0;
     }
     return item->data.weapon.range_tiles;
@@ -915,7 +987,7 @@ uint8_t get_weapon_range(const Item_t* item)
 bool weapon_needs_ammo(const Item_t* item)
 {
     if (item == NULL || item->type != ITEM_TYPE_WEAPON) {
-        // TODO: Implement logging errors on NULL check
+        LOG("weapon_needs_ammo: Item is NULL or not a weapon");
         return false;
     }
 
@@ -926,12 +998,12 @@ bool weapon_needs_ammo(const Item_t* item)
 bool weapon_can_use_ammo(const Item_t* weapon, const Item_t* ammo)
 {
     if (weapon == NULL || ammo == NULL) {
-        // TODO: Implement logging errors on NULL check
+        LOG("weapon_can_use_ammo: Item is NULL");
         return false;
     }
 
     if (weapon->type != ITEM_TYPE_WEAPON || ammo->type != ITEM_TYPE_AMMUNITION) {
-        // TODO: Implement logging errors on type mismatch
+        LOG("weapon_can_use_ammo: Type mismatch");
         return false;
     }
 
@@ -944,7 +1016,7 @@ bool weapon_can_use_ammo(const Item_t* weapon, const Item_t* ammo)
 uint8_t get_armor_value(const Item_t* item)
 {
     if (item == NULL || item->type != ITEM_TYPE_ARMOR) {
-        // TODO: Implement logging errors on NULL check
+        LOG("get_armor_value: Item is NULL or not armor");
         return 0;
     }
     return item->data.armor.armor_value;
@@ -953,7 +1025,7 @@ uint8_t get_armor_value(const Item_t* item)
 uint8_t get_evasion_value(const Item_t* item)
 {
     if (item == NULL || item->type != ITEM_TYPE_ARMOR) {
-        // TODO: Implement logging errors on NULL check
+        LOG("get_evasion_value: Item is NULL or not armor");
         return 0;
     }
     return item->data.armor.evasion_value;
@@ -963,7 +1035,7 @@ uint8_t get_evasion_value(const Item_t* item)
 float get_item_weight(const Item_t* item)
 {
     if (item == NULL) {
-        // TODO: Implement logging errors on NULL check
+        LOG("get_item_weight: Item is NULL");
         return 0.0f;
     }
     return item->weight_kg;
@@ -972,7 +1044,7 @@ float get_item_weight(const Item_t* item)
 uint8_t get_item_value_coins(const Item_t* item)
 {
     if (item == NULL) {
-        // TODO: Implement logging errors on NULL check
+        LOG("get_item_value_coins: Item is NULL");
         return 0;
     }
     return item->value_coins;
@@ -981,7 +1053,7 @@ uint8_t get_item_value_coins(const Item_t* item)
 uint8_t get_stealth_value(const Item_t* item)
 {
     if (item == NULL) {
-        // TODO: Implement logging errors on NULL check
+        LOG("get_stealth_value: Item is NULL");
         return 0;
     }
 
@@ -1002,6 +1074,7 @@ uint8_t get_stealth_value(const Item_t* item)
 uint8_t get_durability(const Item_t* item)
 {
     if (item == NULL) {
+        LOG("get_durability: Item is NULL");
         return 0;
     }
 
@@ -1022,6 +1095,7 @@ uint8_t get_durability(const Item_t* item)
 bool is_item_stackable(const Item_t* item)
 {
     if (item == NULL) {
+        LOG("is_item_stackable: Item is NULL");
         return false;
     }
 
@@ -1032,6 +1106,7 @@ bool is_item_stackable(const Item_t* item)
 uint8_t get_max_stack_size(const Item_t* item)
 {
     if (item == NULL) {
+        LOG("get_max_stack_size: Item is NULL");
         return 0;
     }
 
@@ -1045,6 +1120,13 @@ uint8_t get_max_stack_size(const Item_t* item)
 void damage_item_durability(Item_t* item, uint16_t damage)
 {
     if (item == NULL) {
+        LOG("damage_item_durability: Item is NULL");
+        return;
+    }
+
+    // Check if item resists durability loss due to material properties
+    if (item_resists_durability_loss(item)) {
+        LOG("Item resisted durability loss due to material properties");
         return;
     }
 
@@ -1078,6 +1160,7 @@ void damage_item_durability(Item_t* item, uint16_t damage)
 void repair_item(Item_t* item, uint16_t repair_amount)
 {
     if (item == NULL) {
+        LOG("repair_item: Item is NULL");
         return;
     }
 
@@ -1111,6 +1194,7 @@ void repair_item(Item_t* item, uint16_t repair_amount)
 bool is_item_broken(const Item_t* item)
 {
     if (item == NULL) {
+        LOG("is_item_broken: Item is NULL");
         return true; // NULL items are considered "broken"
     }
 
@@ -1134,6 +1218,7 @@ bool is_item_broken(const Item_t* item)
 float get_durability_percentage(const Item_t* item)
 {
     if (item == NULL) {
+        LOG("get_durability_percentage: Item is NULL");
         return 0.0f;
     }
 
@@ -1161,20 +1246,20 @@ float get_durability_percentage(const Item_t* item)
 Inventory_t* create_inventory(uint8_t size)
 {
     if (size == 0) {
-        // TODO: Implement error handling for invalid inventory size
+        LOG("create_inventory: Invalid inventory size");
         return NULL; // Invalid inventory size
     }
 
     Inventory_t* inventory = (Inventory_t*)malloc(sizeof(Inventory_t));
     if (inventory == NULL) {
-        // TODO: Implement error handling for memory allocation failure
+        LOG("create_inventory: Memory allocation failed");
         return NULL; // Memory allocation failed
     }
 
     inventory->slots = (Inventory_slot_t*)calloc(size, sizeof(Inventory_slot_t));
     if (inventory->slots == NULL) {
         free(inventory);
-        // TODO: Implement error handling for memory allocation failure
+        LOG("create_inventory: Memory allocation failed");
         return NULL; // Memory allocation failed
     }
 
@@ -1193,7 +1278,7 @@ Inventory_t* create_inventory(uint8_t size)
 void destroy_inventory(Inventory_t* inventory)
 {
     if (inventory == NULL) {
-        // TODO: Implement error handling for invalid input
+        LOG("destroy_inventory: Invalid inventory");
         return;
     }
 
@@ -1209,7 +1294,7 @@ void destroy_inventory(Inventory_t* inventory)
 bool add_item_to_inventory(Inventory_t* inventory, Item_t* item, uint8_t quantity)
 {
     if (inventory == NULL || item == NULL || quantity == 0) {
-        // TODO: Implement error handling for invalid input
+        LOG("add_item_to_inventory: Invalid input");
         return false;
     }
 
@@ -1247,7 +1332,7 @@ bool add_item_to_inventory(Inventory_t* inventory, Item_t* item, uint8_t quantit
         }
 
         if (empty_slot >= inventory->size) {
-            // TODO: Implement error handling for no empty slots
+            LOG("Adding items to inventory failed: No empty slots");
             return false; // No empty slots, couldn't add all items
         }
 
@@ -1272,7 +1357,7 @@ bool add_item_to_inventory(Inventory_t* inventory, Item_t* item, uint8_t quantit
 bool remove_item_from_inventory(Inventory_t* inventory, const char* item_id, uint8_t quantity)
 {
     if (inventory == NULL || item_id == NULL || quantity == 0) {
-        // TODO: Implement error handling for invalid input
+        LOG("Invalid input for remove_item_from_inventory");
         return false;
     }
 
@@ -1302,7 +1387,7 @@ bool remove_item_from_inventory(Inventory_t* inventory, const char* item_id, uin
 Inventory_slot_t* find_item_in_inventory(Inventory_t* inventory, const char* item_id)
 {
     if (inventory == NULL || item_id == NULL) {
-        // TODO: Implement error handling for invalid input
+        LOG("Invalid input for find_item_in_inventory");
         return NULL;
     }
 
@@ -1312,14 +1397,14 @@ Inventory_slot_t* find_item_in_inventory(Inventory_t* inventory, const char* ite
             return &inventory->slots[i];
         }
     }
-    // TODO: Implement error handling for item not found
+    LOG("Item not found in inventory");
     return NULL; // Item not found
 }
 
 bool can_stack_items(const Item_t* item1, const Item_t* item2)
 {
     if (item1 == NULL || item2 == NULL) {
-        // TODO: Implement error handling for invalid input
+        LOG("Invalid input for can_stack_items");
         return false;
     }
 
@@ -1330,26 +1415,26 @@ bool can_stack_items(const Item_t* item1, const Item_t* item2)
 bool equip_item(Inventory_t* inventory, const char* item_id)
 {
     if (inventory == NULL || item_id == NULL) {
-        // TODO: Implement error handling for invalid input
+        LOG("Invalid input for equip_item");
         return false;
     }
 
     Inventory_slot_t* slot = find_item_in_inventory(inventory, item_id);
     if (slot == NULL) {
-        // TODO: Implement error handling for item not found
+        LOG("Item not found in inventory for equip_item");
         return false;
     }
 
     // Only weapons and armor can be equipped
     if (slot->item.type != ITEM_TYPE_WEAPON && slot->item.type != ITEM_TYPE_ARMOR) {
-        // TODO: Implement error handling for invalid item type
+        LOG("Invalid item type for equip_item");
         return false;
     }
 
     // Check if item is broken
     if (is_item_broken(&slot->item)) {
-        //
-        return false; // Can't equip broken items
+        LOG("Item is broken for equip_item");
+        return false;
     }
 
     // Unequip any existing item of the same type
@@ -1369,24 +1454,23 @@ bool equip_item(Inventory_t* inventory, const char* item_id)
 bool unequip_item(Inventory_t* inventory, const char* item_id)
 {
     if (inventory == NULL || item_id == NULL) {
-        // TODO: Implement error handling for invalid input
+        LOG("Invalid input for unequip_item");
         return false;
     }
 
     Inventory_slot_t* slot = find_item_in_inventory(inventory, item_id);
     if (slot == NULL || !slot->is_equipped) {
-        // TODO: Implement error handling for item not found or not equipped
+        LOG("Item not found or not equipped for unequip_item");
         return false;
     }
 
     slot->is_equipped = 0;
     return true;
 }
-
 Inventory_slot_t* get_equipped_weapon(Inventory_t* inventory)
 {
     if (inventory == NULL) {
-        // TODO: Implement error handling for invalid input
+        LOG("Invalid input for get_equipped_weapon");
         return NULL;
     }
 
@@ -1394,18 +1478,25 @@ Inventory_slot_t* get_equipped_weapon(Inventory_t* inventory)
         if (inventory->slots[i].quantity > 0 &&
             inventory->slots[i].item.type == ITEM_TYPE_WEAPON &&
             inventory->slots[i].is_equipped) {
+
+            // Check if the equipped weapon is broken
+            if (is_item_broken(&inventory->slots[i].item)) {
+                LOG("Auto-unequipping broken weapon");
+                inventory->slots[i].is_equipped = false;
+                return NULL;
+            }
+
             return &inventory->slots[i];
         }
     }
 
-    // TODO: Implement error handling for no weapon equipped
     return NULL;
 }
+
 
 Inventory_slot_t* get_equipped_armor(Inventory_t* inventory)
 {
     if (inventory == NULL) {
-        // TODO: Implement error handling for invalid input
         return NULL;
     }
 
@@ -1413,18 +1504,25 @@ Inventory_slot_t* get_equipped_armor(Inventory_t* inventory)
         if (inventory->slots[i].quantity > 0 &&
             inventory->slots[i].item.type == ITEM_TYPE_ARMOR &&
             inventory->slots[i].is_equipped) {
+
+            // Check if the equipped armor is broken
+            if (is_item_broken(&inventory->slots[i].item)) {
+                LOG("Auto-unequipping broken armor");
+                inventory->slots[i].is_equipped = false;
+                return NULL;
+            }
+
             return &inventory->slots[i];
         }
     }
-
-    // TODO: Implement error handling for no armor equipped
     return NULL;
 }
+
 
 uint8_t get_inventory_free_slots(const Inventory_t* inventory)
 {
     if (inventory == NULL) {
-        // TODO: Implement error handling for invalid input
+        LOG("Invalid input for get_inventory_free_slots");
         return 0;
     }
 
@@ -1441,7 +1539,7 @@ uint8_t get_inventory_free_slots(const Inventory_t* inventory)
 uint8_t get_total_inventory_weight(const Inventory_t* inventory)
 {
     if (inventory == NULL) {
-        // TODO: Implement error handling for invalid input
+        LOG("Invalid input for get_total_inventory_weight");
         return 0;
     }
 
@@ -1460,7 +1558,7 @@ uint8_t get_total_inventory_weight(const Inventory_t* inventory)
 bool is_inventory_full(const Inventory_t* inventory)
 {
     if (inventory == NULL) {
-        // TODO: Implement error handling for invalid input
+        LOG("Invalid input for is_inventory_full");
         return true; // NULL inventory is considered "full"
     }
 
@@ -1474,7 +1572,7 @@ bool is_inventory_full(const Inventory_t* inventory)
 bool use_consumable(Item_t* item)
 {
     if (item == NULL || item->type != ITEM_TYPE_CONSUMABLE) {
-        // TODO: Implement error handling for invalid input
+        LOG("Invalid input for use_consumable");
         return false;
     }
 
@@ -1482,7 +1580,7 @@ bool use_consumable(Item_t* item)
 
     // Check if the consumable has a valid on_consume callback
     if (consumable->on_consume == NULL) {
-        // TODO: Implement error handling for invalid input
+        LOG("Invalid input for use_consumable");
         return false;
     }
 
@@ -1498,7 +1596,7 @@ bool use_consumable(Item_t* item)
 void trigger_consumable_duration_tick(Item_t* item)
 {
     if (item == NULL || item->type != ITEM_TYPE_CONSUMABLE) {
-        // TODO: Implement error handling for invalid input
+        LOG("Invalid input for trigger_consumable_duration_tick");
         return;
     }
 
@@ -1521,7 +1619,7 @@ void trigger_consumable_duration_tick(Item_t* item)
 void trigger_consumable_duration_end(Item_t* item)
 {
     if (item == NULL || item->type != ITEM_TYPE_CONSUMABLE) {
-        // TODO: Implement error handling for invalid input
+        LOG("Invalid input for trigger_consumable_duration_end");
         return;
     }
 
@@ -1539,19 +1637,19 @@ void trigger_consumable_duration_end(Item_t* item)
 bool can_key_open_lock(const Item_t* key, const Lock_t* lock)
 {
     if (key == NULL || lock == NULL) {
-        // TODO: Implement error handling for invalid input
+        LOG("Can Key Open Lock? No, because key or lock is NULL");
         return false;
     }
 
     // Only keys can open locks
     if (key->type != ITEM_TYPE_KEY) {
-        // TODO: Implement error handling for invalid input
+        LOG("Can Key Open Lock? No, because key is not a key");
         return false;
     }
 
     // Check if the lock is jammed
     if (lock->jammed_seconds > 0) {
-        // TODO: Implement error handling for invalid input
+        LOG("Can Key Open Lock? No, because lock is jammed");
         return false; // Can't open jammed locks
     }
 

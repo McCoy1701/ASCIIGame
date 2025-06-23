@@ -76,7 +76,7 @@ int test_is_armor(void)
     Material_t material = create_test_material();
 
     // Create armor
-    Item_t* armor = create_armor("Test Armor", "test_armor", material, 20, 5, 'A');
+    Item_t* armor = create_armor("Test Armor", "test_armor", material, 20, 5, 'A', 15, 15);
     TEST_ASSERT(armor != NULL, "Armor should be created for testing");
 
     // Test positive case
@@ -177,7 +177,7 @@ int test_get_weapon_data(void)
     TEST_ASSERT(weapon_data->range_tiles == 2, "Weapon data should have correct range");
 
     // Test with wrong type
-    Item_t* armor = create_armor("Test Armor", "test_armor", material, 20, 5, 'A');
+    Item_t* armor = create_armor("Test Armor", "test_armor", material, 20, 5, 'A', 15, 15);
     TEST_ASSERT(armor != NULL, "Armor should be created for testing");
 
     Weapon__Item_t* wrong_data = get_weapon_data(armor);
@@ -196,7 +196,7 @@ int test_get_armor_data(void)
     Material_t material = create_test_material();
 
     // Create armor
-    Item_t* armor = create_armor("Test Armor", "test_armor", material, 20, 5, 'A');
+    Item_t* armor = create_armor("Test Armor", "test_armor", material, 20, 5, 'A', 15, 15);
     TEST_ASSERT(armor != NULL, "Armor should be created for testing");
 
     // Test getting armor data

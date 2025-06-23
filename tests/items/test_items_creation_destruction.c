@@ -68,6 +68,13 @@ int test_create_weapon(void)
     TEST_ASSERT(weapon->data.weapon.min_damage == 10, "Min damage should be 10");
     TEST_ASSERT(weapon->data.weapon.max_damage == 15, "Max damage should be 15");
     TEST_ASSERT(weapon->data.weapon.range_tiles == 0, "Range should be 0 (melee)");
+
+    dString_t* durability_string = d_InitString();
+    d_AppendString(durability_string, "Durability: ", 0);
+    d_AppendInt(durability_string, weapon->data.weapon.durability);
+    LOG(durability_string->str);
+    d_DestroyString(durability_string);
+
     TEST_ASSERT(weapon->data.weapon.durability == 255, "Durability should be 100% (255)");
     TEST_ASSERT(weapon->stackable == 0, "Weapons should not be stackable");
 
@@ -96,7 +103,7 @@ int test_create_armor(void)
     Material_t material = create_test_material();
 
     // Test normal armor creation
-    Item_t* armor = create_armor("Iron Chestplate", "iron_chest", material, 20, 5, 'A');
+    Item_t* armor = create_armor("Iron Chestplate", "iron_chest", material, 20, 5, 'A', 10, 5);
 
     TEST_ASSERT(armor != NULL, "Armor should be created successfully");
     TEST_ASSERT(armor->type == ITEM_TYPE_ARMOR, "Item type should be ARMOR");
@@ -105,6 +112,8 @@ int test_create_armor(void)
     TEST_ASSERT(armor->glyph == 'A', "Armor glyph should be 'A'");
     TEST_ASSERT(armor->data.armor.armor_value == 20, "Armor value should be 20");
     TEST_ASSERT(armor->data.armor.evasion_value == 5, "Evasion value should be 5");
+    TEST_ASSERT(armor->data.armor.stealth_value == 10, "Stealth value should be 10");
+    TEST_ASSERT(armor->data.armor.enchant_value == 5, "Enchant value should be 5");
     TEST_ASSERT(armor->data.armor.durability == 255, "Durability should be 100% (255)");
     TEST_ASSERT(armor->stackable == 0, "Armor should not be stackable");
     TEST_ASSERT(strcmp(armor->material_data.name->str, "Test Material") == 0, "Material name should match");
@@ -112,7 +121,7 @@ int test_create_armor(void)
     destroy_item(armor);
 
     // Test armor creation with NULL parameters
-    Item_t* null_armor = create_armor(NULL, "test", material, 10, 5, 'a');
+    Item_t* null_armor = create_armor(NULL, "test", material, 10, 5, 'a', 10, 20);
     TEST_ASSERT(null_armor == NULL, "Creating armor with NULL name should fail");
 
     return 1;

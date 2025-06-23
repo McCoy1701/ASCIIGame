@@ -1081,6 +1081,7 @@ run_test "Item Durability System" "run-test-items-durability"
 run_test "Inventory Management" "run-test-items-inventory"
 run_test "Item Usage & Effects" "run-test-items-usage"
 run_test "Item Helper Functions" "run-test-items-helper-functions"
+run_test "Item Integration Tests" "run-test-items-integration-tests"
 
 # Calculate overall execution time
 overall_end=$(date +%s.%N)
@@ -1311,7 +1312,7 @@ if [ ${#COMPILE_ERROR_FILES[@]} -gt 0 ] || [ ${#RUNTIME_ERROR_FILES[@]} -gt 0 ] 
 
     if [ ${#RUNTIME_ERROR_FILES[@]} -gt 0 ]; then
         echo ""
-        echo -e "${ORANGE}🐲 HYDRA HEADS RAMPAGE - Memory Corruption Unleashed:${NC}"
+        echo -e "${ORANGE}🐲 MYTHICAL BEASTS RAMPAGE - Memory Corruption Unleashed:${NC}"
         for error_file in "${RUNTIME_ERROR_FILES[@]}"; do
             name=$(echo "$error_file" | cut -d':' -f1)
             target=$(echo "$error_file" | cut -d':' -f2)
@@ -1324,11 +1325,11 @@ if [ ${#COMPILE_ERROR_FILES[@]} -gt 0 ] || [ ${#RUNTIME_ERROR_FILES[@]} -gt 0 ] 
 
     if [ ${#FAILED_FILES[@]} -gt 0 ]; then
         echo ""
-        echo -e "${YELLOW}🏛️ MINOTAUR'S LABYRINTH - Logic Paths Blocked:${NC}"
+        echo -e "${YELLOW}🏛️  MINOTAUR'S LABYRINTH - Logic Paths Blocked:${NC}"
         for failed in "${FAILED_FILES[@]}"; do
             name=$(echo "$failed" | cut -d':' -f1)
             target=$(echo "$failed" | cut -d':' -f2)
-            echo -e "  ${YELLOW}• $name${NC} - Minotaur guards this corridor: assertion failures, logic errors detected"
+            echo -e "  ${YELLOW}• $name${NC} - The corridor is blocked: logical fallacies, circular reasoning, or paradoxes"
             echo -e "    ${GRAY}Navigate maze: check expected vs actual values, boundary conditions, algorithm correctness${NC}"
             file_path=$(map_target_to_file_path "$target")
             echo -e "    Explore: ${YELLOW}make $target${NC} | ${CYAN}View Test:${NC} \e]8;;file://$(pwd)/$file_path\e\\Click Here\e]8;;\e\\"
@@ -1695,32 +1696,73 @@ show_motivational_message() {
             echo -e "    ${FADED}Execution efficiency improved - optimization work paying off${NC}"
         fi
     else
-        # NO CHANGE - Mythological stability analysis
+        # NO CHANGE - Mythological stability analysis with story progression
         echo -e "${CYAN}🏛️ ETERNAL VIGILANCE: The Oracle's vision remains unchanged${NC}"
 
         if [ "$total_curr_issues" -eq 0 ]; then
-            echo -e "${GREEN}🌟 OLYMPIAN PERFECTION! The gods bless your flawless code${NC}"
-            echo -e "    ${FADED}Divine harmony achieved - continue this blessed state${NC}"
+            # Perfect state - random celebration
+            local perfect_messages=(
+                "${GREEN}🏛️ MOUNT OLYMPUS ACHIEVED! Daedalus' labyrinth stands complete and flawless${NC}|Divine architecture perfected - gods themselves marvel at your craftsmanship"
+                "${GREEN}👑 KING MINOS APPROVES! The royal decree: 'None shall challenge this perfect maze!'${NC}|Royal satisfaction achieved - labyrinth defenses are impenetrable"
+                "${GREEN}🌟 OLYMPIAN PERFECTION! Zeus himself blesses your flawless construction${NC}|Divine harmony achieved - continue this blessed architectural state"
+                "${GREEN}💎 MASTER CRAFTSMAN! Daedalus weeps with joy at your legendary skill${NC}|Legendary mastery achieved - your name echoes through mythological halls"
+            )
+            local selected_perfect="${perfect_messages[RANDOM % ${#perfect_messages[@]}]}"
+            IFS='|' read -r message context <<< "$selected_perfect"
+            echo -e "$message"
+            echo -e "    ${FADED}$context${NC}"
+        elif [ "$total_curr_issues" -eq 1 ]; then
+            # Single issue - Minos' final decree
+            if [ "$COMPILE_ERRORS" -gt 0 ]; then
+                echo -e "${YELLOW}👑 MINOS' FINAL DECREE! One blueprint flaw blocks the royal seal${NC}"
+                echo -e "    ${FADED}King Minos awaits: fix the final architectural error to complete the labyrinth${NC}"
+            elif [ "$RUNTIME_ERRORS" -gt 0 ]; then
+                echo -e "${YELLOW}👑 MINOS' FINAL DECREE! One beast prowls the completed corridors${NC}"
+                echo -e "    ${FADED}King Minos commands: slay the final creature to secure the labyrinth${NC}"
+            else
+                echo -e "${YELLOW}👑 MINOS' FINAL DECREE! One corridor remains unexplored${NC}"
+                echo -e "    ${FADED}King Minos demands: navigate the final passage to prove the maze${NC}"
+            fi
         elif [ "$total_curr_issues" -le 3 ]; then
-            echo -e "${BLUE}⚖️ ATHENA'S WISDOM! Only $total_curr_issues minor trials remain${NC}"
-            echo -e "    ${FADED}Near-divine mastery - the finish line beckons heroically${NC}"
+            # Few issues - near completion variety
+            local near_completion_messages=(
+                "${CYAN}🏗️ DAEDALUS INSPECTS! 'Only $total_curr_issues final touches remain on my masterpiece'${NC}|Master architect nods approvingly - the labyrinth nears completion"
+                "${CYAN}🗡️ THESEUS APPROACHES! The hero senses only $total_curr_issues obstacles ahead${NC}|Legendary warrior prepares - victory lies just beyond these final trials"
+                "${CYAN}⚖️ ATHENA'S WISDOM! Only $total_curr_issues minor trials separate you from glory${NC}|Goddess of wisdom whispers - near-divine mastery beckons heroically"
+                "${CYAN}🏛️ TEMPLE GATES OPEN! $total_curr_issues sacred trials guard the inner sanctum${NC}|Divine threshold approaches - the gods prepare your final tests"
+            )
+            local selected_near="${near_completion_messages[RANDOM % ${#near_completion_messages[@]}]}"
+            IFS='|' read -r message context <<< "$selected_near"
+            echo -e "$message"
+            echo -e "    ${FADED}$context${NC}"
+        elif [ "$total_curr_issues" -le 6 ]; then
+            # Moderate issues - active construction/exploration
+            local moderate_messages=(
+                "${PURPLE}🏗️ CONSTRUCTION CONTINUES! Daedalus works tirelessly on $total_curr_issues blueprint sections${NC}|Master architect's plans take shape - systematic building progresses steadily"
+                "${PURPLE}🗡️ BEAST HUNTING PARTY! $total_curr_issues creatures roam the labyrinth depths${NC}|Brave warriors venture forth - each beast slain secures another corridor"
+                "${PURPLE}🧭 CORRIDOR MAPPING! Explorers chart $total_curr_issues unexplored passages${NC}|Methodical exploration continues - each path mapped brings clarity to the maze"
+                "${PURPLE}⚔️ TRIALS OF HEROES! $total_curr_issues challenges test your worthiness${NC}|Epic journey unfolds - heroes face trials that forge legends"
+            )
+            local selected_moderate="${moderate_messages[RANDOM % ${#moderate_messages[@]}]}"
+            IFS='|' read -r message context <<< "$selected_moderate"
+            echo -e "$message"
+            echo -e "    ${FADED}$context${NC}"
         else
-            echo -e "${PURPLE}🔮 ORACLE'S PROPHECY! $total_curr_issues challenges persist${NC}"
-            echo -e "    ${FADED}Prophetic dreams reveal: $COMPILE_ERRORS compiler errors, $RUNTIME_ERRORS memory faults, ${#FAILED_FILES[@]} logic failures${NC}"
+            # Many issues - epic quest beginning
+            local epic_quest_messages=(
+                "${RED}🏗️ DAEDALUS CALLS! 'The labyrinth blueprints need $total_curr_issues corrections, young architect!'${NC}|Master craftsman seeks your aid - great construction projects demand patience and skill"
+                "${RED}🐲 MYTHICAL BEASTS ROAM! $total_curr_issues creatures have invaded the sacred grounds${NC}|Ancient monsters threaten the realm - heroes rise to face legendary challenges"
+                "${RED}🌊 LABYRINTH DEPTHS! $total_curr_issues twisted passages confound even brave explorers${NC}|Maze complexity challenges all who enter - systematic exploration reveals hidden truths"
+                "${RED}⚡ EPIC JOURNEY BEGINS! $total_curr_issues trials await the worthy challenger${NC}|Legendary journey starts - each obstacle overcome builds heroic strength"
+                "${RED}🏛️ OLYMPIAN CHALLENGE! The gods test mortals with $total_curr_issues divine trials${NC}|Sacred tests measure your resolve - prove yourself worthy of mythological fame"
+            )
+            local selected_epic="${epic_quest_messages[RANDOM % ${#epic_quest_messages[@]}]}"
+            IFS='|' read -r message context <<< "$selected_epic"
+            echo -e "$message"
+            echo -e "    ${FADED}$context${NC}"
         fi
     fi
 
-    # Performance analysis with technical metrics
-    if [ "$efficiency_change" -gt 5000 ]; then
-        echo -e "${GREEN}🚀 EXTREME OPTIMIZATION! +${efficiency_change}x execution speed improvement${NC}"
-        echo -e "    ${FADED}Massive performance gain - algorithmic optimization breakthrough${NC}"
-    elif [ "$efficiency_change" -gt 1000 ]; then
-        echo -e "${GREEN}✨ MAJOR SPEEDUP! +${efficiency_change}x faster execution detected${NC}"
-        echo -e "    ${FADED}Significant performance improvement - code efficiency enhanced${NC}"
-    elif [ "$efficiency_change" -gt 100 ]; then
-        echo -e "${GREEN}🔥 PERFORMANCE BOOST! +${efficiency_change}x speed increase${NC}"
-        echo -e "    ${FADED}Notable efficiency gain - optimization work successful${NC}"
-    fi
 
     local final_messages=(
         "🏛️ The Fates weave victory into your thread of destiny!"
@@ -1742,7 +1784,6 @@ show_motivational_message() {
         "🌊 'No man ever steps in the same river twice' - Heraclitean flow!"
         "💎 'Virtue is its own reward' - Stoic satisfaction in clean code!"
         "🎭 'The unexamined life is not worth living' - Socratic self-reflection!"
-        "🌱 'The best time to plant a tree was 20 years ago' - Chinese wisdom for coders!"
         "🏺 'The whole is greater than the sum of its parts' - Aristotelian architecture!"
         "✨ 'Think like a mountain' - Marcus Aurelius teaches patient debugging!"
         "🦉 'The fox knows many things, but the hedgehog knows one big thing' - Archilochus!"
@@ -1753,37 +1794,189 @@ show_motivational_message() {
 
     # Final status assessment with technical recommendations
     if [ "$total_curr_issues" -eq 0 ]; then
-        echo -e "${GREEN}🎉 PERFECT TEST SUITE! All tests passing, zero issues detected${NC}"
-        echo -e "    ${FADED}Excellent code quality - ready for production deployment${NC}"
-        echo -e "${BOLD_WHITE}🏛️ ASCENSION TO OLYMPUS! You have achieved divine coding mastery!${NC}"
+        # Perfect state - epic victory declarations with new characters
+        local victory_messages=(
+            "${GREEN}🎉 MINOTAUR DEFEATED! The labyrinth guardian bows before your flawless code${NC}|All compilation successful, zero runtime crashes, perfect test results|${BOLD_WHITE}🌟 HEROIC LEGEND! Bards will sing of your debugging mastery!${NC}"
+            "${GREEN}🏺 AMPHORA OVERFLOWS! Divine nectar of perfect code fills the sacred vessel${NC}|Immaculate architecture - every function, every pointer, every test pristine|${BOLD_WHITE}💎 CRYSTALLINE CODE! Your logic sparkles like Olympian gemstones!${NC}"
+            "${GREEN}🦅 EAGLE SOARS! Zeus's messenger carries news of your triumph to all realms${NC}|Flawless execution achieved - gods study your techniques in wonder|${BOLD_WHITE}⚡ DIVINE SPARK! You've captured lightning in elegant algorithms!${NC}"
+            "${GREEN}🌊 POSEIDON CALMS! The sea god stills all storms in honor of your mastery${NC}|Perfect stability - no segfaults disturb your computational seas|${BOLD_WHITE}🔱 TRIDENT WIELDER! Command over memory, logic, and compilation!${NC}"
+        )
+        local selected_victory="${victory_messages[RANDOM % ${#victory_messages[@]}]}"
+        IFS='|' read -r message1 message2 message3 <<< "$selected_victory"
+        echo -e "$message1"
+        echo -e "    ${FADED}$message2${NC}"
+        echo -e "$message3"
     elif [ "$total_curr_issues" -le 3 ]; then
-        echo -e "${CYAN}🌟 HEROIC TRIUMPH APPROACHES! Only $total_curr_issues final trials remain${NC}"
-        echo -e "    ${FADED}The summit of Mount Olympus beckons - one last heroic push!${NC}"
+        # Near completion - single line with Sisyphus-themed breakdown
+        local final_breakdowns=(
+            "$COMPILE_ERRORS blueprint flaws, $RUNTIME_ERRORS lurking beasts, ${#FAILED_FILES[@]} blocked passages"
+            "$COMPILE_ERRORS structural cracks, $RUNTIME_ERRORS memory hydras, ${#FAILED_FILES[@]} maze dead-ends"
+            "$COMPILE_ERRORS foundation gaps, $RUNTIME_ERRORS prowling minotaurs, ${#FAILED_FILES[@]} corridor puzzles"
+            "$COMPILE_ERRORS architectural errors, $RUNTIME_ERRORS segfault serpents, ${#FAILED_FILES[@]} labyrinth riddles"
+            "$COMPILE_ERRORS broken blueprints, $RUNTIME_ERRORS crash chimeras, ${#FAILED_FILES[@]} hidden doorways"
+            "$COMPILE_ERRORS design flaws, $RUNTIME_ERRORS wild centaurs, ${#FAILED_FILES[@]} secret chambers"
+            "$COMPILE_ERRORS cracked foundations, $RUNTIME_ERRORS buffer cyclops, ${#FAILED_FILES[@]} twisted pathways"
+            "$COMPILE_ERRORS incomplete plans, $RUNTIME_ERRORS memory griffins, ${#FAILED_FILES[@]} unsolved mysteries"
+            "$COMPILE_ERRORS build failures, $RUNTIME_ERRORS execution crashes, ${#FAILED_FILES[@]} test failures"
+            "$COMPILE_ERRORS syntax errors, $RUNTIME_ERRORS memory errors, ${#FAILED_FILES[@]} logic errors"
+            "$COMPILE_ERRORS linker issues, $RUNTIME_ERRORS runtime crashes, ${#FAILED_FILES[@]} assertion failures"
+        )
+        local selected_breakdown="${final_breakdowns[RANDOM % ${#final_breakdowns[@]}]}"
+        colored_breakdown=$(echo "$selected_breakdown" | sed -E \
+            -e "s/([0-9]+) (blueprint flaws|structural cracks|foundation gaps|architectural errors|broken blueprints|design flaws|cracked foundations|incomplete plans|build failures|syntax errors|linker issues)/\x1b[0;31m\1 \2\x1b[0m/g" \
+            -e "s/([0-9]+) (lurking beasts|memory hydras|prowling minotaurs|segfault serpents|crash chimeras|wild centaurs|buffer cyclops|memory griffins|execution crashes|memory errors|runtime crashes)/\x1b[0;93m\1 \2\x1b[0m/g" \
+            -e "s/([0-9]+) (blocked passages|maze dead-ends|corridor puzzles|labyrinth riddles|hidden doorways|secret chambers|twisted pathways|unsolved mysteries|test failures|logic errors|assertion failures)/\x1b[1;33m\1 \2\x1b[0m/g")
+        echo -e "    ${FADED}Final debugging needed: $colored_breakdown${NC}"
     elif [ "$total_curr_issues" -le 5 ]; then
-        echo -e "${PURPLE}✨ VALIANT PROGRESS! $total_curr_issues challenges await your blade${NC}"
-        echo -e "    ${FADED}Code analysis shows: stack overflows, uninitialized variables, or assertion failures detected${NC}"
+        # Moderate progress - single line with Sisyphus-themed breakdown
+        local moderate_breakdowns=(
+            "$COMPILE_ERRORS construction delays, $RUNTIME_ERRORS territorial beasts, ${#FAILED_FILES[@]} unexplored corridors"
+            "$COMPILE_ERRORS workshop mishaps, $RUNTIME_ERRORS roaming monsters, ${#FAILED_FILES[@]} mapping challenges"
+            "$COMPILE_ERRORS blueprint revisions, $RUNTIME_ERRORS beast encounters, ${#FAILED_FILES[@]} navigation puzzles"
+            "$COMPILE_ERRORS engineering setbacks, $RUNTIME_ERRORS creature invasions, ${#FAILED_FILES[@]} path obstructions"
+            "$COMPILE_ERRORS structural issues, $RUNTIME_ERRORS monster nests, ${#FAILED_FILES[@]} corridor blockages"
+            "$COMPILE_ERRORS design challenges, $RUNTIME_ERRORS beast territories, ${#FAILED_FILES[@]} maze complications"
+            "$COMPILE_ERRORS building problems, $RUNTIME_ERRORS lurking dangers, ${#FAILED_FILES[@]} exploration hurdles"
+            "$COMPILE_ERRORS assembly errors, $RUNTIME_ERRORS beast patrols, ${#FAILED_FILES[@]} passage mysteries"
+            "$COMPILE_ERRORS compilation errors, $RUNTIME_ERRORS segmentation faults, ${#FAILED_FILES[@]} failing tests"
+            "$COMPILE_ERRORS dependency problems, $RUNTIME_ERRORS memory violations, ${#FAILED_FILES[@]} broken functions"
+            "$COMPILE_ERRORS header conflicts, $RUNTIME_ERRORS access violations, ${#FAILED_FILES[@]} algorithm bugs"
+        )
+        local selected_breakdown="${moderate_breakdowns[RANDOM % ${#moderate_breakdowns[@]}]}"
+        colored_breakdown=$(echo "$selected_breakdown" | sed -E \
+            -e "s/([0-9]+) (construction delays|workshop mishaps|blueprint revisions|engineering setbacks|structural issues|design challenges|building problems|assembly errors|compilation errors|dependency problems|header conflicts)/\x1b[0;31m\1 \2\x1b[0m/g" \
+            -e "s/([0-9]+) (territorial beasts|roaming monsters|beast encounters|creature invasions|monster nests|beast territories|lurking dangers|beast patrols|segmentation faults|memory violations|access violations)/\x1b[0;93m\1 \2\x1b[0m/g" \
+            -e "s/([0-9]+) (unexplored corridors|mapping challenges|navigation puzzles|path obstructions|corridor blockages|maze complications|exploration hurdles|passage mysteries|failing tests|broken functions|algorithm bugs)/\x1b[1;33m\1 \2\x1b[0m/g")
+        echo -e "    ${FADED}Development work ahead: $colored_breakdown${NC}"
     else
-        echo -e "${RED}🐲 TRIALS AHEAD! $total_curr_issues beasts roam the realm${NC}"
-        echo -e "    ${FADED}The Labyrinth calls: $COMPILE_ERRORS build errors, $RUNTIME_ERRORS crashes, ${#FAILED_FILES[@]} test failures${NC}"
+        # Many issues - single line with Sisyphus-themed breakdown
+        local major_breakdowns=(
+            "$COMPILE_ERRORS blueprint disasters, $RUNTIME_ERRORS beast invasions, ${#FAILED_FILES[@]} labyrinth mysteries"
+            "$COMPILE_ERRORS foundation collapses, $RUNTIME_ERRORS monster hordes, ${#FAILED_FILES[@]} corridor chaos"
+            "$COMPILE_ERRORS structural catastrophes, $RUNTIME_ERRORS creature stampedes, ${#FAILED_FILES[@]} maze confusion"
+            "$COMPILE_ERRORS design meltdowns, $RUNTIME_ERRORS beast rampages, ${#FAILED_FILES[@]} passage pandemonium"
+            "$COMPILE_ERRORS workshop explosions, $RUNTIME_ERRORS hydra attacks, ${#FAILED_FILES[@]} navigation nightmares"
+            "$COMPILE_ERRORS architectural crises, $RUNTIME_ERRORS monster sieges, ${#FAILED_FILES[@]} corridor catastrophes"
+            "$COMPILE_ERRORS blueprint chaos, $RUNTIME_ERRORS beast rebellions, ${#FAILED_FILES[@]} labyrinth upheaval"
+            "$COMPILE_ERRORS construction disasters, $RUNTIME_ERRORS creature fury, ${#FAILED_FILES[@]} maze madness"
+            "$COMPILE_ERRORS engineering failures, $RUNTIME_ERRORS beast riots, ${#FAILED_FILES[@]} passage turmoil"
+            "$COMPILE_ERRORS foundational cracks, $RUNTIME_ERRORS monster mayhem, ${#FAILED_FILES[@]} exploration disasters"
+            "$COMPILE_ERRORS build system failures, $RUNTIME_ERRORS program crashes, ${#FAILED_FILES[@]} test suite failures"
+            "$COMPILE_ERRORS preprocessor errors, $RUNTIME_ERRORS stack overflows, ${#FAILED_FILES[@]} validation errors"
+            "$COMPILE_ERRORS linking failures, $RUNTIME_ERRORS heap corruption, ${#FAILED_FILES[@]} regression bugs"
+        )
+        local selected_breakdown="${major_breakdowns[RANDOM % ${#major_breakdowns[@]}]}"
+        colored_breakdown=$(echo "$selected_breakdown" | sed -E \
+            -e "s/([0-9]+) (blueprint disasters|foundation collapses|structural catastrophes|design meltdowns|workshop explosions|architectural crises|blueprint chaos|construction disasters|engineering failures|foundational cracks|build system failures|preprocessor errors|linking failures)/\x1b[0;31m\1 \2\x1b[0m/g" \
+            -e "s/([0-9]+) (beast invasions|monster hordes|creature stampedes|beast rampages|hydra attacks|monster sieges|beast rebellions|creature fury|beast riots|monster mayhem|program crashes|stack overflows|heap corruption)/\x1b[0;93m\1 \2\x1b[0m/g" \
+            -e "s/([0-9]+) (labyrinth mysteries|corridor chaos|maze confusion|passage pandemonium|navigation nightmares|corridor catastrophes|labyrinth upheaval|maze madness|passage turmoil|exploration disasters|test suite failures|validation errors|regression bugs)/\x1b[1;33m\1 \2\x1b[0m/g")
+        echo -e "    ${FADED}Major debugging work: $colored_breakdown${NC}"
     fi
 
     # Display current development focus if there are issues
     if [ "$total_curr_issues" -gt 0 ] && [ -n "$curr_challenge" ]; then
-        if [[ "$curr_challenge" == *"Final Requiem"* ]]; then
-            echo -e "${YELLOW}👑 MINOS' DECREE: $curr_challenge${NC}"
-            echo -e "    ${FADED}By King Minos' final command: one last trial blocks your ascension to Mount Olympus${NC}"
-        elif [[ "$curr_challenge" == *"Workshop Crisis"* ]]; then
-            echo -e "${YELLOW}🏗️ DAEDALUS SPEAKS: $curr_challenge${NC}"
-            echo -e "    ${FADED}Master architect whispers: check include paths, verify function signatures, resolve missing dependencies${NC}"
-        elif [[ "$curr_challenge" == *"Hydra Beasts"* ]]; then
-            echo -e "${YELLOW}🗡️  SLAY THE BEASTS: $curr_challenge${NC}"
-            echo -e "    ${FADED}Memory corruption detected: run valgrind, check array bounds, initialize all pointers to NULL${NC}"
-        elif [[ "$curr_challenge" == *"Labyrinth"* ]]; then
-            echo -e "${YELLOW}🏛️ LABYRINTH EXPLORATION: $curr_challenge${NC}"
-            echo -e "    ${FADED}Navigate the twisting corridors: follow failed assertion breadcrumbs, map logic paths, escape the Minotaur${NC}"
+        echo -e "${BOLD_WHITE}CURRENT QUEST:${NC}"
+
+        if [[ "$curr_challenge" == *"Final Requiem"* ]] || [[ "$curr_challenge" == *"Mount Olympus"* ]]; then
+            # Single issue remaining - final boss variety
+            local final_quests=(
+                "${YELLOW}👑 ROYAL SUMMONS: King Minos awaits your final demonstration of mastery${NC}|The throne room doors open only when perfection is achieved"
+                "${YELLOW}🏛️ TEMPLE ASCENSION: Climb the final steps to the sacred coding sanctuary${NC}|Divine wisdom requires one last act of debugging devotion"
+                "${YELLOW}⚡ LIGHTNING TRIAL: Zeus prepares to grant immortal status to worthy coders${NC}|Thunder rolls - prove yourself ready for Olympian programming powers"
+                "${YELLOW}🌟 STELLAR ALIGNMENT: The stars align for your legendary coding achievement${NC}|Cosmic forces await your final keystroke to complete destiny"
+            )
+            local selected_final="${final_quests[RANDOM % ${#final_quests[@]}]}"
+            IFS='|' read -r quest_msg quest_context <<< "$selected_final"
+            echo -e "    $quest_msg"
+            echo -e "    ${FADED}$quest_context${NC}"
+
+        elif [[ "$curr_challenge" == *"Workshop"* ]] || [[ "$curr_challenge" == *"Daedalus"* ]]; then
+            # Compile error quests - blueprint/architecture focus
+            echo -e "    ${YELLOW}🏗️  REPAIR BLUEPRINTS: Daedalus needs help with ${RED}${#COMPILE_ERROR_FILES[@]} compilation error${YELLOW} files${NC}"
+
+            # Randomly suggest a specific file to fix
+            if [ ${#COMPILE_ERROR_FILES[@]} -gt 0 ]; then
+                local random_compile_error="${COMPILE_ERROR_FILES[RANDOM % ${#COMPILE_ERROR_FILES[@]}]}"
+                local suggested_file=$(echo "$random_compile_error" | cut -d':' -f1)
+                local suggested_target=$(echo "$random_compile_error" | cut -d':' -f2)
+                local file_path=$(map_target_to_file_path "$suggested_target")
+                echo -e "    ${CYAN}📍 Focus on: ${BOLD_WHITE}$suggested_file${NC}"
+                echo -e "    Debug: ${YELLOW}make $suggested_target${NC} | ${CYAN}View Test:${NC} \e]8;;file://$(pwd)/$file_path\e\\Click Here\e]8;;\e\\"
+            fi
+
+            local blueprint_tips=(
+                "Check #include statements - missing headers block construction"
+                "Verify function declarations match implementations exactly"
+                "Examine linker flags - libraries must be properly connected"
+                "Review Makefile dependencies for correct build order"
+                "Search for typos in function names and variable declarations"
+                "Ensure all required libraries are installed and linked"
+            )
+            local selected_tip="${blueprint_tips[RANDOM % ${#blueprint_tips[@]}]}"
+            echo -e "    ${FADED}Engineering wisdom: $selected_tip${NC}"
+
+        elif [[ "$curr_challenge" == *"Hydra"* ]] || [[ "$curr_challenge" == *"Beasts"* ]] || [[ "$curr_challenge" == *"runtime"* ]]; then
+            # Runtime error quests - monster hunting
+            echo -e "    ${YELLOW}🗡️ SLAY MYTHICAL BEASTS: Clear ${ORANGE}${#RUNTIME_ERROR_FILES[@]} dangerous runtime error files${YELLOW} from the labyrinth depths${NC}"
+
+            # Randomly suggest a specific file to fix
+            if [ ${#RUNTIME_ERROR_FILES[@]} -gt 0 ]; then
+                local random_runtime_error="${RUNTIME_ERROR_FILES[RANDOM % ${#RUNTIME_ERROR_FILES[@]}]}"
+                local suggested_file=$(echo "$random_runtime_error" | cut -d':' -f1)
+                local suggested_target=$(echo "$random_runtime_error" | cut -d':' -f2)
+                local file_path=$(map_target_to_file_path "$suggested_target")
+                echo -e "    ${CYAN}🎯 Hunt the beast in:${NC} ${YELLOW}make $suggested_target${NC} | ${CYAN}View Test:${NC} \e]8;;file://$(pwd)/$file_path\e\\Click Here\e]8;;\e\\"
+            fi
+
+            local monster_tips=(
+                "Run with valgrind to track memory corruption and leaks"
+                "Initialize all pointers to NULL before use"
+                "Check array bounds - ensure indices stay within allocated memory"
+                "Verify malloc/free pairs - every allocation needs deallocation"
+                "Use debugger breakpoints to trace execution before crashes"
+                "Add printf statements to track variable values before segfaults"
+                "Check for uninitialized variables causing random behavior"
+            )
+            local selected_tip="${monster_tips[RANDOM % ${#monster_tips[@]}]}"
+            echo -e "    ${FADED}Monster hunting tip: $selected_tip${NC}"
+
+        elif [[ "$curr_challenge" == *"Labyrinth"* ]] || [[ "$curr_challenge" == *"Minotaur"* ]]; then
+            # Test failure quests - exploration/navigation focus
+            echo -e "    ${YELLOW}🧭 EXPLORE LABYRINTH: Navigate ${YELLOW}${#FAILED_FILES[@]} test failure corridors${YELLOW} and solve their mysteries${NC}"
+
+            # Randomly suggest a specific file to fix
+            if [ ${#FAILED_FILES[@]} -gt 0 ]; then
+                local random_failed_test="${FAILED_FILES[RANDOM % ${#FAILED_FILES[@]}]}"
+                local suggested_file=$(echo "$random_failed_test" | cut -d':' -f1)
+                local suggested_target=$(echo "$random_failed_test" | cut -d':' -f2)
+                local file_path=$(map_target_to_file_path "$suggested_target")
+                echo -e "    ${CYAN}🗺️ Start exploring: ${BOLD_WHITE}$suggested_file${NC}"
+                echo -e "    Explore: ${YELLOW}make $suggested_target${NC} | ${CYAN}View Test:${NC} \e]8;;file://$(pwd)/$file_path\e\\Click Here\e]8;;\e\\"
+            fi
+
+            local exploration_tips=(
+                "Compare expected vs actual outputs line by line"
+                "Add debug prints to trace execution flow through your logic"
+                "Test edge cases: empty inputs, boundary values, null data"
+                "Verify loop conditions - check off-by-one errors"
+                "Examine conditional statements for missing or wrong logic"
+                "Use assertion messages to understand what the test expects"
+                "Break complex functions into smaller, testable pieces"
+            )
+            local selected_exploration="${exploration_tips[RANDOM % ${#exploration_tips[@]}]}"
+            echo -e "    ${FADED}Explorer's wisdom: $selected_exploration${NC}"
+
         else
-            echo -e "${YELLOW}✨ ZEUS' TRIAL: $curr_challenge${NC}"
-            echo -e "    ${FADED}Divine judgment awaits: debug with systematic analysis, trace execution flow, validate assumptions${NC}"
+            # Fallback for any other challenge types
+            echo -e "    ${YELLOW}⚡ DIVINE TRIAL: The gods test your coding resolve with complex challenges${NC}"
+            local general_tips=(
+                "Debug systematically - isolate and fix one issue at a time"
+                "Read error messages carefully - they contain valuable clues"
+                "Use version control to track changes and revert if needed"
+                "Take breaks when stuck - fresh perspective often reveals solutions"
+            )
+            local selected_tip="${general_tips[RANDOM % ${#general_tips[@]}]}"
+            echo -e "    ${FADED}Ancient wisdom: $selected_tip${NC}"
         fi
     fi
 

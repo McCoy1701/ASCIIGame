@@ -15,7 +15,8 @@
 Item_t* create_weapon(const char* name, const char* id, Material_t material,
                      uint8_t min_dmg, uint8_t max_dmg, uint8_t range, char glyph);
 Item_t* create_armor(const char* name, const char* id, Material_t material,
-                    uint8_t armor_val, uint8_t evasion_val, char glyph);
+                    uint8_t armor_val, uint8_t evasion_val, char glyph,
+                    uint8_t stealth_val, uint8_t enchant_val);
 Item_t* create_key(const char* name, const char* id, Lock_t lock, char glyph);
 Item_t* create_consumable(const char* name, const char* id, uint8_t value,
                          void (*on_consume)(uint8_t), char glyph);
@@ -56,6 +57,9 @@ MaterialProperties_t create_default_material_properties(void);
 // Apply material effects to items
 void apply_material_to_weapon(Item_t* item);
 void apply_material_to_armor(Item_t* item);
+void apply_material_to_ammunition(Item_t* item);
+
+// Calculate final weight and value of an item
 float calculate_final_weight(const Item_t* item);
 uint8_t calculate_final_value(const Item_t* item);
 
@@ -66,6 +70,9 @@ uint8_t calculate_final_value(const Item_t* item);
 // Weapon stats
 uint8_t get_weapon_min_damage(const Item_t* item);
 uint8_t get_weapon_max_damage(const Item_t* item);
+uint8_t get_ammunition_min_damage(const Item_t* item);  // Add this line
+uint8_t get_ammunition_max_damage(const Item_t* item);  // Add this line
+
 uint8_t get_weapon_range(const Item_t* item);
 bool weapon_needs_ammo(const Item_t* item);
 bool weapon_can_use_ammo(const Item_t* weapon, const Item_t* ammo);

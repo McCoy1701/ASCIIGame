@@ -156,6 +156,10 @@ test-items-usage: always $(OBJ_DIR)/items.o
 test-items-helper-functions: always $(OBJ_DIR)/items.o
 	$(CC) $(TEST_CFLAGS) -o $(BIN_DIR)/test_items_helper_functions $(TEST_DIR)/items/test_items_helper_functions.c $(OBJ_DIR)/items.o -lm -lDaedalus -lArchimedes
 
+.PHONY: test-items-integration-tests
+test-items-integration-tests: always $(OBJ_DIR)/items.o
+	$(CC) $(TEST_CFLAGS) -o $(BIN_DIR)/test_items_integration_tests $(TEST_DIR)/items/test_items_integration_tests.c $(OBJ_DIR)/items.o -lm -lDaedalus -lArchimedes
+
 # Compile items.c as object file for testing
 $(OBJ_DIR)/items.o: $(SRC_DIR)/items.c
 	$(CC) -c $< -o $@ $(TEST_CFLAGS)
@@ -193,6 +197,10 @@ run-test-items-usage: test-items-usage
 run-test-items-helper-functions: test-items-helper-functions
 	@./$(BIN_DIR)/test_items_helper_functions
 
+.PHONY: run-test-items-integration-tests
+run-test-items-integration-tests: test-items-integration-tests
+	@./$(BIN_DIR)/test_items_integration_tests
+
 # Demo test for framework improvements
 .PHONY: test-framework-demo
 test-framework-demo: always
@@ -201,6 +209,15 @@ test-framework-demo: always
 .PHONY: run-test-framework-demo
 run-test-framework-demo: test-framework-demo
 	@./$(BIN_DIR)/test_framework_demo
+
+# Test for comma formatting and XP requirements
+.PHONY: test-comma-xp
+test-comma-xp: always
+	$(CC) $(TEST_CFLAGS) -o $(BIN_DIR)/test_comma_and_xp test_comma_and_xp.c -lm
+
+.PHONY: run-test-comma-xp
+run-test-comma-xp: test-comma-xp
+	@./$(BIN_DIR)/test_comma_and_xp
 
 # Global test runner (summary output)
 .PHONY: test

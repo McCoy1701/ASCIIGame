@@ -126,7 +126,7 @@ int test_apply_material_to_weapon(void)
     TEST_ASSERT(1, "apply_material_to_weapon should handle NULL gracefully");
 
     // Test with wrong item type
-    Item_t* armor = create_armor("Test Armor", "test_armor", base_material, 20, 5, 'A');
+    Item_t* armor = create_armor("Test Armor", "test_armor", base_material, 20, 5, 'A', 15, 15);
     apply_material_to_weapon(armor);
     TEST_ASSERT(1, "apply_material_to_weapon should handle wrong type gracefully");
     destroy_item(armor);
@@ -139,7 +139,7 @@ int test_apply_material_to_armor(void)
     // Create a base armor
     MaterialProperties_t leather_props = {1.0f, 1.0f, 0.8f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f};
     Material_t base_material = create_material("leather", leather_props);
-    Item_t* armor = create_armor("Base Armor", "base_armor", base_material, 15, 10, 'A');
+    Item_t* armor = create_armor("Base Armor", "base_armor", base_material, 15, 10, 'A', 15, 15);
     TEST_ASSERT(armor != NULL, "Base armor should be created");
 
     // Store original values
@@ -228,7 +228,7 @@ int test_calculate_final_value(void)
         .evasion_value_fact = 1.2f, .stealth_value_fact = 1.3f, .enchant_value_fact = 1.4f
     };
     Material_t gold = create_material("gold", gold_props);
-    Item_t* crown = create_armor("Golden Crown", "gold_crown", gold, 5, 15, 'C');
+    Item_t* crown = create_armor("Golden Crown", "gold_crown", gold, 5, 15, 'C', 15, 15);
     TEST_ASSERT(crown != NULL, "Golden crown should be created");
 
     apply_material_to_armor(crown);
