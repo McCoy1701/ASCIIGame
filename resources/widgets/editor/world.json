@@ -161,7 +161,7 @@
         "label"   : "World Size",
         "boxed"   : 1,
         "hidden"  : 1,
-        "padding": 1,
+        "padding" : 1,
         "fg"      : [   0,   0,   0, 255 ],
         "bg"      : [ 255, 255, 255, 0 ],
         "options" : [
@@ -178,7 +178,7 @@
         "label"   : "Region Size",
         "boxed"   : 1,
         "hidden"  : 1,
-        "padding": 1,
+        "padding" : 1,
         "fg"      : [   0,   0,   0, 255 ],
         "bg"      : [ 255, 255, 255, 0 ],
         "options" : [

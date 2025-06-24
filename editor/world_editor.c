@@ -123,7 +123,7 @@ static void we_CreationDoLoop( float dt )
 
 static void we_CreationRenderLoop( float dt )
 {
-  a_DrawFilledRect( 240, 240, 400, 265, 255, 0, 255, 255 );
+//  a_DrawFilledRect( 240, 240, 400, 265, 255, 0, 255, 255 );
   
   a_DrawWidgets();
 
