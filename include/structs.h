@@ -36,9 +36,13 @@ typedef struct
   RegionCell_t* regions;
   GameTile_t tile;
 
-  uint16_t world_size;
-  uint16_t region_size;
-  uint16_t local_size;
+  uint8_t world_width;
+  uint8_t world_height;
+  uint8_t region_width;
+  uint8_t region_height;
+  uint8_t local_width;
+  uint8_t local_height;
+  uint8_t z_height;
   
   // floats (1 is 100%, 0.5 is 50%, etc.)
   float temperature_factor; // every region in this world cell

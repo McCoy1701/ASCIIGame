@@ -16,12 +16,18 @@ static void e_WorldEditorRenderLoop( float );
 static void we_CreationDoLoop( float );
 static void we_CreationRenderLoop( float );
 
-static aWidget_t* w;
+static void wec_GenerateWorld( void );
 
-World_t* map;
+int world_size_index    = 0;
+int region_size_index   = 0;
+int local_size_index    = 0;
+int z_height_size_index = 0;
+
+World_t* map = NULL;
 
 void e_InitWorldEditor( void )
 {
+  aWidget_t* w;
   app.delegate.logic = e_WorldEditorDoLoop;
   app.delegate.draw  = e_WorldEditorRenderLoop;
   
@@ -29,10 +35,10 @@ void e_InitWorldEditor( void )
   
   app.active_widget = a_GetWidget( "tab_bar" );
 
-  aContainerWidget_t* container = ( aContainerWidget_t* )app.active_widget->data;
-  for ( int i = 0; i < container->num_components; i++ )
+  aContainerWidget_t* tab_container = ( aContainerWidget_t* )app.active_widget->data;
+  for ( int i = 0; i < tab_container->num_components; i++ )
   {
-    aWidget_t* current = &container->components[i];
+    aWidget_t* current = &tab_container->components[i];
 
     if ( strcmp( current->name, "world" ) == 0 )
     {
@@ -60,11 +66,11 @@ void e_InitWorldEditor( void )
     }
   }
   
-  w = a_GetWidget( "menu_bar" );
-  container = ( aContainerWidget_t* )w->data;
-  for ( int i = 0; i < container->num_components; i++ )
+  w = a_GetWidget( "world_menu_bar" );
+  aContainerWidget_t* world_menu_container = ( aContainerWidget_t* )w->data;
+  for ( int i = 0; i < world_menu_container->num_components; i++ )
   {
-    aWidget_t* current = &container->components[i];
+    aWidget_t* current = &world_menu_container->components[i];
 
     if ( strcmp( current->name, "creation" ) == 0 )
     {
@@ -96,13 +102,18 @@ void we_creation( void )
   
   
   app.active_widget = a_GetWidget( "generation_menu" );
-  aContainerWidget_t* container = ( aContainerWidget_t* )app.active_widget->data;
+  aContainerWidget_t* container = a_GetContainerFromWidget( "generation_menu" );
   app.active_widget->hidden = 0;
   
   for ( int i = 0; i < container->num_components; i++ )
   {
     aWidget_t* current = &container->components[i];
     current->hidden = 0;
+    
+    if ( strcmp( current->name, "generate" ) == 0 )
+    {
+      current->action = wec_GenerateWorld;
+    }
   }
 
 }
@@ -123,9 +134,128 @@ static void we_CreationDoLoop( float dt )
 
 static void we_CreationRenderLoop( float dt )
 {
-//  a_DrawFilledRect( 240, 240, 400, 265, 255, 0, 255, 255 );
-  
   a_DrawWidgets();
+
+}
+
+static void wec_GenerateWorld( void )
+{
+
+  int new_world_size  = 0;
+  int new_region_size = 0;
+  int new_local_size  = 0;
+  int new_z_height    = 0;
+
+  aContainerWidget_t* container = ( aContainerWidget_t* )app.active_widget->data;
+  
+  for ( int i = 0; i < container->num_components; i++ )
+  {
+    aWidget_t* current = &container->components[i];
+    
+    if ( strcmp( current->name, "world_size" ) == 0 )
+    {
+      aSelectWidget_t* world_size = ( aSelectWidget_t* )current->data;
+      world_size_index = world_size->value;
+    }
+    
+    if ( strcmp( current->name, "region_size" ) == 0 )
+    {
+      aSelectWidget_t* region_size = ( aSelectWidget_t* )current->data;
+      region_size_index = region_size->value;
+    }
+    
+    if ( strcmp( current->name, "local_size" ) == 0 )
+    {
+      aSelectWidget_t* local_size = ( aSelectWidget_t* )current->data;
+      local_size_index = local_size->value;
+    }
+    
+    if ( strcmp( current->name, "z_height" ) == 0 )
+    {
+      aSelectWidget_t* z_height = ( aSelectWidget_t* )current->data;
+      z_height_size_index = z_height->value;
+    }
+  }
+  
+  switch ( world_size_index ) {
+  
+    case 0: //small
+      new_world_size = WORLD_WIDTH_SMALL;
+    break;
+
+    case 1: //medium
+      new_world_size = WORLD_WIDTH_MEDIUM;
+    break;
+
+    case 2: //large
+      new_world_size = WORLD_WIDTH_LARGE;
+    break;
+
+    default:
+    break;
+  }
+  
+  switch ( region_size_index ) {
+  
+    case 0: //small
+      new_region_size = REGION_SIZE_SMALL;
+    break;
+
+    case 1: //medium
+      new_region_size = REGION_SIZE_MEDIUM;
+    break;
+
+    case 2: //large
+      new_region_size = REGION_SIZE_LARGE;
+    break;
+
+    default:
+    break;
+  }
+  
+  switch ( local_size_index ) {
+  
+    case 0: //small
+      new_local_size = LOCAL_SIZE_SMALL;
+    break;
+
+    case 1: //medium
+      new_local_size = LOCAL_SIZE_MEDIUM;
+    break;
+
+    case 2: //large
+      new_local_size = LOCAL_SIZE_LARGE;
+    break;
+
+    default:
+    break;
+  }
+  
+  switch ( z_height_size_index ) {
+  
+    case 0: //small
+      new_z_height = Z_HEIGHT_SMALL;
+    break;
+
+    case 1: //medium
+      new_z_height = Z_HEIGHT_MEDIUM;
+    break;
+
+    case 2: //large
+      new_z_height = Z_HEIGHT_LARGE;
+    break;
+
+    default:
+    break;
+  }
+  
+  if ( map != NULL )
+  {
+    free_world( map, ( new_world_size * new_world_size ), ( new_region_size * new_region_size ) );
+  }
+  map = init_world( new_world_size, new_world_size, new_region_size, new_region_size,
+                    new_local_size, new_local_size, new_z_height );
+  printf( "%d %d %d %d\n", new_world_size, new_region_size, new_local_size, new_z_height );
 
 }
 
@@ -159,6 +289,21 @@ static void e_WorldEditorDoLoop( float dt )
 
 static void e_WorldEditorRenderLoop( float dt )
 {
+  if ( map != NULL )
+  {
+    for ( int i = 0; i < ( map->world_width * map->world_height ); i++ )
+    {
+      int row = ( i / map->world_height );
+      int col = ( i % map->world_height );
+      int x = ( SCREEN_WIDTH / 2 ) + ( row - map->world_width / 2 ) * CELL_SIZE;
+      int y = ( SCREEN_HEIGHT/ 2 ) + ( col - map->world_width / 2 ) * CELL_SIZE;
+      int w = CELL_SIZE;
+      int h = CELL_SIZE;
+
+      a_DrawRect( x, y, w, h, 255, 255, 0, 255 );
+    }
+
+  }
   a_DrawFilledRect( 100, 100, 32, 32, 255, 0, 255, 255 );
   a_DrawFilledRect( 300, 300, 32, 32, 0, 255, 255, 255 );
 
@@ -167,6 +312,7 @@ static void e_WorldEditorRenderLoop( float dt )
 
 void e_CleanUpWorldEditor( void )
 {
-  free_world( map, map->world_size, map->region_size );
+  free_world( map, ( map->world_width * map->world_height ),
+                   ( map->region_width * map->region_height ) );
 }
 

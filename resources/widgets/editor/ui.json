@@ -77,7 +77,7 @@
   },
   {
     "type"       : "WT_CONTAINER",
-    "name"       : "menu_bar",
+    "name"       : "ui_menu_bar",
     "x"          : 10,
     "y"          : 670,
     "label"      : "Menu",

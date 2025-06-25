@@ -99,6 +99,7 @@ typedef struct
 {
   int x, y;
   int w, h;
+  int spacing;
   int num_components;
   aWidget_t* components;
 } aContainerWidget_t; 
@@ -107,17 +108,16 @@ typedef struct
 {
   int num_options;
   char** options;
-  int x;
-  int y;
+  int x, y;
+  int w, h;
   int value;
+  char* text_name[MAX_NAME_LENGTH];
 } aSelectWidget_t;
 
 typedef struct
 {
-  int x;
-  int y;
-  int w;
-  int h;
+  int x, y;
+  int w, h;
   int value;
   int step;
   int wait_on_change;
@@ -125,16 +125,15 @@ typedef struct
 
 typedef struct
 {
-  int x;
-  int y;
+  int x, y;
+  int w, h;
   int max_length;
   char* text;
 } aInputWidget_t;
 
 typedef struct
 {
-  int x;
-  int y;
+  int x, y;
   int value;
 } aControlWidget_t;
 
@@ -349,6 +348,7 @@ enum
 void a_DrawWidgets( void );
 void a_DoWidget( void );
 aWidget_t* a_GetWidget( char* name );
+aContainerWidget_t* a_GetContainerFromWidget( char* name );
 void a_InitWidgets( const char* filename );
 int a_ClearWidgetCache( aWidget_t* widget );
 

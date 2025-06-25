@@ -58,7 +58,7 @@ void e_InitUIEditor( void )
     }
   }
 
-  w = a_GetWidget( "menu_bar" );
+  w = a_GetWidget( "ui_menu_bar" );
   container = ( aContainerWidget_t* )w->data;
   for ( int i = 0; i < container->num_components; i++ )
   {
