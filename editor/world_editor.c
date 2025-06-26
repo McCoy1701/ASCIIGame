@@ -320,8 +320,10 @@ static void e_WorldEditorRenderLoop( float dt )
     {
       int row = ( i / map->world_height );
       int col = ( i % map->world_height );
-      int x = ( ( SCREEN_WIDTH / 2 )  - ( ( map->world_width  * CELL_SIZE ) / 2 ) ) + ( row * CELL_SIZE );
-      int y = ( ( SCREEN_HEIGHT / 2 ) - ( ( map->world_height * CELL_SIZE ) / 2 ) ) + ( col * CELL_SIZE );
+      int x = ( ( SCREEN_WIDTH / 2 )  - ( ( map->world_width  * CELL_SIZE ) / 2 ) )
+        + ( row * CELL_SIZE );
+      int y = ( ( SCREEN_HEIGHT / 2 ) - ( ( map->world_height * CELL_SIZE ) / 2 ) )
+        + ( col * CELL_SIZE );
       int w = CELL_SIZE;
       int h = CELL_SIZE;
 
@@ -329,7 +331,6 @@ static void e_WorldEditorRenderLoop( float dt )
     }
 
   }
-  a_DrawPoint( (SCREEN_WIDTH/2), (SCREEN_HEIGHT/2), red );
   a_DrawFilledRect( 100, 100, 32, 32, 255, 0, 255, 255 );
   a_DrawFilledRect( 300, 300, 32, 32, 0, 255, 255, 255 );
 
