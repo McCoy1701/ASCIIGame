@@ -1,35 +1,269 @@
+#define LOG( msg ) printf( "%s | File: %s, Line: %d\n", msg, __FILE__, __LINE__ )
+#include "Daedalus.h"
 #include "items.h"
 #include "structs.h"
 #include "defs.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+// =============================================================================
+// HELPER FUNCTIONS
+// =============================================================================
+/*
+ * Helper function to create and assign a dString_t field from a const char*
+ * Returns true on success, false on failure
+ */
+static bool _populate_string_field(dString_t* dest, const char* src) {
+    if (src == NULL || dest == NULL) {
+        return false;
+    }
 
+    dString_t* temp = d_InitString();
+    if (temp == NULL) {
+        return false;
+    }
+
+    d_AppendString(temp, src, 0);
+    *dest = *temp;  // Copy struct content
+    free(temp);     // Free wrapper, keep string data
+    return true;
+}
+/*
+ * Helper function to populate item description for weapons
+ */
+ static bool _populate_weapon_desc(dString_t* dest, const Material_t* material) {
+     if (dest == NULL || material == NULL) {
+         return false;
+     }
+
+     // BUG FIX: Check if material->name is NULL
+     if (material->name == NULL) {
+         return false;  // or provide a default description
+     }
+
+     dString_t* temp = d_InitString();
+     if (temp == NULL) {
+         return false;
+     }
+
+     d_AppendString(temp, "A weapon made of ", 0);
+     d_AppendString(temp, material->name->str, 0);  // Now safe!
+     *dest = *temp;
+     free(temp);
+     return true;
+ }
+ // Helper function to determine if item resists durability loss
+ // Returns true if item should NOT lose durability
+ static bool item_resists_durability_loss(const Item_t* item)
+ {
+     if (item == NULL) {
+         return false;
+     }
+
+     // Base chance is 5% to avoid durability loss
+     float base_chance = 0.05f;
+     float resistance_chance = base_chance * item->material_data.properties.durability_fact;
+
+     // Cap at 95% maximum resistance (always have some chance of wear)
+     if (resistance_chance > 0.95f) {
+         resistance_chance = 0.95f;
+     }
+
+     // Generate random number between 0.0 and 1.0
+     float random_roll = (float)rand() / (float)RAND_MAX;
+
+     return random_roll < resistance_chance;
+ }
+
+/*
+ * Helper function to populate item description for armor
+ */
+static bool _populate_armor_desc(dString_t* dest, const Material_t* material) {
+    if (dest == NULL || material == NULL) {
+        return false;
+    }
+
+    dString_t* temp = d_InitString();
+    if (temp == NULL) {
+        return false;
+    }
+
+    d_AppendString(temp, "Armor made of ", 0);
+    d_AppendString(temp, material->name->str, 0);
+    *dest = *temp;
+    free(temp);
+    return true;
+}
+/*
+ * Helper function to populate item rarity
+ */
+static bool _populate_rarity(dString_t* dest, const char* rarity) {
+    if (dest == NULL || rarity == NULL) {
+        return false;
+    }
+
+    return _populate_string_field(dest, rarity);
+}
+/*
+ * Helper function to populate item description for keys
+ */
+ static bool _populate_key_desc(dString_t* dest, const Lock_t* lock) {
+     LOG("Entering _populate_key_desc");
+     if (dest == NULL || lock == NULL) {
+         LOG("Error: NULL pointer passed to _populate_key_desc");
+         return false;
+     }
+
+     // Check if lock->name is valid
+     if (lock->name == NULL || lock->name->str == NULL) {
+         LOG("Error: Lock name is NULL");
+         return false;
+     }
+
+     // Directly populate the destination string
+     d_AppendString(dest, "A key that opens: ", 0);
+     d_AppendString(dest, lock->name->str, 0);
+
+     return true;
+ }
+
+
+/*
+ * Helper function to create a default neutral material for keys
+ */
+static Material_t _create_default_material(void) {
+    Material_t material;
+
+    material.name = d_InitString();
+    d_AppendString(material.name, "default", 0);
+
+    // Initialize all properties to neutral (1.0f)
+    material.properties.weight_fact = 1.0f;
+    material.properties.value_coins_fact = 1.0f;
+    material.properties.durability_fact = 1.0f;
+    material.properties.min_damage_fact = 1.0f;
+    material.properties.max_damage_fact = 1.0f;
+    material.properties.armor_value_fact = 1.0f;
+    material.properties.evasion_value_fact = 1.0f;
+    material.properties.stealth_value_fact = 1.0f;
+    material.properties.enchant_value_fact = 1.0f;
+
+    return material;
+}
+/*
+* Helper function to create a default organic material for consumables
+*/
+static Material_t _create_consumable_material(void) {
+    Material_t material;
+
+    // Set material name to "organic" using helper
+    material.name = d_InitString();
+    if (!material.name) {
+        LOG("Consumable creation failed; Failed to allocate memory for material name");
+        return material;
+    }
+    if (!_populate_string_field(material.name, "organic")) {
+        LOG("Consumable creation failed; Failed to populate material name");
+        free(material.name->str);
+        free(material.name);
+        return material;
+    }
+
+    // Initialize all properties to neutral (1.0f)
+    material.properties.weight_fact = 1.0f;
+    material.properties.value_coins_fact = 1.0f;
+    material.properties.durability_fact = 1.0f;
+    material.properties.min_damage_fact = 1.0f;
+    material.properties.max_damage_fact = 1.0f;
+    material.properties.armor_value_fact = 1.0f;
+    material.properties.evasion_value_fact = 1.0f;
+    material.properties.stealth_value_fact = 1.0f;
+    material.properties.enchant_value_fact = 1.0f;
+
+    return material;
+}
+
+/*
+ * Helper function to populate item description for consumables with value info
+ */
+static bool _populate_consumable_desc(dString_t* dest, uint8_t value) {
+    if (dest == NULL) {
+        return false;
+    }
+
+    dString_t* temp = d_InitString();
+    if (temp == NULL) {
+        return false;
+    }
+
+    d_AppendString(temp, "A consumable item with magical properties (Potency: ", 0);
+    d_AppendInt(temp, value);
+    d_AppendChar(temp, ')');
+    *dest = *temp;
+    free(temp);
+    return true;
+}
+/*
+ * Helper function to populate item description for ammunition
+ */
+static bool _populate_ammunition_desc(dString_t* dest, const Material_t* material, uint8_t min_dmg, uint8_t max_dmg) {
+    if (dest == NULL || material == NULL) {
+        return false;
+    }
+
+    dString_t* temp = d_InitString();
+    if (temp == NULL) {
+        return false;
+    }
+
+    d_AppendString(temp, "Ammunition made of ", 0);
+    d_AppendString(temp, material->name->str, 0);
+    d_AppendString(temp, " (Damage: ", 0);
+    d_AppendInt(temp, min_dmg);
+    d_AppendChar(temp, '-');
+    d_AppendInt(temp, max_dmg);
+    d_AppendChar(temp, ')');
+    *dest = *temp;
+    free(temp);
+    return true;
+}
 // =============================================================================
 // ITEM CREATION & DESTRUCTION
 // =============================================================================
-
 Item_t* create_weapon(const char* name, const char* id, Material_t material,
                      uint8_t min_dmg, uint8_t max_dmg, uint8_t range, char glyph)
 {
+
     if (name == NULL || id == NULL) {
+        LOG("Invalid Weapon name or ID provided");
         return NULL;
     }
 
     Item_t* item = (Item_t*)malloc(sizeof(Item_t));
     if (item == NULL) {
+        LOG("Failed to allocate memory for Weapon");
         return NULL;
     }
 
     // Set item type
     item->type = ITEM_TYPE_WEAPON;
 
-    // Copy strings safely
-    strncpy(item->name, name, MAX_NAME_LENGTH - 1);
-    item->name[MAX_NAME_LENGTH - 1] = '\0';
+    // Populate name using helper
+    item->name = d_InitString();
+    if (!_populate_string_field(item->name, name)) {
+        free(item);
+        LOG("Failed to allocate memory for Weapon name");
+        return NULL;
+    }
 
-    strncpy(item->id, id, MAX_ID_LENGTH - 1);
-    item->id[MAX_ID_LENGTH - 1] = '\0';
+    // Populate id using helper
+    item->id = d_InitString();
+    if (!_populate_string_field(item->id, id)) {
+        LOG("Failed to allocate memory for Weapon ID");
+        free(item->name->str);
+        free(item);
+        return NULL;
+    }
 
     // Set basic properties
     item->glyph = glyph;
@@ -51,38 +285,63 @@ Item_t* create_weapon(const char* name, const char* id, Material_t material,
     item->value_coins = min_dmg + max_dmg; // Base value
     item->stackable = 0; // Weapons don't stack
 
-    // Initialize description and rarity
-    strncpy(item->description, "A weapon made of ", MAX_DESCRIPTION_LENGTH - 1);
-    strncat(item->description, material.name, MAX_DESCRIPTION_LENGTH - strlen(item->description) - 1);
-    item->description[MAX_DESCRIPTION_LENGTH - 1] = '\0';
+    // Populate description using helper
+    item->description = d_InitString();
+    if (!_populate_weapon_desc(item->description, &material)) {
+        LOG("Failed to allocate memory for Weapon Description");
+        free(item->name->str);
+        free(item->id->str);
+        free(item);
+        return NULL;
+    }
 
-    strncpy(item->rarity, "common", MAX_ID_LENGTH - 1);
-    item->rarity[MAX_ID_LENGTH - 1] = '\0';
+    // Populate rarity using helper
+    item->rarity = d_InitString();
+    if (!_populate_rarity(item->rarity, "common")) {
+        LOG("Failed to allocate memory for Rarity");
+        free(item->name->str);
+        free(item->id->str);
+        free(item->description->str);
+        free(item);
+        return NULL;
+    }
 
     return item;
 }
 
 Item_t* create_armor(const char* name, const char* id, Material_t material,
-                    uint8_t armor_val, uint8_t evasion_val, char glyph)
+                    uint8_t armor_val, uint8_t evasion_val, char glyph,
+                    uint8_t stealth_val, uint8_t enchant_val)
 {
     if (name == NULL || id == NULL) {
+        LOG("Invalid name or id provided");
         return NULL;
     }
 
     Item_t* item = (Item_t*)malloc(sizeof(Item_t));
     if (item == NULL) {
+        LOG("Failed to allocate memory for Armor");
         return NULL;
     }
 
     // Set item type
     item->type = ITEM_TYPE_ARMOR;
 
-    // Copy strings safely
-    strncpy(item->name, name, MAX_NAME_LENGTH - 1);
-    item->name[MAX_NAME_LENGTH - 1] = '\0';
+    // Populate name and id using helpers
+    item->name = d_InitString();
+    if (!_populate_string_field(item->name, name)) {
+        free(item);
+        LOG("Failed to allocate memory for name");
+        return NULL;
+    }
 
-    strncpy(item->id, id, MAX_ID_LENGTH - 1);
-    item->id[MAX_ID_LENGTH - 1] = '\0';
+    item->id = d_InitString();
+    if (!_populate_string_field(item->id, id)) {
+        free(item->name->str);
+        free(item);
+        LOG("Failed to allocate memory for id");
+        return NULL;
+    }
 
     // Set basic properties
     item->glyph = glyph;
@@ -91,8 +350,8 @@ Item_t* create_armor(const char* name, const char* id, Material_t material,
     // Initialize armor-specific data
     item->data.armor.armor_value = armor_val;
     item->data.armor.evasion_value = evasion_val;
-    item->data.armor.stealth_value = 0;
-    item->data.armor.enchant_value = 0;
+    item->data.armor.stealth_value = stealth_val;
+    item->data.armor.enchant_value = enchant_val;
     item->data.armor.durability = 255; // 100% durability
 
     // Set default values (will be modified by material factors)
@@ -100,108 +359,240 @@ Item_t* create_armor(const char* name, const char* id, Material_t material,
     item->value_coins = armor_val + evasion_val; // Base value
     item->stackable = 0; // Armor doesn't stack
 
-    // Initialize description and rarity
-    strncpy(item->description, "Armor made of ", MAX_DESCRIPTION_LENGTH - 1);
-    strncat(item->description, material.name, MAX_DESCRIPTION_LENGTH - strlen(item->description) - 1);
-    item->description[MAX_DESCRIPTION_LENGTH - 1] = '\0';
+    // Populate description using helper
+    item->description = d_InitString();
+    if (!_populate_armor_desc(item->description, &material)) {
+        free(item->name->str);
+        free(item->id->str);
+        free(item);
+        LOG("Failed to allocate memory for description");
+        return NULL;
+    }
 
-    strncpy(item->rarity, "common", MAX_ID_LENGTH - 1);
-    item->rarity[MAX_ID_LENGTH - 1] = '\0';
+    // Populate rarity using helper
+    item->rarity = d_InitString();
+    if (!_populate_rarity(item->rarity, "common")) {
+        free(item->name->str);
+        free(item->id->str);
+        free(item->description->str);
+        free(item);
+        LOG("Failed to allocate memory for rarity");
+        return NULL;
+    }
 
     return item;
 }
 
 Item_t* create_key(const char* name, const char* id, Lock_t lock, char glyph)
 {
+    dString_t* log_message = d_InitString();
+    d_AppendString(log_message, "Creating key: ", 0);
+    d_AppendString(log_message, name, 0);
+    d_AppendString(log_message, " (", 0);
+    d_AppendString(log_message, id, 0);
+    d_AppendString(log_message, ")", 0);
+    LOG(log_message->str);
+    d_DestroyString(log_message);
+
     if (name == NULL || id == NULL) {
+        LOG("Invalid name or id provided for key");
         return NULL;
     }
 
     Item_t* item = (Item_t*)malloc(sizeof(Item_t));
     if (item == NULL) {
+        LOG("Failed to allocate memory for key");
         return NULL;
     }
 
     // Set item type
     item->type = ITEM_TYPE_KEY;
 
-    // Copy strings safely
-    strncpy(item->name, name, MAX_NAME_LENGTH - 1);
-    item->name[MAX_NAME_LENGTH - 1] = '\0';
+    LOG("Item->type = ITEM_TYPE_KEY");
 
-    strncpy(item->id, id, MAX_ID_LENGTH - 1);
-    item->id[MAX_ID_LENGTH - 1] = '\0';
+    // Populate name and id using helpers
+    item->name = d_InitString();
+    if (!_populate_string_field(item->name, name)) {
+        LOG("Failed to allocate memory for key name");
+        free(item);
+        return NULL;
+    }
+    dString_t* log_message2 = d_InitString();
+    d_AppendString(log_message2, "Item->name = ", 0);
+    d_AppendString(log_message2, item->name->str, 0);
+    LOG(log_message2->str);
+    d_DestroyString(log_message2);
+
+    item->id = d_InitString();
+    if (!_populate_string_field(item->id, id)) {
+        LOG("Failed to allocate memory for key id");
+        free(item->name->str);
+        free(item);
+        return NULL;
+    }
+    dString_t* log_message3 = d_InitString();
+    d_AppendString(log_message3, "Item->id = ", 0);
+    d_AppendString(log_message3, item->id->str, 0);
+    LOG(log_message3->str);
+    d_DestroyString(log_message3);
 
     // Set basic properties
     item->glyph = glyph;
 
-    // Keys don't have materials, so initialize with neutral material
-    strncpy(item->material_data.name, "metal", MAX_NAME_LENGTH - 1);
-    item->material_data.name[MAX_NAME_LENGTH - 1] = '\0';
-    item->material_data.properties.weight_fact = 1.0f;
-    item->material_data.properties.min_damage_fact = 1.0f;
-    item->material_data.properties.max_damage_fact = 1.0f;
-    item->material_data.properties.armor_value_fact = 1.0f;
-    item->material_data.properties.evasion_value_fact = 1.0f;
-    item->material_data.properties.durability_fact = 1.0f;
-    item->material_data.properties.stealth_value_fact = 1.0f;
-    item->material_data.properties.enchant_value_fact = 1.0f;
+    // Keys don't have materials, so use default neutral material
+    item->material_data = _create_default_material();
+    dString_t* log_message4 = d_InitString();
+    d_AppendString(log_message4, "Item->material_data = ", 0);
+    d_AppendString(log_message4, item->material_data.name->str, 0);
+    LOG(log_message4->str);
+    d_DestroyString(log_message4);
 
-    // Initialize key-specific data
-    item->data.key.lock = lock;
+    // Initialize key-specific data - DEEP COPY the lock
+    item->data.key.lock.name = d_InitString();
+    d_AppendString(item->data.key.lock.name, lock.name->str, 0);
+
+    item->data.key.lock.description = d_InitString();
+    d_AppendString(item->data.key.lock.description, lock.description->str, 0);
+
+    item->data.key.lock.pick_difficulty = lock.pick_difficulty;
+    item->data.key.lock.jammed_seconds = lock.jammed_seconds;
 
     // Set default values
-    item->weight_kg = 0.0f; // Keys are light
+    item->weight_kg = 0.1f; // Keys are light but not weightless
     item->value_coins = 5; // Base value
-    item->stackable = 1; // Keys cannot stack
+    item->stackable = 1; // Keys cannot stack (though this seems like it should be 0?)
 
-    // Initialize description and rarity
-    strncpy(item->description, "A key that opens: ", MAX_DESCRIPTION_LENGTH - 1);
-    strncat(item->description, lock.name, MAX_DESCRIPTION_LENGTH - strlen(item->description) - 1);
-    item->description[MAX_DESCRIPTION_LENGTH - 1] = '\0';
+    // Populate description using helper
+    item->description = d_InitString();
+    if (!_populate_key_desc(item->description, &lock)) {
+        LOG("Failed to allocate memory for key description");
+        free(item->name->str);
+        free(item->id->str);
+        // Clean up material name if it was allocated
+        if (item->material_data.name->str != NULL) {
+            free(item->material_data.name->str);
+        }
+        free(item);
+        return NULL;
+    }
 
-    strncpy(item->rarity, "common", MAX_ID_LENGTH - 1);
-    item->rarity[MAX_ID_LENGTH - 1] = '\0';
+    // Populate rarity using helper
+    item->rarity = d_InitString();
+    if (!_populate_rarity(item->rarity, "common")) {
+        LOG("Failed to allocate memory for key rarity");
+        free(item->name->str);
+        free(item->id->str);
+        free(item->description->str);
+        if (item->material_data.name->str != NULL) {
+            free(item->material_data.name->str);
+        }
+        free(item);
+        return NULL;
+    }
 
     return item;
+}
+
+Lock_t create_lock(const char* name, const char* description, uint8_t pick_difficulty, uint8_t jammed_seconds)
+{
+    Lock_t lock;
+
+    // Initialize dString_t fields
+    lock.name = d_InitString();
+    if (lock.name == NULL) {
+        LOG("Lock name string initialization failed");
+        // Return empty lock on allocation failure
+        Lock_t empty_lock = {0};
+        return empty_lock;
+    }
+
+    lock.description = d_InitString();
+    if (lock.description == NULL) {
+        LOG("Lock description string initialization failed");
+        // Clean up and return empty lock
+        d_DestroyString(lock.name);
+        Lock_t empty_lock = {0};
+        return empty_lock;
+    }
+
+    // Populate string fields
+    if (name != NULL) {
+        d_AppendString(lock.name, name, 0);
+    }
+
+    if (description != NULL) {
+        d_AppendString(lock.description, description, 0);
+    }
+
+    // Set numeric properties
+    lock.pick_difficulty = pick_difficulty;
+    lock.jammed_seconds = jammed_seconds;
+
+    return lock;
+}
+
+/*
+ * Destroys a lock and frees its memory
+ */
+void destroy_lock(Lock_t* lock)
+{
+    if (lock == NULL) {
+        LOG("Destruction Failed; Lock is NULL");
+        return;
+    }
+
+    if (lock->name != NULL) {
+        d_DestroyString(lock->name);
+        lock->name = NULL;
+    }
+
+    if (lock->description != NULL) {
+        d_DestroyString(lock->description);
+        lock->description = NULL;
+    }
+
+    lock->pick_difficulty = 0;
+    lock->jammed_seconds = 0;
 }
 
 Item_t* create_consumable(const char* name, const char* id, uint8_t value,
                          void (*on_consume)(uint8_t), char glyph)
 {
     if (name == NULL || id == NULL || on_consume == NULL) {
+        LOG("Consumable creation failed; Invalid parameters");
         return NULL;
     }
 
     Item_t* item = (Item_t*)malloc(sizeof(Item_t));
     if (item == NULL) {
+        LOG("Consumable creation failed; Memory allocation failed");
         return NULL;
     }
 
     // Set item type
     item->type = ITEM_TYPE_CONSUMABLE;
 
-    // Copy strings safely
-    strncpy(item->name, name, MAX_NAME_LENGTH - 1);
-    item->name[MAX_NAME_LENGTH - 1] = '\0';
+    // Populate name and id using helpers
+    item->name = d_InitString();
+    if (!_populate_string_field(item->name, name)) {
+        LOG("Consumable creation failed; Failed to populate name");
+        free(item);
+        return NULL;
+    }
 
-    strncpy(item->id, id, MAX_ID_LENGTH - 1);
-    item->id[MAX_ID_LENGTH - 1] = '\0';
+    item->id = d_InitString();
+    if (!_populate_string_field(item->id, id)) {
+        LOG("Consumable creation failed; Failed to populate id");
+        free(item->name->str);
+        free(item);
+        return NULL;
+    }
 
     // Set basic properties
     item->glyph = glyph;
 
-    // Consumables don't have materials, so initialize with neutral material
-    strncpy(item->material_data.name, "organic", MAX_NAME_LENGTH - 1);
-    item->material_data.name[MAX_NAME_LENGTH - 1] = '\0';
-    item->material_data.properties.weight_fact = 1.0f;
-    item->material_data.properties.min_damage_fact = 1.0f;
-    item->material_data.properties.max_damage_fact = 1.0f;
-    item->material_data.properties.evasion_value_fact = 1.0f;
-    item->material_data.properties.armor_value_fact = 1.0f;
-    item->material_data.properties.durability_fact = 1.0f;
-    item->material_data.properties.stealth_value_fact = 1.0f;
-    item->material_data.properties.enchant_value_fact = 1.0f;
+    // Consumables don't have materials, so use default organic material
+    item->material_data = _create_consumable_material();
 
     // Initialize consumable-specific data
     item->data.consumable.on_consume = on_consume;
@@ -211,16 +602,37 @@ Item_t* create_consumable(const char* name, const char* id, uint8_t value,
     item->data.consumable.duration_seconds = 0; // Instant effect by default
 
     // Set default values
-    item->weight_kg = 0.0f; // Consumables are light
-    item->value_coins = value; // Default Value based on effect strength
+    item->weight_kg = 0.1f; // Consumables are light but not weightless
+    item->value_coins = value; // Default value based on effect strength
     item->stackable = 16; // Can stack up to 16
 
-    // Initialize description and rarity
-    strncpy(item->description, "A consumable item with magical properties", MAX_DESCRIPTION_LENGTH - 1);
-    item->description[MAX_DESCRIPTION_LENGTH - 1] = '\0';
+    // Populate description using helper
+    item->description = d_InitString();
+    if (!_populate_consumable_desc(item->description, item->data.consumable.value)) {
+        LOG("Consumable creation failed; Failed to populate description");
+        free(item->name->str);
+        free(item->id->str);
+        // Clean up material name if it was allocated
+        if (item->material_data.name->str != NULL) {
+            free(item->material_data.name->str);
+        }
+        free(item);
+        return NULL;
+    }
 
-    strncpy(item->rarity, "common", MAX_ID_LENGTH - 1);
-    item->rarity[MAX_ID_LENGTH - 1] = '\0';
+    // Populate rarity using helper
+    item->rarity = d_InitString();
+    if (!_populate_rarity(item->rarity, "common")) {
+        LOG("Consumable creation failed; Failed to populate rarity");
+        free(item->name->str);
+        free(item->id->str);
+        free(item->description->str);
+        if (item->material_data.name->str != NULL) {
+            free(item->material_data.name->str);
+        }
+        free(item);
+        return NULL;
+    }
 
     return item;
 }
@@ -229,23 +641,34 @@ Item_t* create_ammunition(const char* name, const char* id, Material_t material,
                          uint8_t min_dmg, uint8_t max_dmg, char glyph)
 {
     if (name == NULL || id == NULL) {
+        LOG("Create ammunition failed; Invalid name or id");
         return NULL;
     }
 
     Item_t* item = (Item_t*)malloc(sizeof(Item_t));
     if (item == NULL) {
+        LOG("Create ammunition failed; Failed to allocate memory");
         return NULL;
     }
 
     // Set item type
     item->type = ITEM_TYPE_AMMUNITION;
 
-    // Copy strings safely
-    strncpy(item->name, name, MAX_NAME_LENGTH - 1);
-    item->name[MAX_NAME_LENGTH - 1] = '\0';
+    // Populate name and id using helpers
+    item->name = d_InitString();
+    if (!_populate_string_field(item->name, name)) {
+        LOG("Create ammunition failed; Failed to allocate memory for name");
+        free(item);
+        return NULL;
+    }
 
-    strncpy(item->id, id, MAX_ID_LENGTH - 1);
-    item->id[MAX_ID_LENGTH - 1] = '\0';
+    item->id = d_InitString();
+    if (!_populate_string_field(item->id, id)) {
+        LOG("Create ammunition failed; Failed to allocate memory for id");
+        free(item->name->str);
+        free(item);
+        return NULL;
+    }
 
     // Set basic properties
     item->glyph = glyph;
@@ -256,20 +679,34 @@ Item_t* create_ammunition(const char* name, const char* id, Material_t material,
     item->data.ammo.max_damage = max_dmg;
 
     // Set default values (will be modified by material factors)
-    item->weight_kg = 0.0f; // Ammo takes no space
+    item->weight_kg = 0.05f; // Ammo is very light but not weightless
     item->value_coins = (min_dmg + max_dmg) / 2; // Base value
-    item->stackable = 255; // Ammo stacks well
+    item->stackable = 255; // Ammo stacks very well
 
-    // Initialize description and rarity
-    strncpy(item->description, "Ammunition made of ", MAX_DESCRIPTION_LENGTH - 1);
-    strncat(item->description, material.name, MAX_DESCRIPTION_LENGTH - strlen(item->description) - 1);
-    item->description[MAX_DESCRIPTION_LENGTH - 1] = '\0';
+    // Populate description using helper
+    item->description = d_InitString();
+    if (!_populate_ammunition_desc(item->description, &material, min_dmg, max_dmg)) {
+        LOG("Create ammunition failed; Failed to allocate memory for description");
+        free(item->name->str);
+        free(item->id->str);
+        free(item);
+        return NULL;
+    }
 
-    strncpy(item->rarity, "common", MAX_ID_LENGTH - 1);
-    item->rarity[MAX_ID_LENGTH - 1] = '\0';
+    // Populate rarity using helper
+    item->rarity = d_InitString();
+    if (!_populate_rarity(item->rarity, "common")) {
+        LOG("Create ammunition failed; Failed to allocate memory for rarity");
+        free(item->name->str);
+        free(item->id->str);
+        free(item->description->str);
+        free(item);
+        return NULL;
+    }
 
     return item;
 }
+
 
 void destroy_item(Item_t* item)
 {
@@ -372,18 +809,17 @@ Ammunition__Item_t* get_ammunition_data(Item_t* item)
 Material_t create_material(const char* name, MaterialProperties_t properties)
 {
     Material_t material;
-
+    material.name = d_InitString();
     if (name == NULL) {
+        LOG("Material name is NULL");
         // Return a default material if name is NULL
-        strncpy(material.name, "unknown", MAX_NAME_LENGTH - 1);
-        material.name[MAX_NAME_LENGTH - 1] = '\0';
+        _populate_string_field(material.name, "Default Material");
         material.properties = create_default_material_properties();
         return material;
     }
 
     // Copy name safely
-    strncpy(material.name, name, MAX_NAME_LENGTH - 1);
-    material.name[MAX_NAME_LENGTH - 1] = '\0';
+    _populate_string_field(material.name, name);
 
     // Set the properties
     material.properties = properties;
@@ -407,8 +843,6 @@ MaterialProperties_t create_default_material_properties(void)
     return props;
 }
 
-
-
 void apply_material_to_weapon(Item_t* item)
 {
     if (item == NULL || item->type != ITEM_TYPE_WEAPON) {
@@ -421,14 +855,18 @@ void apply_material_to_weapon(Item_t* item)
     // Apply material factors to weapon stats
     weapon->min_damage = (uint8_t)(weapon->min_damage * material->properties.min_damage_fact);
     weapon->max_damage = (uint8_t)(weapon->max_damage * material->properties.max_damage_fact);
-    weapon->durability = (uint8_t)(weapon->durability * material->properties.durability_fact);
+    // NOTE: Durability is no longer modified by material - stays at 255
     weapon->stealth_value = (uint8_t)(weapon->stealth_value * material->properties.stealth_value_fact);
     weapon->enchant_value = (uint8_t)(weapon->enchant_value * material->properties.enchant_value_fact);
 
-    // Apply to base item properties
-    item->weight_kg = (float)(item->weight_kg * material->properties.weight_fact);
-    item->value_coins = (uint8_t)(item->value_coins * material->properties.value_coins_fact);
+    // Apply to base item properties with bounds checking
+    float new_weight = item->weight_kg * material->properties.weight_fact;
+    item->weight_kg = (new_weight < 0.0f) ? 0.0f : new_weight;
+
+    float new_value = item->value_coins * material->properties.value_coins_fact;
+    item->value_coins = (new_value < 0.0f) ? 0 : (uint8_t)new_value;
 }
+
 
 void apply_material_to_armor(Item_t* item)
 {
@@ -446,15 +884,39 @@ void apply_material_to_armor(Item_t* item)
     armor->stealth_value = (uint8_t)(armor->stealth_value * material->properties.stealth_value_fact);
     armor->enchant_value = (uint8_t)(armor->enchant_value * material->properties.enchant_value_fact);
 
-    // Apply to base item properties
-    item->weight_kg = (float)(item->weight_kg * material->properties.weight_fact);
-    item->value_coins = (uint8_t)(item->value_coins * material->properties.value_coins_fact);
+    // Apply to base item properties with bounds checking
+    float new_weight = item->weight_kg * material->properties.weight_fact;
+    item->weight_kg = (new_weight < 0.0f) ? 0.0f : new_weight;
+
+    float new_value = item->value_coins * material->properties.value_coins_fact;
+    item->value_coins = (new_value < 0.0f) ? 0 : (uint8_t)new_value;
+}
+
+void apply_material_to_ammunition(Item_t* item)
+{
+    if (item == NULL || item->type != ITEM_TYPE_AMMUNITION) {
+        return;
+    }
+
+    Ammunition__Item_t* ammo = &item->data.ammo;
+    Material_t* material = &item->material_data;
+
+    // Apply material factors to ammunition stats
+    ammo->min_damage = (uint8_t)(ammo->min_damage * material->properties.min_damage_fact);
+    ammo->max_damage = (uint8_t)(ammo->max_damage * material->properties.max_damage_fact);
+
+    // Apply to base item properties with bounds checking
+    float new_weight = item->weight_kg * material->properties.weight_fact;
+    item->weight_kg = (new_weight < 0.0f) ? 0.0f : new_weight;
+
+    float new_value = item->value_coins * material->properties.value_coins_fact;
+    item->value_coins = (new_value < 0.0f) ? 0 : (uint8_t)new_value;
 }
 
 float calculate_final_weight(const Item_t* item)
 {
     if (item == NULL) {
-        // TODO: Implement logging errors on NULL check
+        LOG("calculate_final_weight: Item is NULL");
         return 0.0f;
     }
 
@@ -465,7 +927,7 @@ float calculate_final_weight(const Item_t* item)
 uint8_t calculate_final_value(const Item_t* item)
 {
     if (item == NULL) {
-        // TODO: Implement logging errors on NULL check
+        LOG("calculate_final_value: Item is NULL");
         return 0;
     }
 
@@ -481,7 +943,7 @@ uint8_t calculate_final_value(const Item_t* item)
 uint8_t get_weapon_min_damage(const Item_t* item)
 {
     if (item == NULL || item->type != ITEM_TYPE_WEAPON) {
-        // TODO: Implement logging errors on NULL check
+        LOG("get_weapon_min_damage: Item is NULL or not a weapon");
         return 0;
     }
     return item->data.weapon.min_damage;
@@ -490,16 +952,33 @@ uint8_t get_weapon_min_damage(const Item_t* item)
 uint8_t get_weapon_max_damage(const Item_t* item)
 {
     if (item == NULL || item->type != ITEM_TYPE_WEAPON) {
-        // TODO: Implement logging errors on NULL check
+        LOG("get_weapon_max_damage: Item is NULL or not a weapon");
         return 0;
     }
     return item->data.weapon.max_damage;
+}
+uint8_t get_ammunition_min_damage(const Item_t* item)
+{
+    if (item == NULL || item->type != ITEM_TYPE_AMMUNITION) {
+        LOG("get_ammunition_min_damage: Item is NULL or not ammunition");
+        return 0;
+    }
+    return item->data.ammo.min_damage;
+}
+
+uint8_t get_ammunition_max_damage(const Item_t* item)
+{
+    if (item == NULL || item->type != ITEM_TYPE_AMMUNITION) {
+        LOG("get_ammunition_max_damage: Item is NULL or not ammunition");
+        return 0;
+    }
+    return item->data.ammo.max_damage;
 }
 
 uint8_t get_weapon_range(const Item_t* item)
 {
     if (item == NULL || item->type != ITEM_TYPE_WEAPON) {
-        // TODO: Implement logging errors on NULL check
+        LOG("get_weapon_range: Item is NULL or not a weapon");
         return 0;
     }
     return item->data.weapon.range_tiles;
@@ -508,7 +987,7 @@ uint8_t get_weapon_range(const Item_t* item)
 bool weapon_needs_ammo(const Item_t* item)
 {
     if (item == NULL || item->type != ITEM_TYPE_WEAPON) {
-        // TODO: Implement logging errors on NULL check
+        LOG("weapon_needs_ammo: Item is NULL or not a weapon");
         return false;
     }
 
@@ -519,12 +998,12 @@ bool weapon_needs_ammo(const Item_t* item)
 bool weapon_can_use_ammo(const Item_t* weapon, const Item_t* ammo)
 {
     if (weapon == NULL || ammo == NULL) {
-        // TODO: Implement logging errors on NULL check
+        LOG("weapon_can_use_ammo: Item is NULL");
         return false;
     }
 
     if (weapon->type != ITEM_TYPE_WEAPON || ammo->type != ITEM_TYPE_AMMUNITION) {
-        // TODO: Implement logging errors on type mismatch
+        LOG("weapon_can_use_ammo: Type mismatch");
         return false;
     }
 
@@ -537,7 +1016,7 @@ bool weapon_can_use_ammo(const Item_t* weapon, const Item_t* ammo)
 uint8_t get_armor_value(const Item_t* item)
 {
     if (item == NULL || item->type != ITEM_TYPE_ARMOR) {
-        // TODO: Implement logging errors on NULL check
+        LOG("get_armor_value: Item is NULL or not armor");
         return 0;
     }
     return item->data.armor.armor_value;
@@ -546,7 +1025,7 @@ uint8_t get_armor_value(const Item_t* item)
 uint8_t get_evasion_value(const Item_t* item)
 {
     if (item == NULL || item->type != ITEM_TYPE_ARMOR) {
-        // TODO: Implement logging errors on NULL check
+        LOG("get_evasion_value: Item is NULL or not armor");
         return 0;
     }
     return item->data.armor.evasion_value;
@@ -556,7 +1035,7 @@ uint8_t get_evasion_value(const Item_t* item)
 float get_item_weight(const Item_t* item)
 {
     if (item == NULL) {
-        // TODO: Implement logging errors on NULL check
+        LOG("get_item_weight: Item is NULL");
         return 0.0f;
     }
     return item->weight_kg;
@@ -565,7 +1044,7 @@ float get_item_weight(const Item_t* item)
 uint8_t get_item_value_coins(const Item_t* item)
 {
     if (item == NULL) {
-        // TODO: Implement logging errors on NULL check
+        LOG("get_item_value_coins: Item is NULL");
         return 0;
     }
     return item->value_coins;
@@ -574,7 +1053,7 @@ uint8_t get_item_value_coins(const Item_t* item)
 uint8_t get_stealth_value(const Item_t* item)
 {
     if (item == NULL) {
-        // TODO: Implement logging errors on NULL check
+        LOG("get_stealth_value: Item is NULL");
         return 0;
     }
 
@@ -595,6 +1074,7 @@ uint8_t get_stealth_value(const Item_t* item)
 uint8_t get_durability(const Item_t* item)
 {
     if (item == NULL) {
+        LOG("get_durability: Item is NULL");
         return 0;
     }
 
@@ -615,6 +1095,7 @@ uint8_t get_durability(const Item_t* item)
 bool is_item_stackable(const Item_t* item)
 {
     if (item == NULL) {
+        LOG("is_item_stackable: Item is NULL");
         return false;
     }
 
@@ -625,6 +1106,7 @@ bool is_item_stackable(const Item_t* item)
 uint8_t get_max_stack_size(const Item_t* item)
 {
     if (item == NULL) {
+        LOG("get_max_stack_size: Item is NULL");
         return 0;
     }
 
@@ -638,6 +1120,13 @@ uint8_t get_max_stack_size(const Item_t* item)
 void damage_item_durability(Item_t* item, uint16_t damage)
 {
     if (item == NULL) {
+        LOG("damage_item_durability: Item is NULL");
+        return;
+    }
+
+    // Check if item resists durability loss due to material properties
+    if (item_resists_durability_loss(item)) {
+        LOG("Item resisted durability loss due to material properties");
         return;
     }
 
@@ -671,6 +1160,7 @@ void damage_item_durability(Item_t* item, uint16_t damage)
 void repair_item(Item_t* item, uint16_t repair_amount)
 {
     if (item == NULL) {
+        LOG("repair_item: Item is NULL");
         return;
     }
 
@@ -704,6 +1194,7 @@ void repair_item(Item_t* item, uint16_t repair_amount)
 bool is_item_broken(const Item_t* item)
 {
     if (item == NULL) {
+        LOG("is_item_broken: Item is NULL");
         return true; // NULL items are considered "broken"
     }
 
@@ -727,6 +1218,7 @@ bool is_item_broken(const Item_t* item)
 float get_durability_percentage(const Item_t* item)
 {
     if (item == NULL) {
+        LOG("get_durability_percentage: Item is NULL");
         return 0.0f;
     }
 
@@ -754,20 +1246,20 @@ float get_durability_percentage(const Item_t* item)
 Inventory_t* create_inventory(uint8_t size)
 {
     if (size == 0) {
-        // TODO: Implement error handling for invalid inventory size
+        LOG("create_inventory: Invalid inventory size");
         return NULL; // Invalid inventory size
     }
 
     Inventory_t* inventory = (Inventory_t*)malloc(sizeof(Inventory_t));
     if (inventory == NULL) {
-        // TODO: Implement error handling for memory allocation failure
+        LOG("create_inventory: Memory allocation failed");
         return NULL; // Memory allocation failed
     }
 
     inventory->slots = (Inventory_slot_t*)calloc(size, sizeof(Inventory_slot_t));
     if (inventory->slots == NULL) {
         free(inventory);
-        // TODO: Implement error handling for memory allocation failure
+        LOG("create_inventory: Memory allocation failed");
         return NULL; // Memory allocation failed
     }
 
@@ -786,7 +1278,7 @@ Inventory_t* create_inventory(uint8_t size)
 void destroy_inventory(Inventory_t* inventory)
 {
     if (inventory == NULL) {
-        // TODO: Implement error handling for invalid input
+        LOG("destroy_inventory: Invalid inventory");
         return;
     }
 
@@ -802,7 +1294,7 @@ void destroy_inventory(Inventory_t* inventory)
 bool add_item_to_inventory(Inventory_t* inventory, Item_t* item, uint8_t quantity)
 {
     if (inventory == NULL || item == NULL || quantity == 0) {
-        // TODO: Implement error handling for invalid input
+        LOG("add_item_to_inventory: Invalid input");
         return false;
     }
 
@@ -840,7 +1332,7 @@ bool add_item_to_inventory(Inventory_t* inventory, Item_t* item, uint8_t quantit
         }
 
         if (empty_slot >= inventory->size) {
-            // TODO: Implement error handling for no empty slots
+            LOG("Adding items to inventory failed: No empty slots");
             return false; // No empty slots, couldn't add all items
         }
 
@@ -865,7 +1357,7 @@ bool add_item_to_inventory(Inventory_t* inventory, Item_t* item, uint8_t quantit
 bool remove_item_from_inventory(Inventory_t* inventory, const char* item_id, uint8_t quantity)
 {
     if (inventory == NULL || item_id == NULL || quantity == 0) {
-        // TODO: Implement error handling for invalid input
+        LOG("Invalid input for remove_item_from_inventory");
         return false;
     }
 
@@ -874,7 +1366,7 @@ bool remove_item_from_inventory(Inventory_t* inventory, const char* item_id, uin
     // Find and remove items with matching ID
     for (uint8_t i = 0; i < inventory->size && remaining_to_remove > 0; i++) {
         if (inventory->slots[i].quantity > 0 &&
-            strcmp(inventory->slots[i].item.id, item_id) == 0) {
+            strcmp(inventory->slots[i].item.id->str, item_id) == 0) {
 
             if (inventory->slots[i].quantity <= remaining_to_remove) {
                 // Remove entire stack
@@ -895,54 +1387,54 @@ bool remove_item_from_inventory(Inventory_t* inventory, const char* item_id, uin
 Inventory_slot_t* find_item_in_inventory(Inventory_t* inventory, const char* item_id)
 {
     if (inventory == NULL || item_id == NULL) {
-        // TODO: Implement error handling for invalid input
+        LOG("Invalid input for find_item_in_inventory");
         return NULL;
     }
 
     for (uint8_t i = 0; i < inventory->size; i++) {
         if (inventory->slots[i].quantity > 0 &&
-            strcmp(inventory->slots[i].item.id, item_id) == 0) {
+            strcmp(inventory->slots[i].item.id->str, item_id) == 0) {
             return &inventory->slots[i];
         }
     }
-    // TODO: Implement error handling for item not found
+    LOG("Item not found in inventory");
     return NULL; // Item not found
 }
 
 bool can_stack_items(const Item_t* item1, const Item_t* item2)
 {
     if (item1 == NULL || item2 == NULL) {
-        // TODO: Implement error handling for invalid input
+        LOG("Invalid input for can_stack_items");
         return false;
     }
 
     // Items can stack if they have the same ID and are stackable
-    return (strcmp(item1->id, item2->id) == 0) && is_item_stackable(item1);
+    return (strcmp(item1->id->str, item2->id->str) == 0) && is_item_stackable(item1);
 }
 
 bool equip_item(Inventory_t* inventory, const char* item_id)
 {
     if (inventory == NULL || item_id == NULL) {
-        // TODO: Implement error handling for invalid input
+        LOG("Invalid input for equip_item");
         return false;
     }
 
     Inventory_slot_t* slot = find_item_in_inventory(inventory, item_id);
     if (slot == NULL) {
-        // TODO: Implement error handling for item not found
+        LOG("Item not found in inventory for equip_item");
         return false;
     }
 
     // Only weapons and armor can be equipped
     if (slot->item.type != ITEM_TYPE_WEAPON && slot->item.type != ITEM_TYPE_ARMOR) {
-        // TODO: Implement error handling for invalid item type
+        LOG("Invalid item type for equip_item");
         return false;
     }
 
     // Check if item is broken
     if (is_item_broken(&slot->item)) {
-        //
-        return false; // Can't equip broken items
+        LOG("Item is broken for equip_item");
+        return false;
     }
 
     // Unequip any existing item of the same type
@@ -962,24 +1454,23 @@ bool equip_item(Inventory_t* inventory, const char* item_id)
 bool unequip_item(Inventory_t* inventory, const char* item_id)
 {
     if (inventory == NULL || item_id == NULL) {
-        // TODO: Implement error handling for invalid input
+        LOG("Invalid input for unequip_item");
         return false;
     }
 
     Inventory_slot_t* slot = find_item_in_inventory(inventory, item_id);
     if (slot == NULL || !slot->is_equipped) {
-        // TODO: Implement error handling for item not found or not equipped
+        LOG("Item not found or not equipped for unequip_item");
         return false;
     }
 
     slot->is_equipped = 0;
     return true;
 }
-
 Inventory_slot_t* get_equipped_weapon(Inventory_t* inventory)
 {
     if (inventory == NULL) {
-        // TODO: Implement error handling for invalid input
+        LOG("Invalid input for get_equipped_weapon");
         return NULL;
     }
 
@@ -987,18 +1478,25 @@ Inventory_slot_t* get_equipped_weapon(Inventory_t* inventory)
         if (inventory->slots[i].quantity > 0 &&
             inventory->slots[i].item.type == ITEM_TYPE_WEAPON &&
             inventory->slots[i].is_equipped) {
+
+            // Check if the equipped weapon is broken
+            if (is_item_broken(&inventory->slots[i].item)) {
+                LOG("Auto-unequipping broken weapon");
+                inventory->slots[i].is_equipped = false;
+                return NULL;
+            }
+
             return &inventory->slots[i];
         }
     }
 
-    // TODO: Implement error handling for no weapon equipped
     return NULL;
 }
+
 
 Inventory_slot_t* get_equipped_armor(Inventory_t* inventory)
 {
     if (inventory == NULL) {
-        // TODO: Implement error handling for invalid input
         return NULL;
     }
 
@@ -1006,18 +1504,25 @@ Inventory_slot_t* get_equipped_armor(Inventory_t* inventory)
         if (inventory->slots[i].quantity > 0 &&
             inventory->slots[i].item.type == ITEM_TYPE_ARMOR &&
             inventory->slots[i].is_equipped) {
+
+            // Check if the equipped armor is broken
+            if (is_item_broken(&inventory->slots[i].item)) {
+                LOG("Auto-unequipping broken armor");
+                inventory->slots[i].is_equipped = false;
+                return NULL;
+            }
+
             return &inventory->slots[i];
         }
     }
-
-    // TODO: Implement error handling for no armor equipped
     return NULL;
 }
+
 
 uint8_t get_inventory_free_slots(const Inventory_t* inventory)
 {
     if (inventory == NULL) {
-        // TODO: Implement error handling for invalid input
+        LOG("Invalid input for get_inventory_free_slots");
         return 0;
     }
 
@@ -1034,7 +1539,7 @@ uint8_t get_inventory_free_slots(const Inventory_t* inventory)
 uint8_t get_total_inventory_weight(const Inventory_t* inventory)
 {
     if (inventory == NULL) {
-        // TODO: Implement error handling for invalid input
+        LOG("Invalid input for get_total_inventory_weight");
         return 0;
     }
 
@@ -1053,7 +1558,7 @@ uint8_t get_total_inventory_weight(const Inventory_t* inventory)
 bool is_inventory_full(const Inventory_t* inventory)
 {
     if (inventory == NULL) {
-        // TODO: Implement error handling for invalid input
+        LOG("Invalid input for is_inventory_full");
         return true; // NULL inventory is considered "full"
     }
 
@@ -1067,7 +1572,7 @@ bool is_inventory_full(const Inventory_t* inventory)
 bool use_consumable(Item_t* item)
 {
     if (item == NULL || item->type != ITEM_TYPE_CONSUMABLE) {
-        // TODO: Implement error handling for invalid input
+        LOG("Invalid input for use_consumable");
         return false;
     }
 
@@ -1075,7 +1580,7 @@ bool use_consumable(Item_t* item)
 
     // Check if the consumable has a valid on_consume callback
     if (consumable->on_consume == NULL) {
-        // TODO: Implement error handling for invalid input
+        LOG("Invalid input for use_consumable");
         return false;
     }
 
@@ -1091,7 +1596,7 @@ bool use_consumable(Item_t* item)
 void trigger_consumable_duration_tick(Item_t* item)
 {
     if (item == NULL || item->type != ITEM_TYPE_CONSUMABLE) {
-        // TODO: Implement error handling for invalid input
+        LOG("Invalid input for trigger_consumable_duration_tick");
         return;
     }
 
@@ -1114,7 +1619,7 @@ void trigger_consumable_duration_tick(Item_t* item)
 void trigger_consumable_duration_end(Item_t* item)
 {
     if (item == NULL || item->type != ITEM_TYPE_CONSUMABLE) {
-        // TODO: Implement error handling for invalid input
+        LOG("Invalid input for trigger_consumable_duration_end");
         return;
     }
 
@@ -1132,19 +1637,19 @@ void trigger_consumable_duration_end(Item_t* item)
 bool can_key_open_lock(const Item_t* key, const Lock_t* lock)
 {
     if (key == NULL || lock == NULL) {
-        // TODO: Implement error handling for invalid input
+        LOG("Can Key Open Lock? No, because key or lock is NULL");
         return false;
     }
 
     // Only keys can open locks
     if (key->type != ITEM_TYPE_KEY) {
-        // TODO: Implement error handling for invalid input
+        LOG("Can Key Open Lock? No, because key is not a key");
         return false;
     }
 
     // Check if the lock is jammed
     if (lock->jammed_seconds > 0) {
-        // TODO: Implement error handling for invalid input
+        LOG("Can Key Open Lock? No, because lock is jammed");
         return false; // Can't open jammed locks
     }
 
@@ -1153,5 +1658,5 @@ bool can_key_open_lock(const Item_t* key, const Lock_t* lock)
     const Lock_t* key_lock = &key->data.key.lock;
 
     // Keys can open locks with matching names
-    return strcmp(key_lock->name, lock->name) == 0;
+    return strcmp(key_lock->name->str, lock->name->str) == 0;
 }

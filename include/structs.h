@@ -1,8 +1,11 @@
 #ifndef __STRUCTS_H__
 #define __STRUCTS_H__
 
-#include <stdint.h>
 #include "defs.h"
+#include "Daedalus.h"
+
+#include <stdint.h>
+#include <stdint.h>
 
 typedef enum {
     ITEM_TYPE_WEAPON,
@@ -47,6 +50,7 @@ typedef struct
   // floats (1 is 100%, 0.5 is 50%, etc.)
   float temperature_factor; // every region in this world cell
   float elevation_factor; // every region in this world cell
+  
 } World_t;
 
 typedef struct
@@ -71,19 +75,20 @@ typedef struct // World_Position_t
   uint32_t local_index;
   // refer to in game tiles as 'world-id:region-id:x/y:x/y'
   int16_t local_x, local_y, local_z;
+
 } World_Position_t;
 
 // World Objects
 typedef struct // WorldObject_t
 {
-    char name[MAX_NAME_LENGTH];
-    char description[MAX_DESCRIPTION_LENGTH];
+    dString_t* name;
+    dString_t* description;
 } WorldObject_t;
 
 typedef struct // Lock_t
 {
-  char name[MAX_NAME_LENGTH];
-  char description[MAX_DESCRIPTION_LENGTH];
+  dString_t* name;
+  dString_t* description;
 
   uint8_t pick_difficulty; // if its 255 it is unpickable
   // TODO: make a timer system and integrate jammed
@@ -108,7 +113,7 @@ typedef struct // Material_t
 {
     // Every Item in our game will have a Material
     // The material will effect properties like weight, damage, armor, stealth, and enchantment
-    char name[MAX_NAME_LENGTH];
+    dString_t* name;
 
     MaterialProperties_t properties;
 } Material_t;
@@ -177,10 +182,10 @@ typedef struct
 
     char glyph;
 
-    char description[MAX_DESCRIPTION_LENGTH]; // TODO: make new string in archmedes
-    char name[MAX_NAME_LENGTH]; // TODO: make new string in archmedes
-    char id[MAX_ID_LENGTH]; // get_item_by_id() will return the item in .dat or an error
-    char rarity[MAX_ID_LENGTH];
+    dString_t* description;
+    dString_t* name;
+    dString_t* id;
+    dString_t* rarity;
 
     float weight_kg;
 

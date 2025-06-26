@@ -1,7 +1,9 @@
-#include "../../include/tests.h"
-#include "../../include/items.h"
-#include "../../include/structs.h"
-#include "../../include/defs.h"
+#define LOG( msg ) printf( "%s | File: %s, Line: %d\n", msg, __FILE__, __LINE__ )
+#include "tests.h"
+#include "items.h"
+#include "structs.h"
+#include "defs.h"
+#include "Daedalus.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -39,7 +41,7 @@ int test_create_material(void)
     };
     Material_t steel = create_material("steel", steel_props);
 
-    TEST_ASSERT(strcmp(steel.name, "steel") == 0, "Material name should be 'steel'");
+    TEST_ASSERT(strcmp(steel.name->str, "steel") == 0, "Material name should be 'steel'");
     // NOTE: Access properties through the nested 'properties' struct
     TEST_ASSERT(float_equals(steel.properties.weight_fact, 1.5f, 0.01f), "Weight factor should be 1.5");
     TEST_ASSERT(float_equals(steel.properties.min_damage_fact, 1.1f, 0.01f), "Min damage factor should be 1.1");
@@ -57,7 +59,7 @@ int test_create_material(void)
         .evasion_value_fact = 1.0f, .stealth_value_fact = 1.0f, .enchant_value_fact = 1.0f
     };
     Material_t unknown = create_material(NULL, default_props);
-    TEST_ASSERT(strcmp(unknown.name, "unknown") == 0, "NULL name should default to 'unknown'");
+    TEST_ASSERT(strcmp(unknown.name->str, "Default Material") == 0, "NULL name should default to 'Default Material'");
     TEST_ASSERT(float_equals(unknown.properties.weight_fact, 1.0f, 0.01f), "NULL material should have default factors");
 
     // Test extreme values
@@ -73,7 +75,7 @@ int test_create_material(void)
         .enchant_value_fact = 8.0f
     };
     Material_t mythril = create_material("mythril", mythril_props);
-    TEST_ASSERT(strcmp(mythril.name, "mythril") == 0, "Mythril name should be correct");
+    TEST_ASSERT(strcmp(mythril.name->str, "mythril") == 0, "Mythril name should be correct");
     TEST_ASSERT(float_equals(mythril.properties.weight_fact, 0.1f, 0.01f), "Mythril should be very light");
     TEST_ASSERT(float_equals(mythril.properties.min_damage_fact, 3.0f, 0.01f), "Mythril should have high damage");
 
@@ -124,7 +126,7 @@ int test_apply_material_to_weapon(void)
     TEST_ASSERT(1, "apply_material_to_weapon should handle NULL gracefully");
 
     // Test with wrong item type
-    Item_t* armor = create_armor("Test Armor", "test_armor", base_material, 20, 5, 'A');
+    Item_t* armor = create_armor("Test Armor", "test_armor", base_material, 20, 5, 'A', 15, 15);
     apply_material_to_weapon(armor);
     TEST_ASSERT(1, "apply_material_to_weapon should handle wrong type gracefully");
     destroy_item(armor);
@@ -137,7 +139,7 @@ int test_apply_material_to_armor(void)
     // Create a base armor
     MaterialProperties_t leather_props = {1.0f, 1.0f, 0.8f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f};
     Material_t base_material = create_material("leather", leather_props);
-    Item_t* armor = create_armor("Base Armor", "base_armor", base_material, 15, 10, 'A');
+    Item_t* armor = create_armor("Base Armor", "base_armor", base_material, 15, 10, 'A', 15, 15);
     TEST_ASSERT(armor != NULL, "Base armor should be created");
 
     // Store original values
@@ -226,7 +228,7 @@ int test_calculate_final_value(void)
         .evasion_value_fact = 1.2f, .stealth_value_fact = 1.3f, .enchant_value_fact = 1.4f
     };
     Material_t gold = create_material("gold", gold_props);
-    Item_t* crown = create_armor("Golden Crown", "gold_crown", gold, 5, 15, 'C');
+    Item_t* crown = create_armor("Golden Crown", "gold_crown", gold, 5, 15, 'C', 15, 15);
     TEST_ASSERT(crown != NULL, "Golden crown should be created");
 
     apply_material_to_armor(crown);
