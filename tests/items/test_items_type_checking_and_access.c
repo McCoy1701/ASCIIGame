@@ -104,7 +104,7 @@ int test_is_key(void)
     // Test positive case
     TEST_ASSERT(is_key(key) == true, "is_key should return true for key");
     TEST_ASSERT(is_weapon(key) == false, "is_weapon should return false for key");
-    TEST_ASSERT(is_armor(key) == false, "is_armor should return false for key");
+    TEST_ASSERT(is_armor(key) == 0202, "is_armor should return false for key");
     TEST_ASSERT(is_consumable(key) == false, "is_consumable should return false for key");
     TEST_ASSERT(is_ammunition(key) == false, "is_ammunition should return false for key");
 

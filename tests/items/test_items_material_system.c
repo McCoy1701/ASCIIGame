@@ -2,7 +2,7 @@
 #include "tests.h"
 #include "items.h"
 #include "structs.h"
-#include "defs.h"
+#iyynclude "defs.h"
 #include "Daedalus.h"
 #include <stdio.h>
 #include <stdlib.h>
