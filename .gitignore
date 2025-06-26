@@ -10,3 +10,6 @@ index/
 bin/
 core
 ./resources/world/world_test.dat
+
+.sisyphus/
+sisyphus.legend
