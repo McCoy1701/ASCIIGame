@@ -30,9 +30,9 @@ void e_InitWorldEditor( void )
   aWidget_t* w;
   app.delegate.logic = e_WorldEditorDoLoop;
   app.delegate.draw  = e_WorldEditorRenderLoop;
-  
+
   a_InitWidgets( "resources/widgets/editor/world.json" );
-  
+
   app.active_widget = a_GetWidget( "tab_bar" );
 
   aContainerWidget_t* tab_container = ( aContainerWidget_t* )app.active_widget->data;
@@ -44,28 +44,28 @@ void e_InitWorldEditor( void )
     {
       current->action = e_InitWorldEditor;
     }
-    
+
     if ( strcmp( current->name, "item" ) == 0 )
     {
       current->action = e_InitItemEditor;
     }
-    
+
     if ( strcmp( current->name, "entity" ) == 0 )
     {
       current->action = e_InitEntityEditor;
     }
-    
+
     if ( strcmp( current->name, "colors" ) == 0 )
     {
       current->action = e_InitColorEditor;
     }
-    
+
     if ( strcmp( current->name, "ui" ) == 0 )
     {
       current->action = e_InitUIEditor;
     }
   }
-  
+
   w = a_GetWidget( "world_menu_bar" );
   aContainerWidget_t* world_menu_container = ( aContainerWidget_t* )w->data;
   for ( int i = 0; i < world_menu_container->num_components; i++ )
@@ -76,17 +76,17 @@ void e_InitWorldEditor( void )
     {
       current->action = we_creation;
     }
-    
+
     if ( strcmp( current->name, "edit" ) == 0 )
     {
       current->action = we_edit;
     }
-    
+
     if ( strcmp( current->name, "save" ) == 0 )
     {
       current->action = we_save;
     }
-    
+
     if ( strcmp( current->name, "load" ) == 0 )
     {
       current->action = we_load;
@@ -99,17 +99,17 @@ void we_creation( void )
 {
   app.delegate.logic = we_CreationDoLoop;
   app.delegate.draw  = we_CreationRenderLoop;
-  
-  
+
+
   app.active_widget = a_GetWidget( "generation_menu" );
   aContainerWidget_t* container = a_GetContainerFromWidget( "generation_menu" );
   app.active_widget->hidden = 0;
-  
+
   for ( int i = 0; i < container->num_components; i++ )
   {
     aWidget_t* current = &container->components[i];
     current->hidden = 0;
-    
+
     if ( strcmp( current->name, "generate" ) == 0 )
     {
       current->action = wec_GenerateWorld;
@@ -121,7 +121,7 @@ void we_creation( void )
 static void we_CreationDoLoop( float dt )
 {
   a_DoInput();
-  
+
   if ( app.keyboard[ SDL_SCANCODE_ESCAPE ] == 1 )
   {
     app.keyboard[SDL_SCANCODE_ESCAPE] = 0;
@@ -147,38 +147,38 @@ static void wec_GenerateWorld( void )
   int new_z_height    = 0;
 
   aContainerWidget_t* container = ( aContainerWidget_t* )app.active_widget->data;
-  
+
   for ( int i = 0; i < container->num_components; i++ )
   {
     aWidget_t* current = &container->components[i];
-    
+
     if ( strcmp( current->name, "world_size" ) == 0 )
     {
       aSelectWidget_t* world_size = ( aSelectWidget_t* )current->data;
       world_size_index = world_size->value;
     }
-    
+
     if ( strcmp( current->name, "region_size" ) == 0 )
     {
       aSelectWidget_t* region_size = ( aSelectWidget_t* )current->data;
       region_size_index = region_size->value;
     }
-    
+
     if ( strcmp( current->name, "local_size" ) == 0 )
     {
       aSelectWidget_t* local_size = ( aSelectWidget_t* )current->data;
       local_size_index = local_size->value;
     }
-    
+
     if ( strcmp( current->name, "z_height" ) == 0 )
     {
       aSelectWidget_t* z_height = ( aSelectWidget_t* )current->data;
       z_height_size_index = z_height->value;
     }
   }
-  
+
   switch ( world_size_index ) {
-  
+
     case 0: //small
       new_world_size = WORLD_WIDTH_SMALL;
     break;
@@ -194,9 +194,9 @@ static void wec_GenerateWorld( void )
     default:
     break;
   }
-  
+
   switch ( region_size_index ) {
-  
+
     case 0: //small
       new_region_size = REGION_SIZE_SMALL;
     break;
@@ -212,9 +212,9 @@ static void wec_GenerateWorld( void )
     default:
     break;
   }
-  
+
   switch ( local_size_index ) {
-  
+
     case 0: //small
       new_local_size = LOCAL_SIZE_SMALL;
     break;
@@ -230,9 +230,9 @@ static void wec_GenerateWorld( void )
     default:
     break;
   }
-  
+
   switch ( z_height_size_index ) {
-  
+
     case 0: //small
       new_z_height = Z_HEIGHT_SMALL;
     break;
@@ -248,10 +248,11 @@ static void wec_GenerateWorld( void )
     default:
     break;
   }
-  
+
   if ( map != NULL )
   {
-    free_world( map, ( new_world_size * new_world_size ), ( new_region_size * new_region_size ) );
+      free_world( map, ( map->world_width * map->world_height ),
+                           ( map->region_width * map->region_height ) );
   }
   map = init_world( new_world_size, new_world_size, new_region_size, new_region_size,
                     new_local_size, new_local_size, new_z_height );
@@ -277,7 +278,7 @@ void we_load( void )
 static void e_WorldEditorDoLoop( float dt )
 {
   a_DoInput();
-  
+
   if ( app.keyboard[ SDL_SCANCODE_ESCAPE ] == 1 )
   {
     app.keyboard[SDL_SCANCODE_ESCAPE] = 0;
@@ -315,4 +316,3 @@ void e_CleanUpWorldEditor( void )
   free_world( map, ( map->world_width * map->world_height ),
                    ( map->region_width * map->region_height ) );
 }
-
