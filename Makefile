@@ -8,6 +8,7 @@ SRC_DIR=src
 INC_DIR=include
 BIN_DIR=bin
 OBJ_DIR=obj
+EMS_DIR=ems_obj
 LIB_DIR=lib
 INDEX_DIR=index
 EDITOR_DIR=editor
@@ -16,11 +17,11 @@ EDITOR_DIR=editor
 all: $(INDEX_DIR)/index
 
 EMS_OBJS =\
-					$(OBJ_DIR)/main.o\
-					$(OBJ_DIR)/game.o
+					$(EMS_DIR)/main.o\
+					$(EMS_DIR)/game.o
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_DIR)
-	$(CC) -c $< -o $@ -ggdb $(CFLAGS)
+$(EMS_DIR)/%.o: $(SRC_DIR)/%.c | $(EMS_DIR)
+	$(ECC) -c $< -o $@ $(CINC)
 
 $(INDEX_DIR)/index: $(EMS_OBJS) $(LIB_DIR)/libArchimedes.a | $(INDEX_DIR)
 	# Create a deployment version of the template with corrected paths
@@ -65,6 +66,9 @@ $(OBJ_DIR)/%.o: $(EDITOR_DIR)/%.c | $(OBJ_DIR)
 $(BIN_DIR)/editor: $(EDITOR_OBJS)  | $(BIN_DIR)
 	$(CC) $^ -ggdb -lArchimedes $(CFLAGS) -o $@
 
+$(EMS_DIR):
+	mkdir -p $(EMS_DIR)
+
 $(OBJ_DIR):
 	mkdir -p $(OBJ_DIR)
 
@@ -86,7 +90,7 @@ bearclean:
 
 .PHONY: clean
 clean:
-	rm -rf $(OBJ_DIR) $(BIN_DIR) $(INDEX_DIR)
+	rm -rf $(OBJ_DIR) $(BIN_DIR) $(INDEX_DIR) $(EMS_DIR)
 	@if [ -t 1 ]; then clear; fi
 
 

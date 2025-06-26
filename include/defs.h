@@ -22,6 +22,12 @@
 #define LOCAL_SIZE_LARGE     48
 #define Z_HEIGHT_LARGE       128
 
+#define WORLD_WIDTH  8
+#define WORLD_HEIGHT 8
+#define REGION_SIZE  8
+#define LOCAL_SIZE   48
+#define Z_HEIGHT     10
+
 #define CELL_SIZE            32
 
 #define MAX_NAME_LENGTH 32

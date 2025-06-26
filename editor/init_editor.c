@@ -71,8 +71,11 @@ void free_world( World_t* world, int world_index, int region_index )
 
       for ( int j = 0; j < max_regions; j++ )
       {
+        if ( world[i].regions[j].tiles == NULL )
+        {
           free( world[i].regions[j].tiles );
           world[i].regions[j].tiles = NULL;
+        }
       }
 
       free( world[i].regions );
