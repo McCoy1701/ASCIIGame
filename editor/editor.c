@@ -94,7 +94,7 @@ int main( void )
   while( app.running ) {
     e_Mainloop();
   }
-  
+
   a_Quit();
 
   return 0;

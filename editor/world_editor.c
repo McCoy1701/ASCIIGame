@@ -125,6 +125,7 @@ static void we_CreationDoLoop( float dt )
   if ( app.keyboard[ SDL_SCANCODE_ESCAPE ] == 1 )
   {
     app.keyboard[SDL_SCANCODE_ESCAPE] = 0;
+    
     e_InitWorldEditor();
   }
 
@@ -251,7 +252,8 @@ static void wec_GenerateWorld( void )
   
   if ( map != NULL )
   {
-    free_world( map, ( new_world_size * new_world_size ), ( new_region_size * new_region_size ) );
+    free_world( map, ( map->world_width * map->world_height ),
+                     ( map->region_width * map->region_height ) );
   }
   map = init_world( new_world_size, new_world_size, new_region_size, new_region_size,
                     new_local_size, new_local_size, new_z_height );
@@ -278,9 +280,32 @@ static void e_WorldEditorDoLoop( float dt )
 {
   a_DoInput();
   
+  if ( app.mouse.button == 1 )
+  {
+    int mousex, mousey = 0;
+    //app.mouse.button = 0;
+    if ( map != NULL )
+    {
+      int edge_x = ( SCREEN_WIDTH  / 2 ) - ( ( map->world_width  * CELL_SIZE ) / 2 );
+      int edge_y = ( SCREEN_HEIGHT / 2 ) - ( ( map->world_height * CELL_SIZE ) / 2 );
+      mousex = ( ( app.mouse.x - edge_x ) / CELL_SIZE );
+      mousey = ( ( app.mouse.y - edge_y ) / CELL_SIZE );
+      int grid_x = ( mousex < 0 ) ? 0 : ( ( mousex >= map->world_width  )
+        ? map->world_width  - 1 : mousex );
+      int grid_y = ( mousey < 0 ) ? 0 : ( ( mousey >= map->world_height )
+        ? map->world_height - 1 : mousey );
+      
+      printf( "%d, %d\n", grid_x, grid_y );
+    }
+ 
+   
+  }
+
   if ( app.keyboard[ SDL_SCANCODE_ESCAPE ] == 1 )
   {
     app.keyboard[SDL_SCANCODE_ESCAPE] = 0;
+    e_DestroyWorldEditor();
+
     e_InitEditor();
   }
 
@@ -295,8 +320,8 @@ static void e_WorldEditorRenderLoop( float dt )
     {
       int row = ( i / map->world_height );
       int col = ( i % map->world_height );
-      int x = ( SCREEN_WIDTH / 2 ) + ( row - map->world_width / 2 ) * CELL_SIZE;
-      int y = ( SCREEN_HEIGHT/ 2 ) + ( col - map->world_width / 2 ) * CELL_SIZE;
+      int x = ( ( SCREEN_WIDTH / 2 )  - ( ( map->world_width  * CELL_SIZE ) / 2 ) ) + ( row * CELL_SIZE );
+      int y = ( ( SCREEN_HEIGHT / 2 ) - ( ( map->world_height * CELL_SIZE ) / 2 ) ) + ( col * CELL_SIZE );
       int w = CELL_SIZE;
       int h = CELL_SIZE;
 
@@ -304,13 +329,14 @@ static void e_WorldEditorRenderLoop( float dt )
     }
 
   }
+  a_DrawPoint( (SCREEN_WIDTH/2), (SCREEN_HEIGHT/2), red );
   a_DrawFilledRect( 100, 100, 32, 32, 255, 0, 255, 255 );
   a_DrawFilledRect( 300, 300, 32, 32, 0, 255, 255, 255 );
 
   a_DrawWidgets();
 }
 
-void e_CleanUpWorldEditor( void )
+void e_DestroyWorldEditor( void )
 {
   free_world( map, ( map->world_width * map->world_height ),
                    ( map->region_width * map->region_height ) );
