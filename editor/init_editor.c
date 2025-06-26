@@ -62,7 +62,7 @@ void free_world( World_t* world, int world_index, int region_index )
 {
   if ( world == NULL ) return;
   
-  for ( int i = 0; i <= world_index; i++ )
+  for ( int i = 0; i < world_index; i++ )
   {
     if ( world[i].regions != NULL)
     {
@@ -71,7 +71,7 @@ void free_world( World_t* world, int world_index, int region_index )
 
       for ( int j = 0; j < max_regions; j++ )
       {
-        if ( world[i].regions[j].tiles == NULL )
+        if ( world[i].regions[j].tiles != NULL )
         {
           free( world[i].regions[j].tiles );
           world[i].regions[j].tiles = NULL;
@@ -85,5 +85,6 @@ void free_world( World_t* world, int world_index, int region_index )
   }
 
   free( world );
+  world = NULL;
 }
 
