@@ -2,113 +2,317 @@
 
 #include "Archimedes.h"
 #include "defs.h"
+#include "structs.h"
+#include "editor.h"
+#include "world_editor.h"
 #include "init_editor.h"
-#include "save_editor.h"
+#include "item_editor.h"
+#include "entity_editor.h"
+#include "color_editor.h"
+#include "ui_editor.h"
 
-static void aDoLoop( float );
-static void aRenderLoop( float );
+static void e_WorldEditorDoLoop( float );
+static void e_WorldEditorRenderLoop( float );
+static void we_CreationDoLoop( float );
+static void we_CreationRenderLoop( float );
 
-static void free_world( void );
+static void wec_GenerateWorld( void );
 
-LocalCell_t* test_cells;
-World_t* map;
+int world_size_index    = 0;
+int region_size_index   = 0;
+int local_size_index    = 0;
+int z_height_size_index = 0;
 
-void aInitGame( void )
+World_t* map = NULL;
+
+void e_InitWorldEditor( void )
 {
-  app.delegate.logic = aDoLoop;
-  app.delegate.draw  = aRenderLoop;
+  aWidget_t* w;
+  app.delegate.logic = e_WorldEditorDoLoop;
+  app.delegate.draw  = e_WorldEditorRenderLoop;
   
-  /* map = init_world();
+  a_InitWidgets( "resources/widgets/editor/world.json" );
+  
+  app.active_widget = a_GetWidget( "tab_bar" );
 
-
-  for ( int i = 0; i < WORLD_WIDTH * WORLD_HEIGHT; i++ )
+  aContainerWidget_t* tab_container = ( aContainerWidget_t* )app.active_widget->data;
+  for ( int i = 0; i < tab_container->num_components; i++ )
   {
-    for ( int j = 0; j < REGION_SIZE * REGION_SIZE; j++ )
+    aWidget_t* current = &tab_container->components[i];
+
+    if ( strcmp( current->name, "world" ) == 0 )
     {
-      for ( int k = 0; k < Z_HEIGHT * LOCAL_SIZE * LOCAL_SIZE; k++ )
-      {
-        map->regions[i].cells[j].tiles[k].glyph       = 'G';
-        map->regions[i].cells[j].tiles[k].is_passable = 1;
-        map->regions[i].cells[j].tiles[k].temperature = 20;
-        map->regions[i].cells[j].tiles[k].elevation   = 0;
-      }
+      current->action = e_InitWorldEditor;
+    }
+    
+    if ( strcmp( current->name, "item" ) == 0 )
+    {
+      current->action = e_InitItemEditor;
+    }
+    
+    if ( strcmp( current->name, "entity" ) == 0 )
+    {
+      current->action = e_InitEntityEditor;
+    }
+    
+    if ( strcmp( current->name, "colors" ) == 0 )
+    {
+      current->action = e_InitColorEditor;
+    }
+    
+    if ( strcmp( current->name, "ui" ) == 0 )
+    {
+      current->action = e_InitUIEditor;
+    }
+  }
+  
+  w = a_GetWidget( "world_menu_bar" );
+  aContainerWidget_t* world_menu_container = ( aContainerWidget_t* )w->data;
+  for ( int i = 0; i < world_menu_container->num_components; i++ )
+  {
+    aWidget_t* current = &world_menu_container->components[i];
+
+    if ( strcmp( current->name, "creation" ) == 0 )
+    {
+      current->action = we_creation;
+    }
+    
+    if ( strcmp( current->name, "edit" ) == 0 )
+    {
+      current->action = we_edit;
+    }
+    
+    if ( strcmp( current->name, "save" ) == 0 )
+    {
+      current->action = we_save;
+    }
+    
+    if ( strcmp( current->name, "load" ) == 0 )
+    {
+      current->action = we_load;
     }
   }
 
-  SaveWorld( map, "resources/world/world_test.dat" );*/
-  map = LoadWorld( "resources/world/world_test.dat" );
-  
-  for ( int i = 0; i < WORLD_WIDTH * WORLD_HEIGHT; i++ )
-  {
-    for ( int j = 0; j < REGION_SIZE * REGION_SIZE; j++ )
-    {
-      for ( int k = 0; k < Z_HEIGHT * LOCAL_SIZE * LOCAL_SIZE; k++ )
-      {
-        printf( "%d, %d, %d, %c, %d, %d, %d\n", i, j, k, map->regions[i].cells[j].tiles[k].glyph,
-               map->regions[i].cells[j].tiles[k].temperature,
-               map->regions[i].cells[j].tiles[k].is_passable,
-               map->regions[i].cells[j].tiles[k].elevation );
-      }
-    }
-  }  
 }
 
-static void aDoLoop( float dt )
+void we_creation( void )
+{
+  app.delegate.logic = we_CreationDoLoop;
+  app.delegate.draw  = we_CreationRenderLoop;
+  
+  
+  app.active_widget = a_GetWidget( "generation_menu" );
+  aContainerWidget_t* container = a_GetContainerFromWidget( "generation_menu" );
+  app.active_widget->hidden = 0;
+  
+  for ( int i = 0; i < container->num_components; i++ )
+  {
+    aWidget_t* current = &container->components[i];
+    current->hidden = 0;
+    
+    if ( strcmp( current->name, "generate" ) == 0 )
+    {
+      current->action = wec_GenerateWorld;
+    }
+  }
+
+}
+
+static void we_CreationDoLoop( float dt )
 {
   a_DoInput();
   
   if ( app.keyboard[ SDL_SCANCODE_ESCAPE ] == 1 )
   {
-    app.running = 0;
+    app.keyboard[SDL_SCANCODE_ESCAPE] = 0;
+    e_InitWorldEditor();
   }
+
+  a_DoWidget();
+
 }
 
-static void aRenderLoop( float dt )
+static void we_CreationRenderLoop( float dt )
 {
-  a_DrawFilledRect( 100, 100, 32, 32, blue );
-  a_DrawFilledRect( 300, 300, 32, 32, red );
+  a_DrawWidgets();
+
 }
 
-void aMainloop( void )
+static void wec_GenerateWorld( void )
 {
-  a_PrepareScene();
 
-  app.delegate.logic( a_GetDeltaTime() );
-  app.delegate.draw( a_GetDeltaTime() );
+  int new_world_size  = 0;
+  int new_region_size = 0;
+  int new_local_size  = 0;
+  int new_z_height    = 0;
+
+  aContainerWidget_t* container = ( aContainerWidget_t* )app.active_widget->data;
   
-  a_PresentScene();
+  for ( int i = 0; i < container->num_components; i++ )
+  {
+    aWidget_t* current = &container->components[i];
+    
+    if ( strcmp( current->name, "world_size" ) == 0 )
+    {
+      aSelectWidget_t* world_size = ( aSelectWidget_t* )current->data;
+      world_size_index = world_size->value;
+    }
+    
+    if ( strcmp( current->name, "region_size" ) == 0 )
+    {
+      aSelectWidget_t* region_size = ( aSelectWidget_t* )current->data;
+      region_size_index = region_size->value;
+    }
+    
+    if ( strcmp( current->name, "local_size" ) == 0 )
+    {
+      aSelectWidget_t* local_size = ( aSelectWidget_t* )current->data;
+      local_size_index = local_size->value;
+    }
+    
+    if ( strcmp( current->name, "z_height" ) == 0 )
+    {
+      aSelectWidget_t* z_height = ( aSelectWidget_t* )current->data;
+      z_height_size_index = z_height->value;
+    }
+  }
+  
+  switch ( world_size_index ) {
+  
+    case 0: //small
+      new_world_size = WORLD_WIDTH_SMALL;
+    break;
+
+    case 1: //medium
+      new_world_size = WORLD_WIDTH_MEDIUM;
+    break;
+
+    case 2: //large
+      new_world_size = WORLD_WIDTH_LARGE;
+    break;
+
+    default:
+    break;
+  }
+  
+  switch ( region_size_index ) {
+  
+    case 0: //small
+      new_region_size = REGION_SIZE_SMALL;
+    break;
+
+    case 1: //medium
+      new_region_size = REGION_SIZE_MEDIUM;
+    break;
+
+    case 2: //large
+      new_region_size = REGION_SIZE_LARGE;
+    break;
+
+    default:
+    break;
+  }
+  
+  switch ( local_size_index ) {
+  
+    case 0: //small
+      new_local_size = LOCAL_SIZE_SMALL;
+    break;
+
+    case 1: //medium
+      new_local_size = LOCAL_SIZE_MEDIUM;
+    break;
+
+    case 2: //large
+      new_local_size = LOCAL_SIZE_LARGE;
+    break;
+
+    default:
+    break;
+  }
+  
+  switch ( z_height_size_index ) {
+  
+    case 0: //small
+      new_z_height = Z_HEIGHT_SMALL;
+    break;
+
+    case 1: //medium
+      new_z_height = Z_HEIGHT_MEDIUM;
+    break;
+
+    case 2: //large
+      new_z_height = Z_HEIGHT_LARGE;
+    break;
+
+    default:
+    break;
+  }
+  
+  if ( map != NULL )
+  {
+    free_world( map, ( new_world_size * new_world_size ), ( new_region_size * new_region_size ) );
+  }
+  map = init_world( new_world_size, new_world_size, new_region_size, new_region_size,
+                    new_local_size, new_local_size, new_z_height );
+  printf( "%d %d %d %d\n", new_world_size, new_region_size, new_local_size, new_z_height );
+
 }
 
-static void free_world( void )
+void we_edit( void )
 {
-  for ( int k = 0; k < WORLD_WIDTH * WORLD_HEIGHT; k++ )
+
+}
+
+void we_save( void )
+{
+
+}
+
+void we_load( void )
+{
+
+}
+
+static void e_WorldEditorDoLoop( float dt )
+{
+  a_DoInput();
+  
+  if ( app.keyboard[ SDL_SCANCODE_ESCAPE ] == 1 )
   {
-    for ( int l = 0; l < REGION_SIZE * REGION_SIZE; l++ )
+    app.keyboard[SDL_SCANCODE_ESCAPE] = 0;
+    e_InitEditor();
+  }
+
+  a_DoWidget();
+}
+
+static void e_WorldEditorRenderLoop( float dt )
+{
+  if ( map != NULL )
+  {
+    for ( int i = 0; i < ( map->world_width * map->world_height ); i++ )
     {
-      free( map->regions[k].cells[l].tiles );
+      int row = ( i / map->world_height );
+      int col = ( i % map->world_height );
+      int x = ( SCREEN_WIDTH / 2 ) + ( row - map->world_width / 2 ) * CELL_SIZE;
+      int y = ( SCREEN_HEIGHT/ 2 ) + ( col - map->world_width / 2 ) * CELL_SIZE;
+      int w = CELL_SIZE;
+      int h = CELL_SIZE;
+
+      a_DrawRect( x, y, w, h, 255, 255, 0, 255 );
     }
 
-    free( map->regions[k].cells );
   }
+  a_DrawFilledRect( 100, 100, 32, 32, 255, 0, 255, 255 );
+  a_DrawFilledRect( 300, 300, 32, 32, 0, 255, 255, 255 );
 
-  free( map->regions );
-  free( map );
+  a_DrawWidgets();
 }
 
-int main( void )
+void e_CleanUpWorldEditor( void )
 {
-  a_Init( SCREEN_WIDTH, SCREEN_HEIGHT, "Archimedes" );
-
-  aInitGame();
-  
-  while( app.running ) {
-    aMainloop();
-  }
-
-  free_world();
-  
-  a_Quit();
-
-  return 0;
+  free_world( map, ( map->world_width * map->world_height ),
+                   ( map->region_width * map->region_height ) );
 }
 

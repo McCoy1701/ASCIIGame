@@ -1,10 +1,11 @@
+#ifndef __STRUCTS_H__
+#define __STRUCTS_H__
+
 #include "defs.h"
 #include "Daedalus.h"
 
 #include <stdint.h>
-
-#ifndef __STRUCTS_H__
-#define __STRUCTS_H__
+#include <stdint.h>
 
 typedef enum {
     ITEM_TYPE_WEAPON,
@@ -15,64 +16,69 @@ typedef enum {
 } ItemType_t;
 
 // World Building Structs
-
-typedef struct // GameTile_t
+typedef struct
 {
-  char glyph;
+  uint16_t glyph;
   uint8_t temperature;
   uint8_t elevation;
   uint8_t is_passable;
 } GameTile_t;
 
-typedef struct // LocalCell_t
+typedef struct
 {
-    GameTile_t* tiles; //Z_HEIGHT * LOCAL_SIZE * LOCAL_SIZE
-    // There are too many local cells to warrant their own id/name/factors
-    // Each local cell will take the factors as the region and world cell it is nested in
-} LocalCell_t;
-
-typedef struct // RegionCell_t
-{
-  LocalCell_t* cells; //REGION_SIZE * REGION_SIZE
-
-  char name[MAX_NAME_LENGTH];
-  char id[MAX_ID_LENGTH]; // refer to in game tiles as 'world-id:region-id:x/y:x/y'
-
-  // float (1 is 100%, 0.5 is 50%, etc.)
+  GameTile_t* tiles;
+  GameTile_t tile;
+  
   float temperature_factor; // every local cell in this region
   float elevation_factor; // every local cell in this region
-
+  // float (1 is 100%, 0.5 is 50%, etc.)
 } RegionCell_t;
 
-typedef struct // World_t
+typedef struct
 {
-    RegionCell_t* regions; //WORLD_HEIGHT * WORLD_WIDTH
+  RegionCell_t* regions;
+  GameTile_t tile;
 
-    dString_t name;
-    dString_t id; // refer to in game tiles as 'world-id:region-id:x/y:x/y'
-
-    // floats (1 is 100%, 0.5 is 50%, etc.)
-    float temperature_factor; // every region in this world cell
-    float elevation_factor; // every region in this world cell
-
+  uint8_t world_width;
+  uint8_t world_height;
+  uint8_t region_width;
+  uint8_t region_height;
+  uint8_t local_width;
+  uint8_t local_height;
+  uint8_t z_height;
+  
+  // floats (1 is 100%, 0.5 is 50%, etc.)
+  float temperature_factor; // every region in this world cell
+  float elevation_factor; // every region in this world cell
+  
 } World_t;
 
-// World Position 'world-id:region-id:x/y:x/y'
+typedef struct
+{
+  char magic[8];
+  uint32_t version;
+  uint16_t world_index;
+  uint16_t region_index;
+  uint32_t local_index;
+  int32_t  local_x, local_y, local_z;
+  uint16_t world_size;
+  uint16_t region_size;
+  uint32_t local_size;
+  uint16_t z_height;
+} FileHeader_t;
 
+// World Position 'world-id:region-id:x/y:x/y'
 typedef struct // World_Position_t
 {
-    dString_t world_id;
-    dString_t region_id;
-    // refer to in game tiles as 'world-id:region-id:x/y:x/y'
-    int16_t local_x;
-    int16_t local_y;
-    // refer to in game tiles as 'world-id:region-id:x/y:x/y'
-    int16_t game_x;
-    int16_t game_y;
+  uint16_t world_index;
+  uint16_t region_index;
+  uint32_t local_index;
+  // refer to in game tiles as 'world-id:region-id:x/y:x/y'
+  int16_t local_x, local_y, local_z;
+
 } World_Position_t;
 
 // World Objects
-
 typedef struct // WorldObject_t
 {
     dString_t* name;
@@ -203,4 +209,6 @@ typedef struct
 
     uint8_t size;
 } Inventory_t;
+
 #endif
+

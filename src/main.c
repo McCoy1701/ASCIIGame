@@ -20,9 +20,6 @@ static void aRenderLocal( float dt );
 SDL_Surface* surf;
 World_t* g_world;
 aColor_t grid_color;
-Text_t* world_text;
-Text_t* region_text;
-Text_t* local_text;
 
 int originX;
 int originY;
@@ -50,7 +47,7 @@ void aInitGame( void )
     printf( "Failed to load image\n" );
   }
 
-  g_world = ( World_t* )malloc( sizeof( World_t ) );
+  /*g_world = ( World_t* )malloc( sizeof( World_t ) );
   if ( g_world == NULL )
   {
     aError_t new_error;
@@ -130,19 +127,10 @@ void aInitGame( void )
       }
     }
 
-    originX = SCREEN_WIDTH/2;
-    originY = SCREEN_HEIGHT/2;
-  }
+  }*/
   
-
-  SDL_Color text_color = {255, 255, 255, 255};
-  
-  world_text  = a_TextConstructor();
-  region_text = a_TextConstructor();
-  local_text  = a_TextConstructor();
-  a_SetText( world_text, "world", text_color );
-  a_SetText( region_text, "region", text_color );
-  a_SetText( local_text, "local", text_color );
+  originX = SCREEN_WIDTH/2;
+  originY = SCREEN_HEIGHT/2;
 
   grid_color = blue;
   //g_ChangeColor( 0xff0000 );
@@ -182,16 +170,16 @@ static void aDoLoop( float dt )
 
 static void aRenderLoop( float dt )
 {
-  a_DrawFilledRect( 100, 100, 32, 32, blue );
-  a_DrawFilledRect( 300, 300, 32, 32, red );
+  a_DrawFilledRect( 100, 100, 32, 32,   0, 0, 255, 255 );
+  a_DrawFilledRect( 300, 300, 32, 32, 255, 0,   0, 255 );
   a_Blit( surf, 200, 200 );
 
 }
 
 static void aRenderWorld( float dt )
 {
-  a_RenderText(world_text, 600, 100, NULL, 0, NULL, SDL_FLIP_NONE);
-  g_DrawWorldMap( g_world, originX, originY, grid_color );
+  a_DrawText( "world", 600, 100, 255, 255, 255, app.font_type, TEXT_ALIGN_CENTER, 0 );
+  g_DrawWorldMap( originX, originY, grid_color );
   //a_DrawFilledRect( 100, 100, 32, 32, blue );
   //a_DrawFilledRect( 300, 300, 32, 32, red );
   //a_Blit( surf, 200, 200 );
@@ -200,8 +188,8 @@ static void aRenderWorld( float dt )
 
 static void aRenderRegion( float dt )
 {
-  a_RenderText(region_text, 600, 100, NULL, 0, NULL, SDL_FLIP_NONE);
-  g_DrawRegionMap( g_world->regions, originX, originY, grid_color );
+  a_DrawText( "region", 600, 100, 255, 255, 255, app.font_type, TEXT_ALIGN_CENTER, 0 );
+  g_DrawRegionMap( originX, originY, grid_color );
   //a_DrawFilledRect( 100, 100, 32, 32, blue );
   //a_DrawFilledRect( 300, 300, 32, 32, red );
   //a_Blit( surf, 200, 200 );
@@ -210,8 +198,8 @@ static void aRenderRegion( float dt )
 
 static void aRenderLocal( float dt )
 {
-  a_RenderText(local_text, 600, 100, NULL, 0, NULL, SDL_FLIP_NONE);
-  g_DrawLocalMap( g_world->regions->cells, originX, originY, grid_color );
+  a_DrawText( "region", 600, 100, 255, 255, 255, app.font_type, TEXT_ALIGN_CENTER, 0 );
+  g_DrawLocalMap( originX, originY, grid_color );
   //a_DrawFilledRect( 100, 100, 32, 32, blue );
   //a_DrawFilledRect( 300, 300, 32, 32, red );
   //a_Blit( surf, 200, 200 );

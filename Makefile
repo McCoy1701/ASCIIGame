@@ -8,22 +8,24 @@ SRC_DIR=src
 INC_DIR=include
 BIN_DIR=bin
 OBJ_DIR=obj
+EMS_DIR=ems_obj
 LIB_DIR=lib
 INDEX_DIR=index
 EDITOR_DIR=editor
 
 .PHONY: all
-all: always $(INDEX_DIR)/index
+all: $(INDEX_DIR)/index
 
-$(OBJ_DIR)/em_main.o: $(SRC_DIR)/main.c
-	$(ECC) -c $< $(CINC) $(EFLAGS) -o $@
+EMS_OBJS =\
+					$(EMS_DIR)/main.o\
+					$(EMS_DIR)/game.o
 
-$(OBJ_DIR)/em_game.o: $(SRC_DIR)/game.c
-	$(ECC) -c $< $(CINC) $(EFLAGS) -o $@
+$(EMS_DIR)/%.o: $(SRC_DIR)/%.c | $(EMS_DIR)
+	$(ECC) -c $< -o $@ $(CINC)
 
 
-$(INDEX_DIR)/index: $(OBJ_DIR)/em_main.o $(OBJ_DIR)/em_game.o $(LIB_DIR)/libArchimedes.a $(LIB_DIR)/libDaedalus.a
-	mkdir -p $(INDEX_DIR)
+$(INDEX_DIR)/index: $(EMS_OBJS) $(LIB_DIR)/libArchimedes.a | $(INDEX_DIR)
+	# Create a deployment version of the template with corrected paths
 
 	# ========================================================================
 	# HTML TEMPLATE PATH TRANSFORMATION FOR DEPLOYMENT
@@ -50,6 +52,7 @@ $(INDEX_DIR)/index: $(OBJ_DIR)/em_main.o $(OBJ_DIR)/em_game.o $(LIB_DIR)/libArch
 	#   |: delimiter (using | instead of / to avoid escaping forward slashes)
 	#   '\''': way to include single quotes in shell command (end quote, escaped quote, start quote)
 	# ========================================================================
+
 	sed -e 's|../htmlTemplate/|htmlTemplate/|g' -e 's|from '\''htmlTemplate/|from '\''./htmlTemplate/|g' htmlTemplate/template.html > $(INDEX_DIR)/template_deploy.html
 
 	# Compile C code to WebAssembly with the modified HTML template
@@ -62,33 +65,50 @@ $(INDEX_DIR)/index: $(OBJ_DIR)/em_main.o $(OBJ_DIR)/em_game.o $(LIB_DIR)/libArch
 	rm $(INDEX_DIR)/template_deploy.html
 
 .PHONY: native
-native: always $(BIN_DIR)/native
+native: $(BIN_DIR)/native
 
-$(OBJ_DIR)/main.o: $(SRC_DIR)/main.c
+NATIVE_OBJS = \
+							$(OBJ_DIR)/main.o\
+							$(OBJ_DIR)/game.o
+
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_DIR)
 	$(CC) -c $< -o $@ -ggdb $(CFLAGS)
 
-$(OBJ_DIR)/game.o: $(SRC_DIR)/game.c
-	$(CC) -c $< -o $@ -ggdb $(CFLAGS)
 
-$(BIN_DIR)/native: $(OBJ_DIR)/main.o $(OBJ_DIR)/game.o $(LIB_DIR)/libDaedalus.so
-	$(CC) $^ -ggdb -lArchimedes $(CFLAGS) -L$(LIB_DIR) -lDaedalus -o $@
+$(BIN_DIR)/native: $(NATIVE_OBJS) | $(BIN_DIR)
+	$(CC) $^ -ggdb -lArchimedes -lDaedalus $(CFLAGS) -o $@
 
 
 .PHONY: editor
-editor: always $(BIN_DIR)/editor
+editor: $(BIN_DIR)/editor
 
-$(OBJ_DIR)/init_editor.o: $(EDITOR_DIR)/init_editor.c
+EDITOR_OBJS = \
+							$(OBJ_DIR)/editor.o\
+							$(OBJ_DIR)/init_editor.o\
+							$(OBJ_DIR)/world_editor.o\
+							$(OBJ_DIR)/items_editor.o\
+							$(OBJ_DIR)/entity_editor.o\
+							$(OBJ_DIR)/color_editor.o\
+							$(OBJ_DIR)/ui_editor.o\
+							#$(OBJ_DIR)/save_editor.o
+
+$(OBJ_DIR)/%.o: $(EDITOR_DIR)/%.c | $(OBJ_DIR)
 	$(CC) -c $< -o $@ -ggdb $(CFLAGS)
 
-$(OBJ_DIR)/save_editor.o: $(EDITOR_DIR)/save_editor.c
-	$(CC) -c $< -o $@ -ggdb $(CFLAGS)
-
-$(OBJ_DIR)/world_editor.o: $(EDITOR_DIR)/world_editor.c
-	$(CC) -c $< -o $@ -ggdb $(CFLAGS)
-
-$(BIN_DIR)/editor: $(OBJ_DIR)/world_editor.o $(OBJ_DIR)/save_editor.o $(OBJ_DIR)/init_editor.o
+$(BIN_DIR)/editor: $(EDITOR_OBJS)  | $(BIN_DIR)
 	$(CC) $^ -ggdb -lArchimedes $(CFLAGS) -o $@
 
+$(EMS_DIR):
+	mkdir -p $(EMS_DIR)
+
+$(OBJ_DIR):
+	mkdir -p $(OBJ_DIR)
+
+$(BIN_DIR):
+	mkdir -p $(BIN_DIR)
+
+$(INDEX_DIR):
+	mkdir -p $(INDEX_DIR)
 
 .PHONY: bear
 bear:
@@ -102,7 +122,7 @@ bearclean:
 
 .PHONY: clean
 clean:
-	rm -rf $(OBJ_DIR) $(BIN_DIR) $(INDEX_DIR)
+	rm -rf $(OBJ_DIR) $(BIN_DIR) $(INDEX_DIR) $(EMS_DIR)
 	@if [ -t 1 ]; then clear; fi
 
 
