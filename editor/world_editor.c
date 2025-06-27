@@ -1,6 +1,8 @@
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "Archimedes.h"
+#include "Daedalus.h"
 #include "defs.h"
 #include "structs.h"
 #include "editor.h"
@@ -28,11 +30,26 @@ int grid_y = 0;
 
 World_t* map = NULL;
 
+World_t* selected_world       = NULL;
+RegionCell_t* selected_region = NULL;
+GameTile_t* selected_gametile = NULL;
+
+World_Position_t current_pos;
+char* pos_text;
+
 void e_InitWorldEditor( void )
 {
   aWidget_t* w;
   app.delegate.logic = e_WorldEditorDoLoop;
   app.delegate.draw  = e_WorldEditorRenderLoop;
+
+  pos_text = malloc( sizeof(char) * 50 );
+
+  current_pos = (World_Position_t){ .world_index = 0, .region_index = 0,
+    .local_index = 0, .level = 0, .local_x = 0, .local_y = 0, .local_z = 0 };
+  snprintf(pos_text, 50, "%d,%d,%d,%d,%d,%d,%d\n", current_pos.world_index,
+           current_pos.region_index, current_pos.local_index, current_pos.level,
+           current_pos.local_x, current_pos.local_y, current_pos.local_z );
 
   a_InitWidgets( "resources/widgets/editor/world.json" );
 
@@ -255,13 +272,12 @@ static void wec_GenerateWorld( void )
 
   if ( map != NULL )
   {
-
     free_world( map, ( map->world_width * map->world_height ),
                      ( map->region_width * map->region_height ) );
   }
+
   map = init_world( new_world_size, new_world_size, new_region_size, new_region_size,
                     new_local_size, new_local_size, new_z_height );
-  printf( "%d %d %d %d\n", new_world_size, new_region_size, new_local_size, new_z_height );
 
 }
 
@@ -291,22 +307,87 @@ static void e_WorldEditorDoLoop( float dt )
     //app.mouse.button = 0;
     if ( map != NULL )
     {
-      int edge_x = ( SCREEN_WIDTH  / 2 ) - ( ( map->world_width  * CELL_SIZE ) / 2 );
-      int edge_y = ( SCREEN_HEIGHT / 2 ) - ( ( map->world_height * CELL_SIZE ) / 2 );
-      mousex = ( ( app.mouse.x - edge_x ) / CELL_SIZE );
-      mousey = ( ( app.mouse.y - edge_y ) / CELL_SIZE );
-      grid_x = ( mousex < 0 ) ? 0 : ( ( mousex >= map->world_width  )
-        ? map->world_width  - 1 : mousex );
-      grid_y = ( mousey < 0 ) ? 0 : ( ( mousey >= map->world_height )
-        ? map->world_height - 1 : mousey );
+      int grid_x, grid_y;
       
-      printf( "%d, %d\n", grid_x, grid_y );
+      switch (current_pos.level) {
+        case WORLD_LEVEL: 
+          e_GetCellAtMouse( map->world_width, map->world_height, &grid_x, &grid_y );
+
+          current_pos.world_index = INDEX_2(grid_y, grid_x, map->world_width);
+          selected_world    = &map[current_pos.world_index];
+          selected_region   = NULL;
+          selected_gametile = NULL;
+          break;
+
+        case REGION_LEVEL:
+          e_GetCellAtMouse( map->region_width, map->region_height, &grid_x, &grid_y );
+          
+          current_pos.region_index = INDEX_2( grid_y, grid_x, map->region_width );
+          selected_world    = NULL;
+          selected_region   = &map[current_pos.world_index].regions[current_pos.region_index];
+          selected_gametile = NULL;
+          break;
+
+        case LOCAL_LEVEL:
+          e_GetCellAtMouse( map->local_width, map->local_height, &grid_x, &grid_y );
+          
+          current_pos.local_index = INDEX_3( grid_y, grid_x, current_pos.local_z,
+                                             map->local_width, map->local_height );
+          selected_world    = NULL;
+          selected_region   = NULL;
+          selected_gametile = &map[current_pos.world_index].regions[current_pos.region_index].
+            tiles[current_pos.local_index];
+          break;
+
+        default:
+          break;
+      }
+    } 
+  }
+  
+  if ( app.keyboard[SDL_SCANCODE_RETURN] == 1 )
+  {
+    app.keyboard[SDL_SCANCODE_RETURN] = 0;
+
+    if ( current_pos.level >= 0 && current_pos.level < LOCAL_LEVEL )
+    {
+      current_pos.level++;
     }
- 
-   
+
+  }
+  
+  if ( app.keyboard[SDL_SCANCODE_BACKSPACE] == 1 )
+  {
+    app.keyboard[SDL_SCANCODE_BACKSPACE] = 0;
+
+    if ( current_pos.level > 0 && current_pos.level <= LOCAL_LEVEL )
+    {
+      current_pos.level--;
+    }
+
+  }
+  
+  if ( app.keyboard[SDL_SCANCODE_EQUALS] == 1 )
+  {
+    app.keyboard[SDL_SCANCODE_EQUALS] = 0;
+    if ( current_pos.local_z >= 0 && current_pos.local_z < map->z_height - 1 )
+    {
+      current_pos.local_z++;
+    }
+
+  }
+  
+  if ( app.keyboard[SDL_SCANCODE_MINUS] == 1 )
+  {
+    app.keyboard[SDL_SCANCODE_MINUS] = 0;
+    if ( current_pos.local_z > 0 && current_pos.local_z <= map->z_height )
+    {
+      current_pos.local_z--;
+    }
+
   }
 
-  if ( app.keyboard[ SDL_SCANCODE_ESCAPE ] == 1 )
+  if ( app.keyboard[SDL_SCANCODE_ESCAPE] == 1 )
   {
     app.keyboard[SDL_SCANCODE_ESCAPE] = 0;
     e_DestroyWorldEditor();
@@ -321,37 +402,108 @@ static void e_WorldEditorRenderLoop( float dt )
 {
   if ( map != NULL )
   {
-    for ( int i = 0; i < ( map->world_width * map->world_height ); i++ )
+    if ( current_pos.level == 0 )
     {
-      int row = ( i / map->world_height );
-      int col = ( i % map->world_height );
-      int x = ( ( SCREEN_WIDTH / 2 )  - ( ( map->world_width  * CELL_SIZE ) / 2 ) )
-        + ( row * CELL_SIZE );
-      int y = ( ( SCREEN_HEIGHT / 2 ) - ( ( map->world_height * CELL_SIZE ) / 2 ) )
-        + ( col * CELL_SIZE );
-      int w = CELL_SIZE;
-      int h = CELL_SIZE;
-      if ( grid_x == x && grid_y == y )
+      for ( uint16_t i = 0; i < ( map->world_width * map->world_height ); i++ )
       {
-        a_DrawRect( x, y, w, h, 255, 2555, 0, 255 );
+        int x, y, w, h;
+        e_GetCellSize( i, map->world_width, map->world_height, &x, &y, &w, &h );
 
-      }
-      else
-      {
-        a_DrawRect( x, y, w, h, 0, 128, 128, 255 );
+        if ( i == current_pos.world_index )
+        {
+          a_DrawRect( x, y, w, h, 255, 255, 0, 255 );
+        }
 
+        else
+        {
+          a_DrawRect( x, y, w, h, 0, 128, 128, 255 );
+        }
       }
     }
 
+    else if ( current_pos.level == 1 )
+    {
+      for ( uint16_t i = 0; i < ( map->region_width * map->region_height ); i++ )
+      {
+        int x, y, w, h;
+        e_GetCellSize( i, map->region_width, map->region_height, &x, &y, &w, &h );
+
+        if ( i == current_pos.region_index )
+        {
+          a_DrawRect( x, y, w, h, 255, 255, 0, 255 );
+        } 
+
+        else
+        {
+          a_DrawRect( x, y, w, h, 0, 128, 128, 255 );
+        }
+      }
+    }
+    
+    else if ( current_pos.level == 2 )
+    {
+      for ( int i = 0; i < ( map->local_width * map->local_height ); i++ )
+      {
+        int x, y, w, h;
+        e_GetCellSize( i, map->local_width, map->local_height, &x, &y, &w, &h );
+        
+        uint32_t index = ( ( current_pos.local_z * ( map->local_width * map->local_height ) ) + i );
+
+        if ( index == current_pos.local_index )
+        {
+          a_DrawRect( x, y, w, h, 255, 255, 0, 255 );
+        } 
+
+        else
+        {
+          a_DrawRect( x, y, w, h, 0, 128, 128, 255 );
+        }
+      }
+    }
+    
+
+    snprintf(pos_text, 50, "%d,%d,%d,%d,%d,%d,%d\n", current_pos.world_index,
+           current_pos.region_index, current_pos.local_index, current_pos.level,
+           current_pos.local_x, current_pos.local_y, current_pos.local_z );
+    a_DrawText( pos_text, 750, 10, 255, 255, 255, app.font_type, TEXT_ALIGN_CENTER, 0 );
+
   }
+
   a_DrawFilledRect( 100, 100, 32, 32, 255, 0, 255, 255 );
   a_DrawFilledRect( 300, 300, 32, 32, 0, 255, 255, 255 );
 
   a_DrawWidgets();
 }
 
+void e_GetCellSize( int index, int width, int height, int* x, int* y, int* w, int* h )
+{
+  int row = ( index / height );
+  int col = ( index % height );
+  *x = ( ( SCREEN_WIDTH / 2 )  - ( ( width  * CELL_SIZE ) / 2 ) )
+    + ( row * CELL_SIZE );
+  *y = ( ( SCREEN_HEIGHT / 2 ) - ( ( height * CELL_SIZE ) / 2 ) )
+    + ( col * CELL_SIZE );
+  *w = CELL_SIZE;
+  *h = CELL_SIZE;
+}
+
+void e_GetCellAtMouse( int width, int height, int* grid_x, int* grid_y )
+{
+  int edge_x = ( SCREEN_WIDTH  / 2 ) - ( ( width  * CELL_SIZE ) / 2 );
+  int edge_y = ( SCREEN_HEIGHT / 2 ) - ( ( height * CELL_SIZE ) / 2 );
+  int mousex = ( ( app.mouse.x - edge_x ) / CELL_SIZE );
+  int mousey = ( ( app.mouse.y - edge_y ) / CELL_SIZE );
+  *grid_x = ( mousex < 0 ) ? 0 : ( ( mousex >= width  )
+    ? width  - 1 : mousex );
+  *grid_y = ( mousey < 0 ) ? 0 : ( ( mousey >= height )
+    ? height - 1 : mousey );
+}
+
 void e_DestroyWorldEditor( void )
 {
   free_world( map, ( map->world_width * map->world_height ),
                    ( map->region_width * map->region_height ) );
+  map = NULL;
+  free( pos_text );
+  pos_text = NULL;
 }
