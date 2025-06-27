@@ -113,5 +113,6 @@ int main( void )
   // Clean up the logger before finishing
   d_DestroyLogger(d_GetGlobalLogger());
 
+
   return 0;
 }
