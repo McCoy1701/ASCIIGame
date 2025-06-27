@@ -19,6 +19,7 @@
 #define TEST_COLOR_GREEN      "\033[32m"
 #define TEST_COLOR_RED        "\033[31m"
 #define TEST_COLOR_BLUE       "\033[34m"
+#define TEST_COLOR_WHITE      "\033[37m"
 #define TEST_COLOR_YELLOW     "\033[33m"
 #define TEST_COLOR_BOLD_WHITE "\033[1;37m"
 #define TEST_COLOR_PURPLE     "\033[35m"
@@ -35,7 +36,9 @@ extern int tests_failed;
 // Global timing variables for suite-level timing
 static double _test_suite_start_time;
 static double _total_test_time = 0.0;
-
+// Loop detection variables
+static int _sisyphus_in_loop = 0;
+static int _sisyphus_loop_iteration = 0;
 // Sisyphus gamification system
 static int _sisyphus_beasts_slayed = 0;
 static int _sisyphus_trials_conquered = 0;
@@ -53,7 +56,10 @@ static int _sisyphus_xp_from_tests = 0;
 static int _sisyphus_xp_from_combos = 0;
 static int _sisyphus_xp_from_achievements = 0;
 static int _sisyphus_random_achievement_multi = 2; // Double XP for random achievement display
-
+// For automatic loop detection
+static const char* _sisyphus_last_assert_file = "";
+static int _sisyphus_last_assert_line = 0;
+static int _sisyphus_loop_iteration_count = 0;
 // --- THE SISYPHUS NARRATIVE: LEVEL-BASED TEST MESSAGING ---
 // Messages change based on current project level to reflect the story progression
 
@@ -62,21 +68,27 @@ static const char* _act_one_beginner_messages[] = {  // Levels 1-3: Complete con
     "🤔 SISYPHUS PUZZLES: What... is this strange new burden?",
     "❓ CONFUSED GLANCES: Daedalus watches your fumbling attempts with pity",
     "🪨 FAMILIAR WEIGHT: This feels like the boulder, but... different",
-    "👀 FIRST OBSERVATIONS: You stare at the blueprint, trying to understand"
+    "👀 FIRST OBSERVATIONS: You stare at the blueprint, trying to understand",
+    "🌪️ LOST IN TRANSLATION: The symbols swim before your eyes like ancient runes",
+    "🎭 COMEDY OF ERRORS: Each keystroke feels like pushing the boulder uphill"
 };
 
 static const char* _act_one_learning_messages[] = {  // Levels 4-6: Starting to understand
     "📚 LEARNING THE CRAFT: Daedalus begins to explain the architect's tools",
     "🔧 FIRST TOOLS: Your hands remember the weight of creation",
     "🏗️ BUILDING BLOCKS: Each function is a stone in the growing maze",
-    "👂 DAEDALUS TEACHES: 'The Labyrinth requires precision, Sisyphus'"
+    "👂 DAEDALUS TEACHES: 'The Labyrinth requires precision, Sisyphus'",
+    "💡 MOMENTS OF CLARITY: The logic begins to unfold like a map",
+    "🗝️ FINDING THE KEY: The patterns start to make sense in your mind"
 };
 
 static const char* _act_one_adapting_messages[] = {  // Levels 7-10: Getting used to it
     "⚡ GROWING SKILL: The work becomes... almost familiar",
     "🎯 FINDING RHYTHM: Each test is another push up the hill",
     "🔍 SISYPHUS ADAPTS: You begin to see patterns in the chaos",
-    "🏛️ THE ROUTINE: Dawn brings work, dusk brings more work"
+    "🏛️ THE ROUTINE: Dawn brings work, dusk brings more work",
+    "🌊 FLOW STATE: Your fingers move across the keyboard like water",
+    "🎪 MASTER OF ROUTINE: The endless cycle becomes a strange comfort"
 };
 
 // Act II: The Labyrinth's Nature (Levels 11-20) - Understanding the true horror
@@ -84,14 +96,18 @@ static const char* _act_two_realization_messages[] = {  // Levels 11-15: True na
     "😱 HORRIBLE TRUTH: This isn't just a building... it's a trap for minds",
     "🐂 DISTANT ROARS: The beast below grows stronger with each passing day",
     "👑 MINOS WATCHES: The King's cold eyes follow your every keystroke",
-    "🌙 NIGHT TERRORS: Daedalus mutters about things that shouldn't exist"
+    "🌙 NIGHT TERRORS: Daedalus mutters about things that shouldn't exist",
+    "💀 THE REAL PURPOSE: You understand now - this is a tomb, not a home",
+    "🩸 BLOOD ON STONE: The tribute ships arrive with fresh sacrifices"
 };
 
 static const char* _act_two_bonding_messages[] = {  // Levels 16-20: Relationship with Daedalus
     "🤝 SHARED BURDEN: You and Daedalus work in grim solidarity",
     "🍷 WINE AND CONFESSIONS: Late nights reveal the architect's guilt",
     "🔒 HIDDEN CHAMBERS: Daedalus shows you rooms not on any blueprint",
-    "📜 SECRET KNOWLEDGE: The Labyrinth's true purpose becomes clear"
+    "📜 SECRET KNOWLEDGE: The Labyrinth's true purpose becomes clear",
+    "👥 KINDRED SPIRITS: Two prisoners sharing the weight of genius",
+    "🕯️ MIDNIGHT CONVERSATIONS: Philosophy by candlelight in the workshop"
 };
 
 // Act III: The Cracks Appear (Levels 21-30) - Breaking under pressure
@@ -99,14 +115,18 @@ static const char* _act_three_strain_messages[] = {  // Levels 21-25: Mental bre
     "🎭 MASKS FALLING: Neither of you can pretend this is normal anymore",
     "⚡ FIRST REBELLION: You leave subtle hints for future heroes",
     "💀 SISYPHUS BREAKS: The weight of building a tomb becomes unbearable",
-    "🔥 DAEDALUS CRACKS: The architect argues with shadows in the corners"
+    "🔥 DAEDALUS CRACKS: The architect argues with shadows in the corners",
+    "🌪️ SANITY FRAYING: The endless loops drive reason to its breaking point",
+    "🔗 CHAINS OF MADNESS: Each bug fix feels like forging your own shackles"
 };
 
 static const char* _act_three_conspiracy_messages[] = {  // Levels 26-30: Planning escape
     "🪶 ICARUS REVEALED: Hidden drawings of a child with mechanical wings",
     "🤫 WHISPERED PLANS: Secret meetings by candlelight",
     "🗡️ CAPTAIN'S SUSPICION: The guards grow watchful of your activities",
-    "🌊 POINT OF NO RETURN: There's no stopping the work now"
+    "🌊 POINT OF NO RETURN: There's no stopping the work now",
+    "🎪 DANGEROUS GAMES: Every line of code hides a secret message",
+    "⚔️ WEAPONS OF HOPE: Building tools of escape within tools of imprisonment"
 };
 
 // Act IV: Inescapable Truths (Levels 31-40) - The escape plan
@@ -114,33 +134,53 @@ static const char* _act_four_alliance_messages[] = {  // Levels 31-35: Forming t
     "🤝 DESPERATE PACT: You agree to help Daedalus save his son",
     "🪶 STEALING DIVINITY: Gathering materials for the impossible wings",
     "🔧 SECRET WORKSHOP: Building hope behind false walls",
-    "📐 SISYPHUS'S MATHEMATICS: Your curse becomes the key to freedom"
+    "📐 SISYPHUS'S MATHEMATICS: Your curse becomes the key to freedom",
+    "💫 DREAMS OF FLIGHT: For the first time, you imagine true escape",
+    "🔥 FORGE OF REBELLION: Turning imprisonment into liberation"
 };
 
 static const char* _act_four_preparation_messages[] = {  // Levels 36-40: Final preparations
     "🌙 MAPPING PATROLS: Every guard rotation memorized",
     "🎭 FINAL DECEPTION: Cruel by day, kind by night",
     "⚡ TOMORROW WE FLY: The wings are ready, the plan is set",
-    "🕊️ DAWN APPROACHES: Freedom or death awaits with the sunrise"
+    "🕊️ DAWN APPROACHES: Freedom or death awaits with the sunrise",
+    "⏰ FINAL COUNTDOWN: Every heartbeat brings the moment closer",
+    "🎯 PRECISION PLANNING: No detail too small, no risk unconsidered"
 };
 
 // Act V: The Eternal Cycle (Levels 41-50) - Acceptance of the absurd
-static const char* _act_five_flight_messages[] = {  // Levels 41-43: Flight and fall
+static const char* _act_five_hope_messages[] = {  // Levels 41-42: Flight and false hope
     "🌅 DAWN OF FREEDOM: Icarus takes to the sky with impossible grace",
     "🕊️ MOMENT OF JOY: For one perfect instant, you've beaten fate itself",
-    "💔 THE FALL: Dreams crash into the wine-dark sea below"
+    "🦅 SOARING TRIUMPH: The boy masters the wind itself, becoming legend",
+    "✨ DIVINE DEFIANCE: Mortal wings dare to challenge the realm of gods",
+    "🌟 PERFECT FLIGHT: Mathematics and courage unite in glorious ascent",
+    "🏛️ ARCHITECT'S PRIDE: Daedalus weeps tears of joy watching his son fly"
+};
+
+static const char* _act_five_fall_messages[] = {  // Level 43: The crushing fall
+    "💔 THE FALL: Dreams crash into the wine-dark sea below",
+    "☀️ TOO CLOSE TO THE SUN: Hubris melts the wings of hope",
+    "🌊 DAEDALUS SCREAMS: A father's anguish echoes across the heavens",
+    "🕯️ WAX AND FEATHERS: The price of touching divinity is always paid",
+    "⚰️ ICARUS DROWNS: The sea swallows youth, ambition, and innocence",
+    "🔥 APOLLO'S JEALOUSY: The sun god claims his due from mortal pride"
 };
 
 static const char* _act_five_bargain_messages[] = {  // Levels 44-46: Deal with Minos
     "👑 MINOS KNOWS ALL: The King was watching from the very beginning",
     "⚖️ DEVIL'S BARGAIN: Stay and help people, or watch the maze become hell",
-    "✨ THE REVELATION: You were never meant to escape this place"
+    "✨ THE REVELATION: You were never meant to escape this place",
+    "🎪 CRUEL CHOICE: Freedom for one or salvation for many",
+    "⚖️ SCALES OF FATE: The weight of one life against countless others"
 };
 
 static const char* _act_five_redemption_messages[] = {  // Levels 47-49: Rebuilding with purpose
     "📝 CODER'S MANIFESTO: Every function now serves compassion",
     "🌊 MYTH REWRITTEN: Heroes speak of the helpful ghost in the maze",
-    "💪 THE HAPPY SISYPHUS: You laugh at the beautiful absurdity of it all"
+    "💪 THE HAPPY SISYPHUS: You laugh at the beautiful absurdity of it all",
+    "🏗️ ARCHITECT OF HOPE: Building bridges where once you built walls",
+    "🌟 ETERNAL PURPOSE: The curse becomes a blessing in disguise"
 };
 
 static const char* _act_five_acceptance_message = "♾️ ETERNAL CODER: In the space between bug and fix, you are perfectly free";  // Level 50: Final wisdom
@@ -150,55 +190,57 @@ static const char* _midas_references[] = {
     "🧠 Metis whispers wisdom about code structure",
     "🔥 Ixion's wheel reminds you to watch for infinite loops",
     "📐 Archimedes would admire this geometric precision",
-    "🏗️ Even Daedalus's craftsmanship seems crude compared to this"
+    "🏗️  Even Daedalus's craftsmanship seems crude compared to this"
 };
 
 // Function to get level-appropriate test messaging
 static const char* _get_narrative_test_message(int project_level) {
     // Add occasional MIDAS references (10% chance)
-    if ((project_level + rand()) % 10 == 0) {
-        return _midas_references[project_level % 4];
+    if (rand() % 10 == 0) {
+        return _midas_references[rand() % 4];
     }
 
     // Act I: The New Curse (Levels 1-10)
     if (project_level <= 3) {
-        return _act_one_beginner_messages[project_level % 4];
+        return _act_one_beginner_messages[rand() % 6];
     } else if (project_level <= 6) {
-        return _act_one_learning_messages[(project_level - 4) % 4];
+        return _act_one_learning_messages[rand() % 6];
     } else if (project_level <= 10) {
-        return _act_one_adapting_messages[(project_level - 7) % 4];
+        return _act_one_adapting_messages[rand() % 6];
     }
     // Act II: The Labyrinth's Nature (Levels 11-20)
     else if (project_level <= 15) {
-        return _act_two_realization_messages[(project_level - 11) % 4];
+        return _act_two_realization_messages[rand() % 6];
     } else if (project_level <= 20) {
-        return _act_two_bonding_messages[(project_level - 16) % 4];
+        return _act_two_bonding_messages[rand() % 6];
     }
     // Act III: The Cracks Appear (Levels 21-30)
     else if (project_level <= 25) {
-        return _act_three_strain_messages[(project_level - 21) % 4];
+        return _act_three_strain_messages[rand() % 6];
     } else if (project_level <= 30) {
-        return _act_three_conspiracy_messages[(project_level - 26) % 4];
+        return _act_three_conspiracy_messages[rand() % 6];
     }
     // Act IV: Inescapable Truths (Levels 31-40)
     else if (project_level <= 35) {
-        return _act_four_alliance_messages[(project_level - 31) % 4];
+        return _act_four_alliance_messages[rand() % 6];
     } else if (project_level <= 40) {
-        return _act_four_preparation_messages[(project_level - 36) % 4];
+        return _act_four_preparation_messages[rand() % 6];
     }
     // Act V: The Eternal Cycle (Levels 41-50)
-    else if (project_level <= 43) {
-        return _act_five_flight_messages[(project_level - 41) % 3];
+    else if (project_level <= 42) {
+        return _act_five_hope_messages[rand() % 6];
+    } else if (project_level == 43) {
+        return _act_five_fall_messages[rand() % 6];
     } else if (project_level <= 46) {
-        return _act_five_bargain_messages[(project_level - 44) % 3];
+        return _act_five_bargain_messages[rand() % 5];
     } else if (project_level <= 49) {
-        return _act_five_redemption_messages[(project_level - 47) % 3];
+        return _act_five_redemption_messages[rand() % 5];
     } else if (project_level == 50) {
         return _act_five_acceptance_message;
     }
     // Beyond level 50 - cycle through final act messages
     else {
-        return _act_five_redemption_messages[(project_level - 47) % 3];
+        return _act_five_redemption_messages[rand() % 5];
     }
 }
 
@@ -216,7 +258,10 @@ static const char* _act_one_part_one_thoughts[] = {
     "This logic is a new kind of geometry, not of lines and circles in the sand, but of cause and effect.",
     "This dVec3_t Daedalus uses... it's a coordinate in a world of pure logic. Cleaner than the mud and stone I'm used to.",
     "He speaks ill of Archimedes' a_DrawCircle, calling it simple. But there is an honesty in a perfect circle that these complex matrices lack.",
-    "I am to help build this world, one d_CreateKinmaticBody at a time. A body of code, given motion by my will."
+    "I am to help build this world, one d_CreateKinmaticBody at a time. A body of code, given motion by my will.",
+    "This machine is a silent oracle. It does not speak in riddles, but in errors. Understanding its language feels like the first step out of an ancient darkness.",
+    "My old kingdom was one of men and stone. This new realm is one of pure thought, where the only limit is the clarity of my own mind. The challenge is... invigorating.",
+    "Daedalus calls this 'declaring a variable.' It feels more like naming a new subject in my court, bestowing upon it a purpose and a place in the hierarchy. It is a small, but familiar, act of order."
 };
 
 // Act I Part 2 (Levels 4-6): Learning the Craft
@@ -236,6 +281,12 @@ static const char* _act_one_part_two_thoughts[] = {
     "I've figured out Daedalus's naming convention. If it's elegant and works, it's d_Something. If it's a temporary hack, it's temp_final_final_v2.",
     "This pointer is the first thing in an eternity that hasn't given me a segmentation fault. I could weep.",
     "Daedalus keeps muttering about 'best practices'. From the look of this code, the best practice was 'whatever works at 3 AM'.",
+    "The conditional statement, a simple 'if-else,' is the heart of all judgment. It is the crossroad where all paths are considered, but only one is taken. I have sent men to their deaths on weaker logic.",
+    "This 'memory allocation' is a delicate dance. I request a small parcel of the machine's vast kingdom, and I must be a just ruler, returning what I no longer need. To hoard it is to invite ruin.",
+    "I find a strange comfort in the compiler's cold, exacting nature. It does not care for my past glories or my eternal damnation; it asks only for syntactical perfection. In its own way, it is the purest form of justice I have ever known.",
+    "Building a complex data structure is like drafting a new law for the kingdom. Each rule, each connection, must be precise, lest it create loopholes for chaos to exploit.",
+    "They call it a 'Daemon,' a process that runs unseen in the background, ever watchful. I know better. These are the Fates, spinning and cutting the threads of the machine without my knowledge.",
+    "To link these libraries is to forge alliances between kingdoms. Each brings its own strengths, its own armies of functions, to serve a greater purpose. The diplomacy is... delicate."
 };
 
 // Act I Part 3 (Levels 7-10): Realization of Horror
@@ -256,7 +307,16 @@ static const char* _act_one_part_three_thoughts[] = {
     "I've seen the core logic. There are no comments. No documentation. Just the abyss staring back.",
     "This isn't a feature; it's a bug with tenure and a pension plan. And I'm the one who has to maintain it.",
     "For a simple death trap, the number of nested if statements here is absurd. This isn't just a maze; it's a monument to over-engineering.",
-    };
+    "Every bug I fix makes the trap more perfect, more inescapable. My success is measured in the screams of future heroes.",
+    "As a king, I built walls to keep my people safe. Now I build them to ensure no one is safe. The skill is the same; the purpose is a desecration.",
+    "The Labyrinth has a pulse. I feel it in the hum of the stones. It is the slow, patient heartbeat of a predator waiting for its meal.",
+    "I find myself admiring a particularly clever algorithm, then recoil in horror when I remember it calculates the most efficient path to the Minotaur's maw.",
+    "I examine the dMat4x4_t that defines a room's perspective. It is not a viewpoint; it is a cage for the eyes, designed to induce madness.",
+    "This project is a death march, but for the users, not the developers. We are merely the architects of their doom.",
+    "The requirements from Minos are clear: the primary stakeholder is a monster, and the user stories are written in blood.",
+    "Daedalus's library is full of functions to calculate vectors and paths. They are the tools of a god, used to create a playground for a demon.",
+    "This is the greatest trick the gods have played on me. They have made me hate my own craft, my own mind."
+};
 
 // Act II Part 1 (Levels 11-15): Understanding the True Purpose
 static const char* _act_two_part_one_thoughts[] = {
@@ -336,7 +396,7 @@ static const char* _act_three_part_one_thoughts[] = {
     "Is this what it means to be a king? To be the one who must call a_Quit, to end the suffering, even if it means ending everything?",
     "All my kingly cunning, the gift of Metis, has led to this: crafting a more efficient slaughterhouse. My wisdom has become my shame.",
     "This guilt is a wheel of fire inside my skull, a punishment worse than any Ixion faced, for his crime was ambition, and mine is complicity.",
-    "I look at the code to draw a simple triangle, a perfect shape Archimedes would admire, and see only the three points of a spearhead."
+    "I look at the code to draw a simple triangle, a perfect shape Archimedes would admire, and see only the three points of a spearhead.",
 };
 
 // Act III Part 2 (Levels 26-30): Conspiracy Planning
@@ -605,76 +665,84 @@ static const char* _act_five_part_three_thoughts[] = {
     "My damnation has become my ministry. My prison has become my sanctuary. My curse has become my prayer. And I am at peace."
 };
 
+// State variable to remember the last thought displayed.
+static const char* _sisyphus_last_inner_thought = NULL;
+
 // Function to get inner dialogue based on current project level and story progression
 static const char* _get_inner_dialogue(int project_level, int test_passed) {
-    int thoughts_index;
+    const char** thoughts_array = NULL;
+    int thought_count = 0;
 
+    // --- Step 1: Select the appropriate array of thoughts based on project level ---
     // Act I: The New Curse (Levels 1-10)
     if (project_level <= 3) {
-        // Part 1: Confusion and Willingness
-        thoughts_index = (project_level + test_passed) % 3;
-        return _act_one_part_one_thoughts[thoughts_index];
+        thoughts_array = _act_one_part_one_thoughts;
+        thought_count = sizeof(_act_one_part_one_thoughts) / sizeof(const char*);
     } else if (project_level <= 6) {
-        // Part 2: Learning the Craft
-        thoughts_index = (project_level + test_passed) % 3;
-        return _act_one_part_two_thoughts[thoughts_index];
+        thoughts_array = _act_one_part_two_thoughts;
+        thought_count = sizeof(_act_one_part_two_thoughts) / sizeof(const char*);
     } else if (project_level <= 10) {
-        // Part 3: Realization of Horror
-        thoughts_index = (project_level + test_passed) % 4;
-        return _act_one_part_three_thoughts[thoughts_index];
+        thoughts_array = _act_one_part_three_thoughts;
+        thought_count = sizeof(_act_one_part_three_thoughts) / sizeof(const char*);
     }
     // Act II: The Labyrinth's Nature (Levels 11-20)
     else if (project_level <= 15) {
-        // Part 1: Understanding the True Purpose
-        thoughts_index = (project_level + test_passed) % 5;
-        return _act_two_part_one_thoughts[thoughts_index];
+        thoughts_array = _act_two_part_one_thoughts;
+        thought_count = sizeof(_act_two_part_one_thoughts) / sizeof(const char*);
     } else if (project_level <= 20) {
-        // Part 2: Bonding with Daedalus
-        thoughts_index = (project_level + test_passed) % 5;
-        return _act_two_part_two_thoughts[thoughts_index];
+        thoughts_array = _act_two_part_two_thoughts;
+        thought_count = sizeof(_act_two_part_two_thoughts) / sizeof(const char*);
     }
     // Act III: The Cracks Appear (Levels 21-30)
     else if (project_level <= 25) {
-        // Part 1: Mental Breakdown
-        thoughts_index = (project_level + test_passed) % 5;
-        return _act_three_part_one_thoughts[thoughts_index];
+        thoughts_array = _act_three_part_one_thoughts;
+        thought_count = sizeof(_act_three_part_one_thoughts) / sizeof(const char*);
     } else if (project_level <= 30) {
-        // Part 2: Conspiracy Planning
-        thoughts_index = (project_level + test_passed) % 5;
-        return _act_three_part_two_thoughts[thoughts_index];
+        thoughts_array = _act_three_part_two_thoughts;
+        thought_count = sizeof(_act_three_part_two_thoughts) / sizeof(const char*);
     }
     // Act IV: Inescapable Truths (Levels 31-40)
     else if (project_level <= 35) {
-        // Part 1: Debating the Offer
-        thoughts_index = (project_level + test_passed) % 5;
-        return _act_four_part_one_thoughts[thoughts_index];
+        thoughts_array = _act_four_part_one_thoughts;
+        thought_count = sizeof(_act_four_part_one_thoughts) / sizeof(const char*);
     } else if (project_level <= 40) {
-        // Part 2: All In on Rebellion
-        thoughts_index = (project_level + test_passed) % 5;
-        return _act_four_part_two_thoughts[thoughts_index];
+        thoughts_array = _act_four_part_two_thoughts;
+        thought_count = sizeof(_act_four_part_two_thoughts) / sizeof(const char*);
     }
     // Act V: The Eternal Cycle (Levels 41-50)
     else if (project_level <= 42) {
-        // Part 1A: The Flight - False Hope
-        thoughts_index = (project_level + test_passed) % 2;
-        return _act_five_part_one_a_thoughts[thoughts_index];
+        thoughts_array = _act_five_part_one_a_thoughts;
+        thought_count = sizeof(_act_five_part_one_a_thoughts) / sizeof(const char*);
     } else if (project_level <= 44) {
-        // Part 1B: The Fall - Crushing Despair
-        thoughts_index = (project_level + test_passed) % 2;
-        return _act_five_part_one_b_thoughts[thoughts_index];
+        thoughts_array = _act_five_part_one_b_thoughts;
+        thought_count = sizeof(_act_five_part_one_b_thoughts) / sizeof(const char*);
     } else if (project_level <= 47) {
-        // Part 2: The King's Bargain
-        thoughts_index = (project_level + test_passed) % 3;
-        return _act_five_part_two_thoughts[thoughts_index];
-    } else if (project_level <= 50) {
-        // Part 3: Acceptance and Transformation
-        thoughts_index = (project_level + test_passed) % 3;
-        return _act_five_part_three_thoughts[thoughts_index];
-    } else {
-        // Beyond level 50: Cycle through final transformation thoughts
-        thoughts_index = (project_level + test_passed) % 3;
-        return _act_five_part_three_thoughts[thoughts_index];
+        thoughts_array = _act_five_part_two_thoughts;
+        thought_count = sizeof(_act_five_part_two_thoughts) / sizeof(const char*);
+    } else { // Levels 48 and beyond
+        thoughts_array = _act_five_part_three_thoughts;
+        thought_count = sizeof(_act_five_part_three_thoughts) / sizeof(const char*);
     }
+
+    // If for some reason we have no thoughts, return an empty string.
+    if (thought_count == 0) {
+        return "";
+    }
+
+    // --- Step 2: Choose an index, ensuring it's not the same as the last one ---
+    int ideal_index = (project_level + test_passed) % thought_count;
+    const char* chosen_thought = thoughts_array[ideal_index];
+
+    // THE NEW LOGIC: If the chosen thought is the same as the last, and we have other options...
+    if (thought_count > 1 && chosen_thought == _sisyphus_last_inner_thought) {
+        // ...then nudge the index to the next one in the list.
+        int nudged_index = (ideal_index + 1) % thought_count;
+        chosen_thought = thoughts_array[nudged_index];
+    }
+
+    // --- Step 3: Remember the thought we're about to show and return it ---
+    _sisyphus_last_inner_thought = chosen_thought;
+    return chosen_thought;
 }
 
 // Failure tracking
@@ -755,84 +823,34 @@ static const char* _motivational_quotes[] = {
 };
 static const int _motivational_quotes_count = sizeof(_motivational_quotes) / sizeof(_motivational_quotes[0]);
 
-// Achievement flags
-static int _achievement_first_blood = 0;
-static int _achievement_combo_master = 0;
-static int _achievement_speed_demon = 0;
-static int _achievement_perfectionist = 0;
-// Additional achievement flags
-static int _achievement_lightning_fast = 0;      // Complete all tests under 1ms total
-static int _achievement_atlas_endurance = 0;    // Complete 50+ tests in one suite
-static int _achievement_hermes_messenger = 0;   // Complete suite in under 0.001 seconds
-static int _achievement_hydra_slayer = 0;       // Overcome failures and still win
-static int _achievement_midas_touch = 0;        // Get 100+ XP in single suite
-static int _achievement_odyssey_complete = 0;   // Complete suite with perfect accuracy
-static int _achievement_spartan_warrior = 0;   // 500+ XP, 8+ combo, zero defeats (elite warrior!)
-static int _achievement_trojan_horse = 0;       // Unexpected comeback (fail first, then all pass)
-static int _achievement_phoenix_rising = 0;     // Achieve max combo after breaking streak
-static int _achievement_golden_fleece = 0;      // Find the fastest possible time (under 10µs)
-static int _achievement_pandoras_box = 0;       // Unlock 5+ achievements in one run
-static int _achievement_oracle_wisdom = 0;     // 7+ achievements + lightning speed
-static int _achievement_titan_strength = 0;     // Earn 1000+ total project XP
-static int _achievement_nectar_gods = 0;        // Perfect run with 10x combo multiplier
-static int _achievement_sisyphus_persistence = 0; // Come back from defeat to victory
-// New easy-medium achievements
-static int _achievement_apprentice_coder = 0;    // Pass 5 tests in a row
-static int _achievement_steady_hands = 0;        // Complete 3 test functions
-static int _achievement_code_warrior = 0;        // Earn 100+ XP in single suite
-// New ultra-hard achievement
-static int _achievement_divine_perfection = 0;   // 50+ tests, 0 failures, sub-100μs average
-// New medium-hard historical achievements
-static int _achievement_marathon_runner = 0;     // 26+ tests passed (Marathon distance)
-static int _achievement_olympic_champion = 0;    // Win with 4+ different achievement types
-// New unique sought-after achievements
-static int _achievement_alchemist_precision = 0; // Exactly 13 perfect tests + speed
-static int _achievement_archimedes_eureka = 0;   // 12+ combo + sub-1ms + 15+ tests
-static int _achievement_philosopher_king = 0;    // 10+ achievements + 25+ perfect + 15+ combo
-// More achievable overtaking achievements
-static int _achievement_athena_strategy = 0;     // Perfect first 10 tests (40 XP)
-static int _achievement_apollo_harmony = 0;     // Balance of speed and accuracy (35 XP)
-static int _achievement_hermes_swiftness = 0;   // Complete in under 0.0003s total (38 XP)
-// New educational achievements with higher XP values
-static int _achievement_socratic_method = 0;     // Learn from failure then achieve perfection (45 XP)
-static int _achievement_alexander_conquest = 0;  // Rapid domination with high XP (50 XP)
-static int _achievement_euclidean_proof = 0;     // Mathematical precision and systematic approach (42 XP)
-// Ultra Combo Achievements
-static int _achievement_sisyphus_mastery = 0;     // 100+ combo streak
-static int _achievement_prometheus_fire = 0;     // 150+ combo streak
-static int _achievement_kraken_unleashed = 0;    // 200+ combo streak
-static int _achievement_olympus_ascended = 0;    // 250+ combo streak
+// --- Sisyphus Achievements ---
+// Flags to ensure achievements are unlocked only once per suite.
+static int _achievement_cornerstone = 0;
+static int _achievement_the_phalanx = 0;
+static int _achievement_daedalus_blueprint = 0;
+static int _achievement_artemis_focus = 0;
+static int _achievement_perfect_stride = 0;
+static int _achievement_perseus_aegis = 0;
+static int _achievement_atalantas_sprint = 0;
+static int _achievement_golden_fleece = 0;
+static int _achievement_hermes_caduceus = 0;
+static int _achievement_laughing_sisyphus = 0;
+static int _achievement_hydras_blood = 0;
+static int _achievement_odysseus_return = 0;
+static int _achievement_gordian_knot = 0;
+static int _achievement_asclepius_cure = 0;
+static int _achievement_theseus_thread = 0;
+static int _achievement_platos_ideal_form = 0;
+static int _achievement_midas_touch = 0;
+static int _achievement_hidden_passage = 0;
+static int _achievement_tyches_favor = 0;
+static int _achievement_oracle_at_delphi = 0;
 
-// Speed Demon Upgrades
-static int _achievement_hermes_wings = 0;        // Sub-20 microseconds
-static int _achievement_lightning_bolt = 0;      // Sub-15 microseconds
-static int _achievement_time_lord = 0;           // Sub-10 microseconds
-
-// Inventory-Specific Achievements
-static int _achievement_hoarder_dragon = 0;      // 1000+ inventory operations
-static int _achievement_master_organizer = 0;    // Perfect inventory management
-static int _achievement_swift_merchant = 0;      // Rapid operations
-
-// Endurance/Persistence Achievements
-static int _achievement_marathon_god = 0;        // 500+ tests in one run
-static int _achievement_eternal_vigilance = 0;   // 1000+ tests in one run
-static int _achievement_unstoppable_force = 0;   // 50+ test functions
-
-// XP Milestone Achievements
-static int _achievement_treasure_hunter = 0;     // 10,000+ XP in one suite
-static int _achievement_gold_rush = 0;           // 5,000+ XP in under 1ms
-static int _achievement_croesus_wealth = 0;      // 200,000+ total project XP
-
-// Meta Achievements
-static int _achievement_achievement_hunter = 0;   // Unlock 25+ achievements
-static int _achievement_trophy_collector = 0;    // Unlock 50+ achievements
-static int _achievement_pantheon_member = 0;     // Unlock all base achievements
-
-// Streak-Based Achievements
-static int _achievement_flawless_victory = 0;    // 15+ perfect test streak
-static int _achievement_domination = 0;          // 30+ perfect test streak
-static int _achievement_godlike = 0;             // 100+ perfect test streak
-
+// Helper flags for tracking achievement states
+static int _sisyphus_first_test_failed = -1; // -1: unset, 0: passed, 1: failed
+static int _sisyphus_first_assert_passed = -1; // -1: unset, 0: failed, 1: passed
+static double _sisyphus_min_test_time = 999.0;
+static double _sisyphus_max_test_time = 0.0;
 
 // Best achievement tracking
 static char _sisyphus_best_achievement[64] = "";
@@ -1040,587 +1058,144 @@ static void _write_sisyphus_mini_stats(void) {
     }
 }
 
+// Sisyphus refined achievement system
 static void _check_achievements(void) {
-    // Skip achievements during full test mode (make test run)
-    if (_sisyphus_is_full_test_mode) {
-        return;
+    if (_sisyphus_is_full_test_mode) return;
+
+    // --- Perfection & Endurance ---
+    if (!_achievement_cornerstone && _sisyphus_first_assert_passed == 1 && tests_failed == 0) {
+        _achievement_cornerstone = 1; _sisyphus_achievements_unlocked++; int bonus_xp = 30;
+        _sisyphus_xp_earned += bonus_xp; _sisyphus_xp_from_achievements += bonus_xp;
+        printf(TEST_COLOR_WHITE "🏆 ACHIEVEMENT: The Cornerstone " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
+        printf(TEST_COLOR_GRAY "    For laying a perfect foundation and building a flawless structure upon it." TEST_COLOR_RESET "\n");
+        UPDATE_BEST_ACHIEVEMENT("The Cornerstone", bonus_xp, "Laid a perfect foundation for a flawless run.");
+    }
+    if (!_achievement_the_phalanx && _sisyphus_perfect_streak >= 3 && tests_failed == 0) {
+        _achievement_the_phalanx = 1; _sisyphus_achievements_unlocked++; int bonus_xp = 40;
+        _sisyphus_xp_earned += bonus_xp; _sisyphus_xp_from_achievements += bonus_xp;
+        printf(TEST_COLOR_CYAN "🏆 ACHIEVEMENT: The Phalanx " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
+        printf(TEST_COLOR_GRAY "    For a perfect streak of 3 test functions, an unbreakable formation." TEST_COLOR_RESET "\n");
+        UPDATE_BEST_ACHIEVEMENT("The Phalanx", bonus_xp, "A perfect streak of 3 test functions.");
+    }
+    if (!_achievement_daedalus_blueprint && tests_failed == 0 && total_tests >= 7) {
+        _achievement_daedalus_blueprint = 1; _sisyphus_achievements_unlocked++; int bonus_xp = 70;
+        _sisyphus_xp_earned += bonus_xp; _sisyphus_xp_from_achievements += bonus_xp;
+        printf(TEST_COLOR_PURPLE "🏆 ACHIEVEMENT: Daedalus's Blueprint " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
+        printf(TEST_COLOR_GRAY "    For flawlessly executing a grand design of 7 or more test functions." TEST_COLOR_RESET "\n");
+        UPDATE_BEST_ACHIEVEMENT("Daedalus's Blueprint", bonus_xp, "Flawlessly executed a grand design.");
+    }
+    if (!_achievement_artemis_focus && tests_failed == 0 && _sisyphus_min_test_time > 0.000050) {
+        // This is a placeholder; requires logic to check if ALL tests are > 50us
     }
 
-    // Reduce XP rewards if there are test failures
-    int xp_multiplier = (tests_failed > 0) ? 1 : 2;
-
-    // HISTORICAL XP VALUES - meaningful numbers from ancient history
-    // Basic achievements for encouragement (lower XP rewards)
-
-    if (!_achievement_first_blood && _sisyphus_max_combo >= 7) {
-        _achievement_first_blood = 1;
-        _sisyphus_achievements_unlocked++;
-        int bonus_xp = 7 / xp_multiplier; // Seven against Thebes
-        _sisyphus_xp_earned += bonus_xp;
-        _sisyphus_xp_from_achievements += bonus_xp;
-        printf(TEST_COLOR_GREEN "🏆 ACHIEVEMENT UNLOCKED: First Blood! " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
-        printf(TEST_COLOR_GRAY "   First combo streak (x7) achieved - the taste of victory! (Seven against Thebes)" TEST_COLOR_RESET "\n");
-        UPDATE_BEST_ACHIEVEMENT("First Blood", bonus_xp, "First combo streak (x7) achieved - the taste of victory! (Seven against Thebes)");
+    // --- Speed & Efficiency ---
+    if (!_achievement_perseus_aegis && tests_failed == 0 && total_tests >= 5 && _total_test_time < 0.000150) {
+        _achievement_perseus_aegis = 1; _sisyphus_achievements_unlocked++; int bonus_xp = 65;
+        _sisyphus_xp_earned += bonus_xp; _sisyphus_xp_from_achievements += bonus_xp;
+        printf(TEST_COLOR_BOLD_WHITE "🏆 ACHIEVEMENT: Perseus's Aegis " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
+        printf(TEST_COLOR_GRAY "    A perfect defense against a worthy foe (%d tests in under 150µs)." TEST_COLOR_RESET "\n", total_tests);
+        UPDATE_BEST_ACHIEVEMENT("Perseus's Aegis", bonus_xp, "A perfect defense against a worthy foe.");
     }
-
-    if (!_achievement_speed_demon && _sisyphus_fastest_test < 0.000050) {
-        _achievement_speed_demon = 1;
-        _sisyphus_achievements_unlocked++;
-        int bonus_xp = 12 / xp_multiplier; // Twelve Labors of Hercules
-        _sisyphus_xp_earned += bonus_xp;
-        _sisyphus_xp_from_achievements += bonus_xp;
-        printf(TEST_COLOR_CYAN "🏆 ACHIEVEMENT UNLOCKED: Speed Demon! " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
-        printf(TEST_COLOR_GRAY "   Completed a trial in under 50 microseconds (Twelve Labors pace)" TEST_COLOR_RESET "\n");
-        UPDATE_BEST_ACHIEVEMENT("Speed Demon", bonus_xp, "Completed a trial in under 50 microseconds (Twelve Labors pace)");
+    if (!_achievement_atalantas_sprint && _sisyphus_consecutive_fast_tests >= 5) {
+        _achievement_atalantas_sprint = 1; _sisyphus_achievements_unlocked++; int bonus_xp = 45;
+        _sisyphus_xp_earned += bonus_xp; _sisyphus_xp_from_achievements += bonus_xp;
+        printf(TEST_COLOR_GREEN "🏆 ACHIEVEMENT: Atalanta's Sprint " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
+        printf(TEST_COLOR_GRAY "    For completing 5+ consecutive test functions with the speed of a huntress." TEST_COLOR_RESET "\n");
+        UPDATE_BEST_ACHIEVEMENT("Atalanta's Sprint", bonus_xp, "5+ consecutive tests with the speed of a huntress.");
     }
-
-    if (!_achievement_midas_touch && _sisyphus_xp_from_achievements >= (_sisyphus_xp_earned * 0.6) && _sisyphus_xp_earned >= 200) {
-        _achievement_midas_touch = 1;
-        _sisyphus_achievements_unlocked++;
-        int bonus_xp = 24 / xp_multiplier; // 24 books of Homer's epics
-        _sisyphus_xp_earned += bonus_xp;
-        _sisyphus_xp_from_achievements += bonus_xp;
-        printf(TEST_COLOR_YELLOW "🏆 ACHIEVEMENT UNLOCKED: 👑 Midas Touch! " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
-        printf(TEST_COLOR_GRAY "   60%% XP from achievements - everything turns to gold! (Homer's 24 books)" TEST_COLOR_RESET "\n");
-        UPDATE_BEST_ACHIEVEMENT("Midas Touch", bonus_xp, "60%+ XP from achievements - everything turns to gold! (Homer's 24 books)");
-    }
-
-    if (!_achievement_hermes_messenger && _sisyphus_consecutive_fast_tests >= 3) {
-        _achievement_hermes_messenger = 1;
-        _sisyphus_achievements_unlocked++;
-        int bonus_xp = 3 / xp_multiplier; // Three Fates
-        _sisyphus_xp_earned += bonus_xp;
-        _sisyphus_xp_from_achievements += bonus_xp;
-        printf(TEST_COLOR_BLUE "🏆 ACHIEVEMENT UNLOCKED: 🏃 Hermes Messenger! " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
-        printf(TEST_COLOR_GRAY "   3+ consecutive lightning tests - divine messenger speed! (Three Fates)" TEST_COLOR_RESET "\n");
-        UPDATE_BEST_ACHIEVEMENT("Hermes Messenger", bonus_xp, "3+ consecutive lightning tests - divine messenger speed! (Three Fates)");
-    }
-
-    if (!_achievement_golden_fleece && _sisyphus_fastest_test < 0.000001) {
-        _achievement_golden_fleece = 1;
-        _sisyphus_achievements_unlocked++;
-        int bonus_xp = 25 / xp_multiplier; // 25 Argonauts (reduced from 50)
-        _sisyphus_xp_earned += bonus_xp;
-        _sisyphus_xp_from_achievements += bonus_xp;
-        printf(TEST_COLOR_YELLOW "🏆 ACHIEVEMENT UNLOCKED: 🐏 Golden Fleece! " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
-        printf(TEST_COLOR_GRAY "   Found the impossible speed - %.6fs is legendary! (25 Argonauts)" TEST_COLOR_RESET "\n", _sisyphus_fastest_test);
-        UPDATE_BEST_ACHIEVEMENT("Golden Fleece", bonus_xp, "Found the impossible speed - legendary! (25 Argonauts)");
-    }
-
-    // Moderate achievements requiring more effort
-
-    if (!_achievement_lightning_fast && _total_test_time < 0.0005 && _sisyphus_trials_conquered >= 8) {
-        _achievement_lightning_fast = 1;
-        _sisyphus_achievements_unlocked++;
-        int bonus_xp = 9 / xp_multiplier; // Nine Muses
-        _sisyphus_xp_earned += bonus_xp;
-        _sisyphus_xp_from_achievements += bonus_xp;
-        printf(TEST_COLOR_CYAN "🏆 ACHIEVEMENT UNLOCKED: ✨ Zeus's Lightning! " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
-        printf(TEST_COLOR_GRAY "   Completed %d battles in under 0.5ms - divine speed! (Nine Muses)" TEST_COLOR_RESET "\n", _sisyphus_trials_conquered);
-        UPDATE_BEST_ACHIEVEMENT("Zeus's Lightning", bonus_xp, "Completed battles in under 0.5ms - divine speed! (Nine Muses)");
-    }
-
-    if (!_achievement_spartan_warrior && _sisyphus_xp_earned >= 500 && _sisyphus_max_combo >= 10 && tests_failed == 0) {
-        _achievement_spartan_warrior = 1;
-        _sisyphus_achievements_unlocked++;
-        int bonus_xp = 30 / xp_multiplier;
-        _sisyphus_xp_earned += bonus_xp;
-        _sisyphus_xp_from_achievements += bonus_xp;
-        printf(TEST_COLOR_RED "🏆 ACHIEVEMENT UNLOCKED: ⚔️ Spartan Warrior! " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
-        printf(TEST_COLOR_GRAY "   500+ XP, 10+ combo, zero defeats - This is Sparta! (300 warriors)" TEST_COLOR_RESET "\n");
-        UPDATE_BEST_ACHIEVEMENT("Spartan Warrior", bonus_xp, "500+ XP, 10+ combo, zero defeats - This is Sparta! (300 warriors)");
-    }
-
-    // High-tier achievements for mastery (highest XP but very rare)
-
-    if (!_achievement_combo_master && _sisyphus_max_combo >= 20) {
-        _achievement_combo_master = 1;
-        _sisyphus_achievements_unlocked++;
-        int bonus_xp = 21 / xp_multiplier; // Reduced from 42 - still meaningful
-        _sisyphus_xp_earned += bonus_xp;
-        _sisyphus_xp_from_achievements += bonus_xp;
-        printf(TEST_COLOR_PURPLE "🏆 ACHIEVEMENT UNLOCKED: Combo Master! " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
-        printf(TEST_COLOR_GRAY "   Achieved a 20+ perfect trial streak with diminishing returns!" TEST_COLOR_RESET "\n");
-        UPDATE_BEST_ACHIEVEMENT("Combo Master", bonus_xp, "Achieved a 20+ perfect trial streak with diminishing returns!");
-    }
-
-    if (!_achievement_perfectionist && tests_passed >= 30 && tests_failed == 0) {
-        _achievement_perfectionist = 1;
-        _sisyphus_achievements_unlocked++;
-        int bonus_xp = 18 / xp_multiplier; // Reduced from 36 - more balanced
-        _sisyphus_xp_earned += bonus_xp;
-        _sisyphus_xp_from_achievements += bonus_xp;
-        printf(TEST_COLOR_GREEN "🏆 ACHIEVEMENT UNLOCKED: Perfectionist! " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
-        printf(TEST_COLOR_GRAY "   Completed 30+ trials without failure (Perfect circle)" TEST_COLOR_RESET "\n");
-        UPDATE_BEST_ACHIEVEMENT("Perfectionist", bonus_xp, "Completed 30+ trials without failure (Perfect circle)");
-    }
-
-    // New achievement implementations with contextual requirements
-
-    if (!_achievement_hydra_slayer && tests_failed >= 3 && tests_passed >= tests_failed * 2) {
-        _achievement_hydra_slayer = 1;
-        _sisyphus_achievements_unlocked++;
-        int bonus_xp = 9 / xp_multiplier; // Hydra's nine heads
-        _sisyphus_xp_earned += bonus_xp;
-        _sisyphus_xp_from_achievements += bonus_xp;
-        printf(TEST_COLOR_ORANGE "🏆 ACHIEVEMENT UNLOCKED: 🐍 Hydra Slayer! " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
-        printf(TEST_COLOR_GRAY "   Overcame %d failures and still triumphed (Nine heads conquered)" TEST_COLOR_RESET "\n", tests_failed);
-        UPDATE_BEST_ACHIEVEMENT("Hydra Slayer", bonus_xp, "Overcame failures and still triumphed (Nine heads conquered)");
-    }
-
-    if (!_achievement_odyssey_complete && tests_passed >= 20 && tests_failed == 0 && _sisyphus_fastest_test < 0.0001) {
-        _achievement_odyssey_complete = 1;
-        _sisyphus_achievements_unlocked++;
-        int bonus_xp = 10 / xp_multiplier; // Reduced from 20 - more balanced
-        _sisyphus_xp_earned += bonus_xp;
-        _sisyphus_xp_from_achievements += bonus_xp;
-        printf(TEST_COLOR_BLUE "🏆 ACHIEVEMENT UNLOCKED: 🚢 Odyssey Complete! " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
-        printf(TEST_COLOR_GRAY "   Perfect accuracy + lightning speed (Epic journey)" TEST_COLOR_RESET "\n");
-        UPDATE_BEST_ACHIEVEMENT("Odyssey Complete", bonus_xp, "Perfect accuracy + lightning speed (Epic journey)");
-    }
-
-    if (!_achievement_trojan_horse && tests_failed >= 1 && _sisyphus_perfect_streak >= 10) {
-        _achievement_trojan_horse = 1;
-        _sisyphus_achievements_unlocked++;
-        int bonus_xp = 10 / xp_multiplier; // 10 years of Troy siege
-        _sisyphus_xp_earned += bonus_xp;
-        _sisyphus_xp_from_achievements += bonus_xp;
-        printf(TEST_COLOR_CYAN "🏆 ACHIEVEMENT UNLOCKED: 🐴 Trojan Horse! " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
-        printf(TEST_COLOR_GRAY "   Unexpected comeback - failed then conquered all (10-year siege)" TEST_COLOR_RESET "\n");
-        UPDATE_BEST_ACHIEVEMENT("Trojan Horse", bonus_xp, "Unexpected comeback - failed then conquered all (10-year siege)");
-    }
-
-    if (!_achievement_phoenix_rising && tests_failed >= 1 && _sisyphus_current_perfect_streak >= 8) {
-        _achievement_phoenix_rising = 1;
-        _sisyphus_achievements_unlocked++;
-        int bonus_xp = 5 / xp_multiplier; // Much more reasonable - phoenix feathers
-        _sisyphus_xp_earned += bonus_xp;
-        _sisyphus_xp_from_achievements += bonus_xp;
-        printf(TEST_COLOR_PURPLE "🏆 ACHIEVEMENT UNLOCKED: 🔥 Phoenix Rising! " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
-        printf(TEST_COLOR_GRAY "   Rose from failure to 8+ perfect streak - reborn from ashes! (Phoenix feathers)" TEST_COLOR_RESET "\n");
-        UPDATE_BEST_ACHIEVEMENT("Phoenix Rising", bonus_xp, "Rose from failure to 8+ perfect streak - reborn from ashes! (Phoenix feathers)");
-    }
-
-    if (!_achievement_pandoras_box && _sisyphus_achievements_unlocked >= 5) {
-        _achievement_pandoras_box = 1;
-        _sisyphus_achievements_unlocked++;
-        int bonus_xp = 1; // Hope was the last thing in the box - already minimal
-        _sisyphus_xp_earned += bonus_xp;
-        _sisyphus_xp_from_achievements += bonus_xp;
-        printf(TEST_COLOR_YELLOW "🏆 ACHIEVEMENT UNLOCKED: 📦 Pandora's Box! " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
-        printf(TEST_COLOR_GRAY "   Unlocked 5+ achievements - Hope remains! (Last in the box)" TEST_COLOR_RESET "\n");
-        UPDATE_BEST_ACHIEVEMENT("Pandora's Box", bonus_xp, "Unlocked 5+ achievements - Hope remains! (Last in the box)");
-    }
-
-    if (!_achievement_oracle_wisdom && _sisyphus_achievements_unlocked >= 7 && _sisyphus_fastest_test < 0.00005) {
-        _achievement_oracle_wisdom = 1;
-        _sisyphus_achievements_unlocked++;
-        int bonus_xp = 7 / xp_multiplier; // Seven Sages of Greece
-        _sisyphus_xp_earned += bonus_xp;
-        _sisyphus_xp_from_achievements += bonus_xp;
-        printf(TEST_COLOR_CYAN "🏆 ACHIEVEMENT UNLOCKED: 🔮 Oracle Wisdom! " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
-        printf(TEST_COLOR_GRAY "   Seven achievements + lightning prophecy - divine foresight!" TEST_COLOR_RESET "\n");
-        UPDATE_BEST_ACHIEVEMENT("Oracle Wisdom", bonus_xp, "Seven achievements + lightning prophecy - divine foresight!");
-    }
-
-    if (!_achievement_atlas_endurance && _sisyphus_trials_conquered >= 50) {
-        _achievement_atlas_endurance = 1;
-        _sisyphus_achievements_unlocked++;
-        int bonus_xp = 12 / xp_multiplier; // Twelve Titans
-        _sisyphus_xp_earned += bonus_xp;
-        _sisyphus_xp_from_achievements += bonus_xp;
-        printf(TEST_COLOR_PURPLE "🏆 ACHIEVEMENT UNLOCKED: 💪 Atlas Endurance! " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
-        printf(TEST_COLOR_GRAY "   Shouldered %d battles - titan strength! (Twelve Titans)" TEST_COLOR_RESET "\n", _sisyphus_trials_conquered);
-        UPDATE_BEST_ACHIEVEMENT("Atlas Endurance", bonus_xp, "Shouldered battles - titan strength! (Twelve Titans)");
-    }
-
-    if (!_achievement_nectar_gods && _sisyphus_max_combo >= 12 && _sisyphus_trials_conquered >= 10) {
-        _achievement_nectar_gods = 1;
-        _sisyphus_achievements_unlocked++;
-        int bonus_xp = 12 / xp_multiplier; // Twelve Olympians
-        _sisyphus_xp_earned += bonus_xp;
-        _sisyphus_xp_from_achievements += bonus_xp;
-        printf(TEST_COLOR_GOLD "🏆 ACHIEVEMENT UNLOCKED: 🍯 Nectar of Gods! " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
-        printf(TEST_COLOR_GRAY "   Perfect run with 12+ combo (Twelve Olympians feast)" TEST_COLOR_RESET "\n");
-        UPDATE_BEST_ACHIEVEMENT("Nectar of Gods", bonus_xp, "Perfect run with 12+ combo (Twelve Olympians feast)");
-    }
-
-    if (!_achievement_titan_strength && _sisyphus_xp_from_tests >= 1000) {
-        _achievement_titan_strength = 1;
-        _sisyphus_achievements_unlocked++;
-        int bonus_xp = 60 / xp_multiplier; // Six original Titans
-        _sisyphus_xp_earned += bonus_xp;
-        _sisyphus_xp_from_achievements += bonus_xp;
-        printf(TEST_COLOR_PURPLE "🏆 ACHIEVEMENT UNLOCKED: ⛰️ Titan Strength! " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
-        printf(TEST_COLOR_GRAY "   1000+ test XP earned - primordial power! (Six Titans)" TEST_COLOR_RESET "\n");
-        UPDATE_BEST_ACHIEVEMENT("Titan Strength", bonus_xp, "1000+ test XP earned - primordial power! (Six Titans)");
-    }
-
-    if (!_achievement_sisyphus_persistence && tests_failed >= 5 && tests_passed >= 20) {
-        _achievement_sisyphus_persistence = 1;
-        _sisyphus_achievements_unlocked++;
-        int bonus_xp = 1; // Eternal struggle, humble reward - already minimal
-        _sisyphus_xp_earned += bonus_xp;
-        _sisyphus_xp_from_achievements += bonus_xp;
-        printf(TEST_COLOR_GRAY "🏆 ACHIEVEMENT UNLOCKED: 🪨 Sisyphus Persistence! " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
-        printf(TEST_COLOR_GRAY "   Came back from defeat to victory - the eternal struggle!" TEST_COLOR_RESET "\n");
-        UPDATE_BEST_ACHIEVEMENT("Sisyphus Persistence", bonus_xp, "Came back from defeat to victory - the eternal struggle!");
-    }
-
-    // NEW EASY-MEDIUM ACHIEVEMENTS
-
-    if (!_achievement_apprentice_coder && _sisyphus_max_combo >= 5) {
-        _achievement_apprentice_coder = 1;
-        _sisyphus_achievements_unlocked++;
-        int bonus_xp = 5 / xp_multiplier; // Simple milestone
-        _sisyphus_xp_earned += bonus_xp;
-        _sisyphus_xp_from_achievements += bonus_xp;
-        printf(TEST_COLOR_GREEN "🏆 ACHIEVEMENT UNLOCKED: 🎓 Apprentice Coder! " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
-        printf(TEST_COLOR_GRAY "   Achieved 5x combo streak - learning the ropes!" TEST_COLOR_RESET "\n");
-        UPDATE_BEST_ACHIEVEMENT("Apprentice Coder", bonus_xp, "Achieved 5x combo streak - learning the ropes!");
-    }
-
-    if (!_achievement_steady_hands && tests_passed >= 3) {
-        _achievement_steady_hands = 1;
-        _sisyphus_achievements_unlocked++;
-        int bonus_xp = 3 / xp_multiplier; // Three test functions completed
-        _sisyphus_xp_earned += bonus_xp;
-        _sisyphus_xp_from_achievements += bonus_xp;
-        printf(TEST_COLOR_CYAN "🏆 ACHIEVEMENT UNLOCKED: ✋ Steady Hands! " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
-        printf(TEST_COLOR_GRAY "   Completed 3 test functions - building consistency!" TEST_COLOR_RESET "\n");
-        UPDATE_BEST_ACHIEVEMENT("Steady Hands", bonus_xp, "Completed 3 test functions - building consistency!");
-    }
-
-    if (!_achievement_code_warrior && _sisyphus_xp_earned >= 100) {
-        _achievement_code_warrior = 1;
-        _sisyphus_achievements_unlocked++;
-        int bonus_xp = 15 / xp_multiplier; // Moderate achievement
-        _sisyphus_xp_earned += bonus_xp;
-        _sisyphus_xp_from_achievements += bonus_xp;
-        printf(TEST_COLOR_ORANGE "🏆 ACHIEVEMENT UNLOCKED: ⚔️ Code Warrior! " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
-        printf(TEST_COLOR_GRAY "   Earned 100+ XP in single suite - battle-tested!" TEST_COLOR_RESET "\n");
-        UPDATE_BEST_ACHIEVEMENT("Code Warrior", bonus_xp, "Earned 100+ XP in single suite - battle-tested!");
-    }
-
-    // ULTRA-HARD ACHIEVEMENT (100+ XP)
-
-    if (!_achievement_divine_perfection && tests_passed >= 50 && tests_failed == 0 && _total_test_time < 0.005) {
-        _achievement_divine_perfection = 1;
-        _sisyphus_achievements_unlocked++;
-        int bonus_xp = 144 / xp_multiplier; // 12 squared - perfect divine number
-        _sisyphus_xp_earned += bonus_xp;
-        _sisyphus_xp_from_achievements += bonus_xp;
-        printf(TEST_COLOR_GOLD "🏆 ACHIEVEMENT UNLOCKED: ✨ DIVINE PERFECTION! " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
-        printf(TEST_COLOR_BOLD_WHITE "   🌟 50+ tests, ZERO failures, sub-5ms total time - GODLIKE! 🌟" TEST_COLOR_RESET "\n");
-        printf(TEST_COLOR_GRAY "   You have transcended mortal coding limitations!" TEST_COLOR_RESET "\n");
-        UPDATE_BEST_ACHIEVEMENT("Divine Perfection", bonus_xp, "50+ tests, ZERO failures, sub-5ms total time - GODLIKE!");
-    }
-
-    // NEW MEDIUM-HARD HISTORICAL ACHIEVEMENTS
-
-    if (!_achievement_marathon_runner && tests_passed >= 26 && tests_failed <= 2) {
-        _achievement_marathon_runner = 1;
-        _sisyphus_achievements_unlocked++;
-        int bonus_xp = 26 / xp_multiplier; // Marathon distance: 26.2 miles from Marathon to Athens
-        _sisyphus_xp_earned += bonus_xp;
-        _sisyphus_xp_from_achievements += bonus_xp;
-        printf(TEST_COLOR_BLUE "🏆 ACHIEVEMENT UNLOCKED: 🏃 Marathon Runner! " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
-        printf(TEST_COLOR_GRAY "   Ran 26+ tests like Pheidippides' legendary run to Athens!" TEST_COLOR_RESET "\n");
-        UPDATE_BEST_ACHIEVEMENT("Marathon Runner", bonus_xp, "Ran 26+ tests like Pheidippides' legendary run to Athens!");
-    }
-
-    if (!_achievement_olympic_champion && _sisyphus_achievements_unlocked >= 4 && _sisyphus_max_combo >= 10) {
-        _achievement_olympic_champion = 1;
-        _sisyphus_achievements_unlocked++;
-        int bonus_xp = 32 / xp_multiplier;
-        _sisyphus_xp_earned += bonus_xp;
-        _sisyphus_xp_from_achievements += bonus_xp;
-        printf(TEST_COLOR_PURPLE "🏆 ACHIEVEMENT UNLOCKED: 🥇 Olympic Champion! " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
-        printf(TEST_COLOR_GRAY "   4+ achievements + 10+ combo - worthy of Olympian laurels!" TEST_COLOR_RESET "\n");
-        UPDATE_BEST_ACHIEVEMENT("Olympic Champion", bonus_xp, "4+ achievements + 10+ combo - worthy of Olympian laurels!");
-    }
-
-    // NEW UNIQUE SOUGHT-AFTER ACHIEVEMENTS
-
-    if (!_achievement_alchemist_precision && tests_passed == 13 && tests_failed == 0 && _sisyphus_fastest_test < 0.0001) {
-        _achievement_alchemist_precision = 1;
-        _sisyphus_achievements_unlocked++;
-        int bonus_xp = 33 / xp_multiplier; // Master number in alchemy/numerology
-        _sisyphus_xp_earned += bonus_xp;
-        _sisyphus_xp_from_achievements += bonus_xp;
-        printf(TEST_COLOR_PURPLE "🏆 ACHIEVEMENT UNLOCKED: 🧪 Alchemist Precision! " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
-        printf(TEST_COLOR_GRAY "   Exactly 13 perfect tests - transmuted bad luck to gold!" TEST_COLOR_RESET "\n");
-        UPDATE_BEST_ACHIEVEMENT("Alchemist Precision", bonus_xp, "Exactly 13 perfect tests - transmuted bad luck to gold!");
-    }
-
-    if (!_achievement_archimedes_eureka && _sisyphus_max_combo >= 12 && _total_test_time < 0.001 && tests_passed >= 15) {
-        _achievement_archimedes_eureka = 1;
-        _sisyphus_achievements_unlocked++;
-        int bonus_xp = 42 / xp_multiplier; // Answer to everything (Douglas Adams tribute)
-        _sisyphus_xp_earned += bonus_xp;
-        _sisyphus_xp_from_achievements += bonus_xp;
-        printf(TEST_COLOR_YELLOW "🏆 ACHIEVEMENT UNLOCKED: 💡 Archimedes Eureka! " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
-        printf(TEST_COLOR_GRAY "   'I have found it!' - Perfect speed + combo mastery!" TEST_COLOR_RESET "\n");
-        UPDATE_BEST_ACHIEVEMENT("Archimedes Eureka", bonus_xp, "'I have found it!' - Perfect speed + combo mastery!");
-    }
-
-    if (!_achievement_philosopher_king && _sisyphus_achievements_unlocked >= 10 && tests_passed >= 25 && tests_failed == 0 && _sisyphus_max_combo >= 20) {
-        _achievement_philosopher_king = 1;
-        _sisyphus_achievements_unlocked++;
-        int bonus_xp = 99 / xp_multiplier; // Almost divine perfection (99% wisdom)
-        _sisyphus_xp_earned += bonus_xp;
-        _sisyphus_xp_from_achievements += bonus_xp;
-        printf(TEST_COLOR_GOLD "🏆 ACHIEVEMENT UNLOCKED: 👑 Philosopher King! " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
-        printf(TEST_COLOR_BOLD_WHITE "   🎓 Plato's ideal ruler: wisdom, power, and perfect justice! 🎓" TEST_COLOR_RESET "\n");
-        printf(TEST_COLOR_GRAY "   10+ achievements, 25+ perfect tests, 20+ combo - true mastery!" TEST_COLOR_RESET "\n");
-        UPDATE_BEST_ACHIEVEMENT("Philosopher King", bonus_xp, "Plato's ideal ruler: wisdom, power, and perfect justice!");
-    }
-
-    // MORE ACHIEVABLE OVERTAKING ACHIEVEMENTS
-
-    if (!_achievement_athena_strategy && tests_passed >= 10 && tests_failed == 0 && _sisyphus_trials_conquered >= 10) {
-        _achievement_athena_strategy = 1;
-        _sisyphus_achievements_unlocked++;
-        int bonus_xp = 40 / xp_multiplier; // Wisdom goddess strategic bonus
-        _sisyphus_xp_earned += bonus_xp;
-        _sisyphus_xp_from_achievements += bonus_xp;
-        printf(TEST_COLOR_BLUE "🏆 ACHIEVEMENT UNLOCKED: 🦉 Athena Strategy! " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
-        printf(TEST_COLOR_GRAY "   Perfect first 10 tests - wise strategic planning!" TEST_COLOR_RESET "\n");
-        UPDATE_BEST_ACHIEVEMENT("Athena Strategy", bonus_xp, "Perfect first 10 tests - wise strategic planning!");
-    }
-
-    if (!_achievement_apollo_harmony && _sisyphus_max_combo >= 10 && _sisyphus_fastest_test < 0.00003 && tests_passed >= 12) {
-        _achievement_apollo_harmony = 1;
-        _sisyphus_achievements_unlocked++;
-        int bonus_xp = 35 / xp_multiplier; // God of harmony and perfection
-        _sisyphus_xp_earned += bonus_xp;
-        _sisyphus_xp_from_achievements += bonus_xp;
-        printf(TEST_COLOR_YELLOW "🏆 ACHIEVEMENT UNLOCKED: 🎵 Apollo Harmony! " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
-        printf(TEST_COLOR_GRAY "   Perfect balance of speed and combo mastery!" TEST_COLOR_RESET "\n");
-        UPDATE_BEST_ACHIEVEMENT("Apollo Harmony", bonus_xp, "Perfect balance of speed and combo mastery!");
-    }
-
-    if (!_achievement_hermes_swiftness && _total_test_time < 0.0003 && tests_passed >= 9) {
-        _achievement_hermes_swiftness = 1;
-        _sisyphus_achievements_unlocked++;
-        int bonus_xp = 38 / xp_multiplier; // Messenger god speed bonus
-        _sisyphus_xp_earned += bonus_xp;
-        _sisyphus_xp_from_achievements += bonus_xp;
-        printf(TEST_COLOR_CYAN "🏆 ACHIEVEMENT UNLOCKED: 🚀 Hermes Swiftness! " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
-        printf(TEST_COLOR_GRAY "   Sub-0.3ms total time - divine messenger speed!" TEST_COLOR_RESET "\n");
-        UPDATE_BEST_ACHIEVEMENT("Hermes Swiftness", bonus_xp, "Sub-0.3ms total time - divine messenger speed!");
-    }
-
-    // Ultra Combo Achievements
-    if (!_achievement_sisyphus_mastery && _sisyphus_max_combo >= 100) {
-        _achievement_sisyphus_mastery = 1;
-        _sisyphus_achievements_unlocked++;
-        int bonus_xp = 100 / xp_multiplier; // Century milestone
-        _sisyphus_xp_earned += bonus_xp;
-        _sisyphus_xp_from_achievements += bonus_xp;
-        printf(TEST_COLOR_PURPLE "🏆 ACHIEVEMENT UNLOCKED: 🗿 Sisyphus Mastery! " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
-        printf(TEST_COLOR_GRAY "   100+ combo streak - you've mastered the eternal struggle!" TEST_COLOR_RESET "\n");
-        UPDATE_BEST_ACHIEVEMENT("Sisyphus Mastery", bonus_xp, "100+ combo streak - mastered the eternal struggle!");
-    }
-
-    if (!_achievement_prometheus_fire && _sisyphus_max_combo >= 150) {
-        _achievement_prometheus_fire = 1;
-        _sisyphus_achievements_unlocked++;
-        int bonus_xp = 150 / xp_multiplier; // Fire of knowledge
-        _sisyphus_xp_earned += bonus_xp;
-        _sisyphus_xp_from_achievements += bonus_xp;
-        printf(TEST_COLOR_ORANGE "🏆 ACHIEVEMENT UNLOCKED: 🔥 Prometheus Fire! " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
-        printf(TEST_COLOR_GRAY "   150+ combo streak - stolen fire from the gods!" TEST_COLOR_RESET "\n");
-        UPDATE_BEST_ACHIEVEMENT("Prometheus Fire", bonus_xp, "150+ combo streak - stolen fire from the gods!");
-    }
-
-    if (!_achievement_kraken_unleashed && _sisyphus_max_combo >= 200) {
-        _achievement_kraken_unleashed = 1;
-        _sisyphus_achievements_unlocked++;
-        int bonus_xp = 200 / xp_multiplier; // Beast of the deep
-        _sisyphus_xp_earned += bonus_xp;
-        _sisyphus_xp_from_achievements += bonus_xp;
-        printf(TEST_COLOR_BLUE "🏆 ACHIEVEMENT UNLOCKED: 🐙 Kraken Unleashed! " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
-        printf(TEST_COLOR_GRAY "   200+ combo streak - unleashed the beast of the deep!" TEST_COLOR_RESET "\n");
-        UPDATE_BEST_ACHIEVEMENT("Kraken Unleashed", bonus_xp, "200+ combo streak - unleashed the beast of the deep!");
-    }
-
-    if (!_achievement_olympus_ascended && _sisyphus_max_combo >= 250) {
-        _achievement_olympus_ascended = 1;
-        _sisyphus_achievements_unlocked++;
-        int bonus_xp = 250 / xp_multiplier; // Divine ascension
-        _sisyphus_xp_earned += bonus_xp;
-        _sisyphus_xp_from_achievements += bonus_xp;
-        printf(TEST_COLOR_GOLD "🏆 ACHIEVEMENT UNLOCKED: ⛰️ Olympus Ascended! " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
-        printf(TEST_COLOR_GRAY "   250+ combo streak - climbed to the realm of gods!" TEST_COLOR_RESET "\n");
-        UPDATE_BEST_ACHIEVEMENT("Olympus Ascended", bonus_xp, "250+ combo streak - climbed to the realm of gods!");
-    }
-
-    // Speed Achievements
-    if (!_achievement_hermes_wings && _sisyphus_fastest_test < 0.000020) {
-        _achievement_hermes_wings = 1;
-        _sisyphus_achievements_unlocked++;
-        int bonus_xp = 20 / xp_multiplier; // Sub-20 microseconds
-        _sisyphus_xp_earned += bonus_xp;
-        _sisyphus_xp_from_achievements += bonus_xp;
-        printf(TEST_COLOR_CYAN "🏆 ACHIEVEMENT UNLOCKED: 🪶 Hermes Wings! " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
-        printf(TEST_COLOR_GRAY "   Sub-20μs test - winged feet of the messenger god!" TEST_COLOR_RESET "\n");
-        UPDATE_BEST_ACHIEVEMENT("Hermes Wings", bonus_xp, "Sub-20μs test - winged feet of the messenger god!");
-    }
-
-    if (!_achievement_lightning_bolt && _sisyphus_fastest_test < 0.000015) {
-        _achievement_lightning_bolt = 1;
-        _sisyphus_achievements_unlocked++;
-        int bonus_xp = 15 / xp_multiplier; // Sub-15 microseconds
-        _sisyphus_xp_earned += bonus_xp;
-        _sisyphus_xp_from_achievements += bonus_xp;
-        printf(TEST_COLOR_YELLOW "🏆 ACHIEVEMENT UNLOCKED: ⚡ Lightning Bolt! " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
-        printf(TEST_COLOR_GRAY "   Sub-15μs test - faster than Zeus's lightning!" TEST_COLOR_RESET "\n");
-        UPDATE_BEST_ACHIEVEMENT("Lightning Bolt", bonus_xp, "Sub-15μs test - faster than Zeus's lightning!");
-    }
-
-    if (!_achievement_time_lord && _sisyphus_fastest_test < 0.000010) {
-        _achievement_time_lord = 1;
-        _sisyphus_achievements_unlocked++;
-        int bonus_xp = 42 / xp_multiplier; // Answer to everything
-        _sisyphus_xp_earned += bonus_xp;
-        _sisyphus_xp_from_achievements += bonus_xp;
-        printf(TEST_COLOR_PURPLE "🏆 ACHIEVEMENT UNLOCKED: ⏰ Time Lord! " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
-        printf(TEST_COLOR_GRAY "   Sub-10μs test - master of time itself!" TEST_COLOR_RESET "\n");
-        UPDATE_BEST_ACHIEVEMENT("Time Lord", bonus_xp, "Sub-10μs test - master of time itself!");
-    }
-
-    // XP Achievements
-    if (!_achievement_treasure_hunter && _sisyphus_xp_earned >= 10000) {
-        _achievement_treasure_hunter = 1;
-        _sisyphus_achievements_unlocked++;
-        int bonus_xp = 100 / xp_multiplier; // Treasure milestone
-        _sisyphus_xp_earned += bonus_xp;
-        _sisyphus_xp_from_achievements += bonus_xp;
-        printf(TEST_COLOR_YELLOW "🏆 ACHIEVEMENT UNLOCKED: 💰 Treasure Hunter! " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
-        printf(TEST_COLOR_GRAY "   10,000+ XP in one suite - found the mother lode!" TEST_COLOR_RESET "\n");
-        UPDATE_BEST_ACHIEVEMENT("Treasure Hunter", bonus_xp, "10,000+ XP in one suite - found the mother lode!");
-    }
-
-    if (!_achievement_gold_rush && _sisyphus_xp_earned >= 5000 && _total_test_time < 0.001) {
-        _achievement_gold_rush = 1;
-        _sisyphus_achievements_unlocked++;
-        int bonus_xp = 49 / xp_multiplier; // California Gold Rush
-        _sisyphus_xp_earned += bonus_xp;
-        _sisyphus_xp_from_achievements += bonus_xp;
-        printf(TEST_COLOR_GOLD "🏆 ACHIEVEMENT UNLOCKED: 🏃‍♂️ Gold Rush! " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
-        printf(TEST_COLOR_GRAY "   5,000+ XP in under 1ms - struck gold fast!" TEST_COLOR_RESET "\n");
-        UPDATE_BEST_ACHIEVEMENT("Gold Rush", bonus_xp, "5,000+ XP in under 1ms - struck gold fast!");
-    }
-
-    // Test Count Achievements
-    if (!_achievement_marathon_god && _sisyphus_trials_conquered >= 500) {
-        _achievement_marathon_god = 1;
-        _sisyphus_achievements_unlocked++;
-        int bonus_xp = 80 / xp_multiplier; // Marathon distance
-        _sisyphus_xp_earned += bonus_xp;
-        _sisyphus_xp_from_achievements += bonus_xp;
-        printf(TEST_COLOR_GREEN "🏆 ACHIEVEMENT UNLOCKED: 🏃 Marathon God! " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
-        printf(TEST_COLOR_GRAY "   500+ tests in one run - divine endurance!" TEST_COLOR_RESET "\n");
-        UPDATE_BEST_ACHIEVEMENT("Marathon God", bonus_xp, "500+ tests in one run - divine endurance!");
-    }
-
-    if (!_achievement_eternal_vigilance && _sisyphus_trials_conquered >= 1000) {
-        _achievement_eternal_vigilance = 1;
-        _sisyphus_achievements_unlocked++;
-        int bonus_xp = 150 / xp_multiplier; // Eternal vigilance
-        _sisyphus_xp_earned += bonus_xp;
-        _sisyphus_xp_from_achievements += bonus_xp;
-        printf(TEST_COLOR_PURPLE "🏆 ACHIEVEMENT UNLOCKED: 👁️ Eternal Vigilance! " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
-        printf(TEST_COLOR_GRAY "   1000+ tests in one run - eternal watchfulness!" TEST_COLOR_RESET "\n");
-        UPDATE_BEST_ACHIEVEMENT("Eternal Vigilance", bonus_xp, "1000+ tests in one run - eternal watchfulness!");
-    }
-
-    // Meta Achievements
-    if (!_achievement_achievement_hunter && _sisyphus_achievements_unlocked >= 25) {
-        _achievement_achievement_hunter = 1;
-        _sisyphus_achievements_unlocked++;
-        int bonus_xp = 25 / xp_multiplier; // Achievement milestone
-        _sisyphus_xp_earned += bonus_xp;
-        _sisyphus_xp_from_achievements += bonus_xp;
-        printf(TEST_COLOR_CYAN "🏆 ACHIEVEMENT UNLOCKED: 🎯 Achievement Hunter! " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
-        printf(TEST_COLOR_GRAY "   Unlocked 25+ achievements - dedicated collector!" TEST_COLOR_RESET "\n");
-        UPDATE_BEST_ACHIEVEMENT("Achievement Hunter", bonus_xp, "Unlocked 25+ achievements - dedicated collector!");
-    }
-
-    // Streak Achievements
-    if (!_achievement_flawless_victory && _sisyphus_perfect_streak >= 15) {
-        _achievement_flawless_victory = 1;
-        _sisyphus_achievements_unlocked++;
-        int bonus_xp = 15 / xp_multiplier; // Perfect streak
-        _sisyphus_xp_earned += bonus_xp;
-        _sisyphus_xp_from_achievements += bonus_xp;
-        printf(TEST_COLOR_GREEN "🏆 ACHIEVEMENT UNLOCKED: 🎯 Flawless Victory! " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
-        printf(TEST_COLOR_GRAY "   15+ perfect test streak - flawless execution!" TEST_COLOR_RESET "\n");
-        UPDATE_BEST_ACHIEVEMENT("Flawless Victory", bonus_xp, "15+ perfect test streak - flawless execution!");
-    }
-
-    if (!_achievement_domination && _sisyphus_perfect_streak >= 30) {
-        _achievement_domination = 1;
-        _sisyphus_achievements_unlocked++;
-        int bonus_xp = 30 / xp_multiplier; // Domination
-        _sisyphus_xp_earned += bonus_xp;
-        _sisyphus_xp_from_achievements += bonus_xp;
-        printf(TEST_COLOR_RED "🏆 ACHIEVEMENT UNLOCKED: 👑 Domination! " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
-        printf(TEST_COLOR_GRAY "   30+ perfect test streak - total domination!" TEST_COLOR_RESET "\n");
-        UPDATE_BEST_ACHIEVEMENT("Domination", bonus_xp, "30+ perfect test streak - total domination!");
-    }
-
-    if (!_achievement_godlike && _sisyphus_perfect_streak >= 100) {
-        _achievement_godlike = 1;
-        _sisyphus_achievements_unlocked++;
-        int bonus_xp = 100 / xp_multiplier; // Godlike performance
-        _sisyphus_xp_earned += bonus_xp;
-        _sisyphus_xp_from_achievements += bonus_xp;
-        printf(TEST_COLOR_GOLD "🏆 ACHIEVEMENT UNLOCKED: ⚡ Godlike! " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
-        printf(TEST_COLOR_GRAY "   100+ perfect test streak - ascended to godhood!" TEST_COLOR_RESET "\n");
-        UPDATE_BEST_ACHIEVEMENT("Godlike", bonus_xp, "100+ perfect test streak - ascended to godhood!");
+    if (!_achievement_golden_fleece && _sisyphus_fastest_test < 0.000005) {
+        _achievement_golden_fleece = 1; _sisyphus_achievements_unlocked++; int bonus_xp = 90;
+        _sisyphus_xp_earned += bonus_xp; _sisyphus_xp_from_achievements += bonus_xp;
+        printf(TEST_COLOR_GOLD "🏆 ACHIEVEMENT: The Golden Fleece " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
+        printf(TEST_COLOR_GRAY "    For obtaining a prize of mythical speed (< 5 microseconds)." TEST_COLOR_RESET "\n");
+        UPDATE_BEST_ACHIEVEMENT("The Golden Fleece", bonus_xp, "Obtained a prize of mythical speed.");
     }
 
 
-    // NEW EDUCATIONAL ACHIEVEMENTS (Higher XP values for overtaking Spartan Warrior)
-
-    if (!_achievement_socratic_method && tests_passed >= 15 && tests_failed == 0 && _sisyphus_xp_earned >= 400 && _sisyphus_achievements_unlocked >= 3) {
-        _achievement_socratic_method = 1;
-        _sisyphus_achievements_unlocked++;
-        int bonus_xp = 45 / xp_multiplier; // Socrates' 45 years of teaching
-        _sisyphus_xp_earned += bonus_xp;
-        _sisyphus_xp_from_achievements += bonus_xp;
-        printf(TEST_COLOR_PURPLE "🏆 ACHIEVEMENT UNLOCKED: 🤔 Socratic Method! " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
-        printf(TEST_COLOR_GRAY "   'I know that I know nothing' - learned from questioning, achieved wisdom!" TEST_COLOR_RESET "\n");
-        UPDATE_BEST_ACHIEVEMENT("Socratic Method", bonus_xp, "'I know that I know nothing' - learned from questioning, achieved wisdom!");
+    // --- Resilience & Absurdity ---
+    if (!_achievement_laughing_sisyphus && _sisyphus_first_test_failed == 1 && tests_failed == 1) {
+        _achievement_laughing_sisyphus = 1; _sisyphus_achievements_unlocked++; int bonus_xp = 80;
+        _sisyphus_xp_earned += bonus_xp; _sisyphus_xp_from_achievements += bonus_xp;
+        printf(TEST_COLOR_ORANGE "🏆 ACHIEVEMENT: The Laughing Sisyphus " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
+        printf(TEST_COLOR_GRAY "    For failing the first trial, yet pushing the boulder to the summit perfectly." TEST_COLOR_RESET "\n");
+        UPDATE_BEST_ACHIEVEMENT("The Laughing Sisyphus", bonus_xp, "Failed the first trial, then achieved perfection.");
+    }
+    if (!_achievement_hydras_blood && tests_failed >= 3 && tests_passed > (tests_failed * 2)) {
+        _achievement_hydras_blood = 1; _sisyphus_achievements_unlocked++; int bonus_xp = 35;
+        _sisyphus_xp_earned += bonus_xp; _sisyphus_xp_from_achievements += bonus_xp;
+        printf(TEST_COLOR_RED "🏆 ACHIEVEMENT: The Hydra's Blood " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
+        printf(TEST_COLOR_GRAY "    For being bloodied in battle (%d failures), but emerging victorious." TEST_COLOR_RESET "\n", tests_failed);
+        UPDATE_BEST_ACHIEVEMENT("The Hydra's Blood", bonus_xp, "Bloodied by many failures, but emerged victorious.");
+    }
+    if (!_achievement_odysseus_return && total_tests >= 7 && tests_failed >= 3 && _sisyphus_perfect_streak > 0) {
+        // We check if the last test was a success by checking the overall perfect streak counter
+        _achievement_odysseus_return = 1; _sisyphus_achievements_unlocked++; int bonus_xp = 60;
+        _sisyphus_xp_earned += bonus_xp; _sisyphus_xp_from_achievements += bonus_xp;
+        printf(TEST_COLOR_BLUE "🏆 ACHIEVEMENT: Odysseus's Return " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
+        printf(TEST_COLOR_GRAY "    For enduring a long, arduous journey and returning home a victor." TEST_COLOR_RESET "\n");
+        UPDATE_BEST_ACHIEVEMENT("Odysseus's Return", bonus_xp, "Endured a long journey and returned a victor.");
+    }
+    if (!_achievement_gordian_knot && tests_failed >= 2) {
+         // Simplified: just failing two different test functions is the knot.
+        _achievement_gordian_knot = 1; _sisyphus_achievements_unlocked++; int bonus_xp = 50;
+        _sisyphus_xp_earned += bonus_xp; _sisyphus_xp_from_achievements += bonus_xp;
+        printf(TEST_COLOR_PURPLE "🏆 ACHIEVEMENT: The Gordian Knot " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
+        printf(TEST_COLOR_GRAY "    For facing a complex, multi-faceted problem with at least two points of failure." TEST_COLOR_RESET "\n");
+        UPDATE_BEST_ACHIEVEMENT("The Gordian Knot", bonus_xp, "Faced a complex problem with multiple failures.");
+    }
+     if (!_achievement_asclepius_cure && tests_failed == 1 && _sisyphus_failed_count == 1) {
+        _achievement_asclepius_cure = 1; _sisyphus_achievements_unlocked++; int bonus_xp = 30;
+        _sisyphus_xp_earned += bonus_xp; _sisyphus_xp_from_achievements += bonus_xp;
+        printf(TEST_COLOR_GREEN "🏆 ACHIEVEMENT: Asclepius's Cure " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
+        printf(TEST_COLOR_GRAY "    For identifying and curing a single, precise point of sickness in the code." TEST_COLOR_RESET "\n");
+        UPDATE_BEST_ACHIEVEMENT("Asclepius's Cure", bonus_xp, "Cured a single, precise point of sickness.");
     }
 
-    if (!_achievement_alexander_conquest && tests_failed == 0 && _sisyphus_xp_earned >= 600 && _total_test_time < 0.001 && tests_passed >= 12) {
-        _achievement_alexander_conquest = 1;
-        _sisyphus_achievements_unlocked++;
-        int bonus_xp = 50 / xp_multiplier; // Alexander conquered known world in 50 major battles
-        _sisyphus_xp_earned += bonus_xp;
-        _sisyphus_xp_from_achievements += bonus_xp;
-        printf(TEST_COLOR_GOLD "🏆 ACHIEVEMENT UNLOCKED: ⚔️ Alexander's Conquest! " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
-        printf(TEST_COLOR_BOLD_WHITE "   🌍 Conquered the known world with lightning speed and perfect strategy! 🌍" TEST_COLOR_RESET "\n");
-        printf(TEST_COLOR_GRAY "   600+ XP, sub-1ms, 12+ perfect tests - legendary domination!" TEST_COLOR_RESET "\n");
-        UPDATE_BEST_ACHIEVEMENT("Alexander's Conquest", bonus_xp, "Conquered the known world with lightning speed and perfect strategy!");
+    // --- Mastery & Craftsmanship ---
+    if (!_achievement_theseus_thread && _sisyphus_max_combo >= 15) {
+        _achievement_theseus_thread = 1; _sisyphus_achievements_unlocked++; int bonus_xp = 50;
+        _sisyphus_xp_earned += bonus_xp; _sisyphus_xp_from_achievements += bonus_xp;
+        printf(TEST_COLOR_GOLD "🏆 ACHIEVEMENT: Theseus's Golden Thread " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
+        printf(TEST_COLOR_GRAY "    For navigating a single, winding corridor of logic with a 15+ combo." TEST_COLOR_RESET "\n");
+        UPDATE_BEST_ACHIEVEMENT("Theseus's Thread", bonus_xp, "Navigated a winding corridor with a 15+ combo.");
+    }
+    if (!_achievement_platos_ideal_form && tests_failed == 0 && _sisyphus_max_combo >= 30) {
+        _achievement_platos_ideal_form = 1; _sisyphus_achievements_unlocked++; int bonus_xp = 100;
+        _sisyphus_xp_earned += bonus_xp; _sisyphus_xp_from_achievements += bonus_xp;
+        printf(TEST_COLOR_BOLD_WHITE "🏆 ACHIEVEMENT: Plato's Ideal Form " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
+        printf(TEST_COLOR_GRAY "    For a perfect suite reflecting profound mastery (30+ combo)." TEST_COLOR_RESET "\n");
+        UPDATE_BEST_ACHIEVEMENT("Plato's Ideal Form", bonus_xp, "A perfect suite reflecting profound mastery.");
+    }
+    if (!_achievement_midas_touch && (_sisyphus_xp_earned - _sisyphus_xp_from_achievements) < 750 && _sisyphus_xp_earned >= 750) { // Check if this achievement pushes it over
+        _achievement_midas_touch = 1; _sisyphus_achievements_unlocked++; int bonus_xp = 70;
+        _sisyphus_xp_earned += bonus_xp; _sisyphus_xp_from_achievements += bonus_xp;
+        printf(TEST_COLOR_GOLD "🏆 ACHIEVEMENT: The Midas Touch " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
+        printf(TEST_COLOR_GRAY "    For turning a simple test run into a treasure trove of over 750 XP." TEST_COLOR_RESET "\n");
+        UPDATE_BEST_ACHIEVEMENT("The Midas Touch", bonus_xp, "Turned a test run into a treasure trove of >750 XP.");
+    }
+    if (!_achievement_hidden_passage && _sisyphus_max_combo >= 20) {
+        _achievement_hidden_passage = 1; _sisyphus_achievements_unlocked++; int bonus_xp = 75;
+        _sisyphus_xp_earned += bonus_xp; _sisyphus_xp_from_achievements += bonus_xp;
+        printf(TEST_COLOR_CYAN "🏆 ACHIEVEMENT: The Hidden Passage " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
+        printf(TEST_COLOR_GRAY "    For exploring a function so deeply you achieved a 20+ combo." TEST_COLOR_RESET "\n");
+        UPDATE_BEST_ACHIEVEMENT("The Hidden Passage", bonus_xp, "Explored a function so deeply (20+ combo).");
     }
 
-    if (!_achievement_euclidean_proof && tests_passed >= 9 && tests_failed == 0 && _sisyphus_max_combo >= 12 && _sisyphus_fastest_test < 0.00002) {
-        _achievement_euclidean_proof = 1;
-        _sisyphus_achievements_unlocked++;
-        int bonus_xp = 42 / xp_multiplier; // Euclid's 42 propositions in Elements Book 1
-        _sisyphus_xp_earned += bonus_xp;
-        _sisyphus_xp_from_achievements += bonus_xp;
-        printf(TEST_COLOR_BLUE "🏆 ACHIEVEMENT UNLOCKED: 📐 Euclidean Proof! " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
-        printf(TEST_COLOR_GRAY "   Q.E.D. - Mathematical precision with 12+ perfect proofs and lightning speed!" TEST_COLOR_RESET "\n");
-        UPDATE_BEST_ACHIEVEMENT("Euclidean Proof", bonus_xp, "Q.E.D. - Mathematical precision with 12+ perfect proofs and lightning speed!");
+    // --- Meta Achievements (Checked Last) ---
+    if (!_achievement_tyches_favor && _sisyphus_achievements_unlocked >= 3) {
+        _achievement_tyches_favor = 1; _sisyphus_achievements_unlocked++; int bonus_xp = 25;
+        _sisyphus_xp_earned += bonus_xp; _sisyphus_xp_from_achievements += bonus_xp;
+        printf(TEST_COLOR_GREEN "🏆 ACHIEVEMENT: Tyche's Favor " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
+        printf(TEST_COLOR_GRAY "    For a run so successful that Fortune herself smiles upon you (3+ achievements)." TEST_COLOR_RESET "\n");
+        UPDATE_BEST_ACHIEVEMENT("Tyche's Favor", bonus_xp, "A lucky run blessed by Fortune (3+ achievements).");
     }
-
-
-
+    if (!_achievement_oracle_at_delphi && tests_failed == 0 && _sisyphus_achievements_unlocked >= 2 && _total_test_time < 0.000100) {
+        _achievement_oracle_at_delphi = 1; _sisyphus_achievements_unlocked++; int bonus_xp = 125;
+        _sisyphus_xp_earned += bonus_xp; _sisyphus_xp_from_achievements += bonus_xp;
+        printf(TEST_COLOR_PURPLE "🏆 ACHIEVEMENT: The Oracle at Delphi " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp);
+        printf(TEST_COLOR_GRAY "    For a perfect, swift, and multi-faceted prophecy of success." TEST_COLOR_RESET "\n");
+        UPDATE_BEST_ACHIEVEMENT("The Oracle at Delphi", bonus_xp, "A perfect, swift, multi-faceted prophecy.");
+    }
 }
 
 static void _level_up_check(void) {
@@ -1650,22 +1225,33 @@ static double get_time_precise(void) {
 #endif
 }
 
-// Epic Sisyphus gamified test assertion macro
+#define LOOP_TEST_START() \
+    do { \
+        _sisyphus_in_loop = 1; \
+        _sisyphus_loop_iteration = 0; \
+        printf(TEST_COLOR_CYAN "  🌀 Entering Repetitive Trial..." TEST_COLOR_RESET "\n"); \
+    } while(0)
+
+#define LOOP_TEST_END() \
+    do { \
+        if (_sisyphus_loop_iteration >= 3) { \
+            printf(TEST_COLOR_GRAY "      ... (condensed %d subsequent messages)\n" TEST_COLOR_RESET, _sisyphus_loop_iteration - 3); \
+        } \
+        printf(TEST_COLOR_CYAN "  🌀 Repetitive Trial Complete." TEST_COLOR_RESET "\n"); \
+        _sisyphus_in_loop = 0; \
+    } while(0)
+
+
 #define TEST_ASSERT(condition, message) \
     do { \
+        if (_sisyphus_first_assert_passed == -1) { \
+            _sisyphus_first_assert_passed = (condition) ? 1 : 0; \
+        } \
+        \
         if (!(condition)) { \
-            /* Reset combo suppression on failure */ \
-            if (_sisyphus_suppressing_combos) { \
-                printf(TEST_COLOR_GREEN "🔥 COMBO x%d VICTORY: %s" TEST_COLOR_RESET, _sisyphus_combo_multiplier - 1, _sisyphus_last_combo_message); \
-                printf(TEST_COLOR_YELLOW " (+3 XP)" TEST_COLOR_RESET "\n"); \
-                _sisyphus_suppressing_combos = 0; \
-            } \
-            _sisyphus_same_message_count = 0; \
-            _sisyphus_last_combo_message[0] = '\0'; \
-            _sisyphus_current_test_penalty = (tests_failed + 1) * 100; \
+            /* Failure logic doesn't change */ \
             printf(TEST_COLOR_RED "💥 TRIAL FAILED: %s" TEST_COLOR_RESET, message); \
-            printf(TEST_COLOR_RED " (-%d XP)" TEST_COLOR_RESET "\n", _sisyphus_current_test_penalty); \
-            printf(TEST_COLOR_GRAY "   🏛️  Line %d in %s" TEST_COLOR_RESET "\n", __LINE__, __FILE__); \
+            printf(TEST_COLOR_GRAY "\n      Line %d in %s" TEST_COLOR_RESET "\n", __LINE__, __FILE__); \
             if (_sisyphus_failed_count < 10) { \
                 snprintf(_sisyphus_failed_tests[_sisyphus_failed_count], 256, "%s", __func__); \
                 snprintf(_sisyphus_failed_messages[_sisyphus_failed_count], 512, "%s", message); \
@@ -1673,61 +1259,44 @@ static double get_time_precise(void) {
                 _sisyphus_failed_count++; \
             } \
             _sisyphus_combo_multiplier = 1; \
-            _sisyphus_perfect_streak = 0; \
             return 0; \
         } else { \
             _sisyphus_trials_conquered++; \
-            /* Implement diminishing returns after combo x7 (8+ assertions) */ \
-            int base_xp; \
-            if (_sisyphus_combo_multiplier <= 7) { \
-                base_xp = 10 + (3 * (_sisyphus_combo_multiplier - 1)); \
-            } else { \
-                /* After x7, diminish by 5 per level: 28->23->18->13->8->3 (min 3) */ \
-                int diminish_levels = _sisyphus_combo_multiplier - 7; \
-                base_xp = 28 - (diminish_levels * 5); \
-                if (base_xp < 3) base_xp = 3; \
-            } \
-            int xp_gain = _sisyphus_is_full_test_mode ? (base_xp) : base_xp; \
-            _sisyphus_xp_earned += xp_gain; \
-            if (_sisyphus_combo_multiplier > 1) { \
-                int combo_portion = xp_gain - (_sisyphus_is_full_test_mode ? (10 / 4) : 10); \
-                int test_portion = _sisyphus_is_full_test_mode ? (10 / 4) : 10; \
-                _sisyphus_xp_from_combos += combo_portion; \
-                _sisyphus_xp_from_tests += test_portion; \
-            } else { \
+            int xp_gain = 0; \
+            \
+            if (_sisyphus_in_loop) { \
+                /* --- IN-LOOP LOGIC --- */ \
+                if (_sisyphus_loop_iteration < 3) { \
+                    printf(TEST_COLOR_GREEN "      - Iter %d: %s" TEST_COLOR_RESET, _sisyphus_loop_iteration + 1, message); \
+                    printf(TEST_COLOR_YELLOW " (+1 XP)" TEST_COLOR_RESET "\n"); \
+                } \
+                if (_sisyphus_loop_iteration == 2) { \
+                    printf(TEST_COLOR_GRAY "          Sisyphus finds a rhythm... (condensing output)\n" TEST_COLOR_RESET); \
+                } \
+                xp_gain = 1; /* Award a single, non-decaying XP point for loop assertions */ \
                 _sisyphus_xp_from_tests += xp_gain; \
-            } \
-            /* Check if this is the same message as before */ \
-            if (strcmp(_sisyphus_last_combo_message, message) == 0) { \
-                _sisyphus_same_message_count++; \
-                if (_sisyphus_same_message_count == 3) { \
-                    /* Starting to suppress - show the third one then ellipsis */ \
-                    printf(TEST_COLOR_GREEN "🔥 COMBO x%d VICTORY: %s" TEST_COLOR_RESET, _sisyphus_combo_multiplier, message); \
-                    printf(TEST_COLOR_YELLOW " (+%d XP)" TEST_COLOR_RESET "\n", xp_gain); \
-                    printf(TEST_COLOR_GRAY "...\n" TEST_COLOR_RESET); \
-                    _sisyphus_suppressing_combos = 1; \
-                    _sisyphus_first_combo_of_sequence = _sisyphus_combo_multiplier - 2; \
-                } else if (_sisyphus_same_message_count < 3) { \
-                    /* Show first 3 normally */ \
-                    printf(TEST_COLOR_GREEN "🔥 COMBO x%d VICTORY: %s" TEST_COLOR_RESET, _sisyphus_combo_multiplier, message); \
-                    printf(TEST_COLOR_YELLOW " (+%d XP)" TEST_COLOR_RESET "\n", xp_gain); \
-                } \
-                /* If > 3, we're suppressing - don't print */ \
+                _sisyphus_loop_iteration++; \
             } else { \
-                /* Different message - check if we were suppressing */ \
-                if (_sisyphus_suppressing_combos && _sisyphus_same_message_count > 3) { \
-                    /* Show the final one from the suppressed sequence */ \
-                    printf(TEST_COLOR_GREEN "🔥 COMBO x%d VICTORY: %s" TEST_COLOR_RESET, _sisyphus_combo_multiplier - 1, _sisyphus_last_combo_message); \
-                    printf(TEST_COLOR_YELLOW " (+3 XP)" TEST_COLOR_RESET "\n"); \
+                /* --- NORMAL COMBO LOGIC (WITH CORRECTED ATTRIBUTION) --- */ \
+                int base_test_xp = 5; \
+                int combo_bonus = 0; \
+                if (_sisyphus_combo_multiplier <= 7) { \
+                    combo_bonus = 2 * (_sisyphus_combo_multiplier - 1); \
+                } else { \
+                    int diminish_levels = _sisyphus_combo_multiplier - 7; \
+                    int diminished_bonus = 12 - (diminish_levels * 3); /* Max combo bonus is 12 */ \
+                    combo_bonus = (diminished_bonus > 0) ? diminished_bonus : 0; \
                 } \
-                /* Reset and show new message */ \
-                _sisyphus_same_message_count = 1; \
-                _sisyphus_suppressing_combos = 0; \
-                strncpy(_sisyphus_last_combo_message, message, sizeof(_sisyphus_last_combo_message) - 1); \
-                printf(TEST_COLOR_GREEN "🔥 COMBO x%d VICTORY: %s" TEST_COLOR_RESET, _sisyphus_combo_multiplier, message); \
+                xp_gain = base_test_xp + combo_bonus; \
+                _sisyphus_xp_from_tests += base_test_xp; \
+                _sisyphus_xp_from_combos += combo_bonus; \
+                \
+                printf(TEST_COLOR_GREEN "  - COMBO x%d VICTORY: %s" TEST_COLOR_RESET, _sisyphus_combo_multiplier, message); \
                 printf(TEST_COLOR_YELLOW " (+%d XP)" TEST_COLOR_RESET "\n", xp_gain); \
+                _sisyphus_combo_multiplier++; \
             } \
-            _sisyphus_combo_multiplier++; \
+            \
+            _sisyphus_xp_earned += xp_gain; \
             if (!_sisyphus_is_full_test_mode) { \
                 _check_achievements(); \
             } \
@@ -1753,11 +1322,15 @@ do { \
         double elapsed_time = end_time - start_time; \
         _total_test_time += elapsed_time; \
         if (elapsed_time < _sisyphus_fastest_test) _sisyphus_fastest_test = elapsed_time; \
-        if (elapsed_time < 0.00003) { \
-            _sisyphus_consecutive_fast_tests++; \
-        } else { \
-            _sisyphus_consecutive_fast_tests = 0; \
-        } \
+        if (elapsed_time > _sisyphus_max_test_time) _sisyphus_max_test_time = elapsed_time; \
+        if (elapsed_time < 0.000020) { \
+                _sisyphus_consecutive_fast_tests++; \
+            } else { \
+                _sisyphus_consecutive_fast_tests = 0; \
+            } \
+            if (_sisyphus_first_test_failed == -1) { \
+                _sisyphus_first_test_failed = test_result ? 0 : 1; \
+            } \
         if (test_result) { \
             tests_passed++; \
             _sisyphus_perfect_streak++; \
@@ -1765,7 +1338,7 @@ do { \
             /* Track max combo using combo multiplier reached during test */ \
             int max_combo_this_test = _sisyphus_combo_multiplier - 1; \
             if (max_combo_this_test > _sisyphus_max_combo) _sisyphus_max_combo = max_combo_this_test; \
-            int battle_xp = _sisyphus_trials_conquered * 5; \
+            int battle_xp = _sisyphus_trials_conquered * 2; \
             int final_xp = _sisyphus_is_full_test_mode ? (battle_xp / 4) : battle_xp; \
             _sisyphus_xp_earned += final_xp; \
             _sisyphus_xp_from_tests += final_xp; \
@@ -1813,7 +1386,7 @@ do { \
         _sisyphus_combo_multiplier = 1; \
         /* End any suppressed combo sequence when test ends */ \
         if (_sisyphus_suppressing_combos && _sisyphus_same_message_count > 3) { \
-            printf(TEST_COLOR_GREEN "🔥 COMBO x%d VICTORY: %s" TEST_COLOR_RESET, _sisyphus_combo_multiplier - 1, _sisyphus_last_combo_message); \
+            printf(TEST_COLOR_GREEN "   COMBO x%d VICTORY: %s" TEST_COLOR_RESET, _sisyphus_combo_multiplier - 1, _sisyphus_last_combo_message); \
             printf(TEST_COLOR_YELLOW " (+3 XP)" TEST_COLOR_RESET "\n"); \
         } \
         _sisyphus_suppressing_combos = 0; \
@@ -1853,12 +1426,11 @@ do { \
         const char* suite_intro = _get_narrative_test_message(_sisyphus_project_level); \
         printf(TEST_COLOR_PURPLE "🏛️  LABYRINTH CONSTRUCTION: %s" TEST_COLOR_RESET "\n", suite_name); \
         printf(TEST_COLOR_CYAN "════════════════════════════════════════════════════════" TEST_COLOR_RESET "\n"); \
-        printf(TEST_COLOR_YELLOW "%s" TEST_COLOR_RESET "\n", suite_intro); \
         printf(TEST_COLOR_GRAY "🪨 Each test pushes the boulder higher • Build the perfect maze" TEST_COLOR_RESET "\n"); \
         char total_xp_str[32], next_level_xp_str[32]; \
         format_number_with_commas(total_xp_str, sizeof(total_xp_str), _sisyphus_total_project_xp); \
         format_number_with_commas(next_level_xp_str, sizeof(next_level_xp_str), _get_xp_for_level(_sisyphus_project_level + 1)); \
-        printf(TEST_COLOR_CYAN "🏗️ Architect Level: %d | Total Construction XP: %s | Next Level: %s XP" TEST_COLOR_RESET "\n", _sisyphus_project_level, total_xp_str, next_level_xp_str); \
+        printf(TEST_COLOR_CYAN "🏗️  Architect Level: %d | Total Construction XP: %s | Next Level: %s XP" TEST_COLOR_RESET "\n", _sisyphus_project_level, total_xp_str, next_level_xp_str); \
     } else { \
         printf(TEST_COLOR_GRAY "🏗️  Workshop Session: %s" TEST_COLOR_RESET " ", suite_name); \
     }
@@ -1866,6 +1438,31 @@ do { \
 #define TEST_SUITE_END() \
     double _suite_end_time = get_time_precise(); \
     double _total_suite_time = _suite_end_time - _test_suite_start_time; \
+    if (_sisyphus_loop_iteration_count > 3) { \
+            printf(TEST_COLOR_GRAY "      ... (suppressed %d similar messages)\n" TEST_COLOR_RESET, _sisyphus_loop_iteration_count - 3); \
+        } \
+        if (!_achievement_perfect_stride && tests_failed == 0 && total_tests > 3 && (_sisyphus_max_test_time - _sisyphus_fastest_test) < 0.000030) { \
+                _achievement_perfect_stride = 1; _sisyphus_achievements_unlocked++; int bonus_xp = 50; \
+                _sisyphus_xp_earned += bonus_xp; _sisyphus_xp_from_achievements += bonus_xp; \
+                printf(TEST_COLOR_GREEN "🏆 ACHIEVEMENT: The Perfect Stride " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp); \
+                printf(TEST_COLOR_GRAY "    For incredible consistency; every step as perfect as the last." TEST_COLOR_RESET "\n"); \
+                UPDATE_BEST_ACHIEVEMENT("The Perfect Stride", bonus_xp, "Incredible consistency between all tests."); \
+            } \
+            \
+            double overhead_time = _total_suite_time - _total_test_time; \
+            if (!_achievement_hermes_caduceus && tests_failed == 0 && overhead_time < (_total_test_time * 0.5)) { \
+                _achievement_hermes_caduceus = 1; _sisyphus_achievements_unlocked++; int bonus_xp = 55; \
+                _sisyphus_xp_earned += bonus_xp; _sisyphus_xp_from_achievements += bonus_xp; \
+                printf(TEST_COLOR_CYAN "🏆 ACHIEVEMENT: Hermes's Caduceus " TEST_COLOR_YELLOW "+%d XP" TEST_COLOR_RESET "\n", bonus_xp); \
+                printf(TEST_COLOR_GRAY "    A divinely efficient run where the framework overhead was minimal." TEST_COLOR_RESET "\n"); \
+                UPDATE_BEST_ACHIEVEMENT("Hermes's Caduceus", bonus_xp, "A divinely efficient run."); \
+            } \
+            /* --- END OF ACHIEVEMENT LOGIC --- */ \
+            \
+            if (_sisyphus_loop_iteration_count > 3) { \
+                printf(TEST_COLOR_GRAY "      ... (condensed %d subsequent messages)\n" TEST_COLOR_RESET, _sisyphus_loop_iteration_count - 3); \
+            } \
+            \
     /* Apply XP penalties for failures: -100, -200, -300, etc. */ \
     int xp_penalty = 0; \
     if (tests_failed > 0) { \
@@ -1887,11 +1484,11 @@ do { \
     _update_project_xp(); \
     _write_sisyphus_mini_stats(); \
     printf(TEST_COLOR_CYAN "════════════════════════════════════════════════════════" TEST_COLOR_RESET "\n"); \
-    printf(TEST_COLOR_PURPLE "🏛️ WORKSHOP PROGRESS - LABYRINTH CONSTRUCTION REPORT" TEST_COLOR_RESET "\n"); \
+    printf(TEST_COLOR_PURPLE "🏛️  WORKSHOP PROGRESS - LABYRINTH CONSTRUCTION REPORT" TEST_COLOR_RESET "\n"); \
     printf(TEST_COLOR_CYAN "════════════════════════════════════════════════════════" TEST_COLOR_RESET "\n"); \
     _display_progress_bar(tests_passed, total_tests, "Victory Rate", TEST_COLOR_GREEN); \
     printf(TEST_COLOR_CYAN "🧪 Maze Sections Built: %d" TEST_COLOR_RESET " | ", total_tests); \
-    printf(TEST_COLOR_GREEN "🏗️ Completed: %d" TEST_COLOR_RESET " | ", tests_passed); \
+    printf(TEST_COLOR_GREEN "🏗️  Completed: %d" TEST_COLOR_RESET " | ", tests_passed); \
     printf(TEST_COLOR_RED "🪨 Needs Rework: %d" TEST_COLOR_RESET "\n", tests_failed); \
     int current_level_xp = _get_xp_in_current_level(_sisyphus_xp_earned, _sisyphus_current_level); \
     int xp_needed_for_next = _get_xp_for_level(_sisyphus_current_level); \
@@ -1899,7 +1496,7 @@ do { \
     int project_level_xp = _get_xp_in_current_level(_sisyphus_total_project_xp, _sisyphus_project_level); \
     int project_xp_needed = _get_xp_for_level(_sisyphus_project_level); \
     _display_progress_bar_with_level(project_level_xp, project_xp_needed, "Project XP", TEST_COLOR_PURPLE, _sisyphus_project_level, 1); \
-    printf(TEST_COLOR_BLUE "⏱️  Fastest Trial: %.6fs" TEST_COLOR_RESET " | ", _sisyphus_fastest_test < 999.0 ? _sisyphus_fastest_test : 0.0); \
+    printf( "⏱️  Fastest Trial: %.6fs" TEST_COLOR_RESET " | ", _sisyphus_fastest_test < 999.0 ? _sisyphus_fastest_test : 0.0); \
     printf(TEST_COLOR_GREEN "🏆 Achievements: %d" TEST_COLOR_RESET, _sisyphus_achievements_unlocked); \
     if (_sisyphus_best_achievement_xp > 0) { \
         printf(TEST_COLOR_BOLD_WHITE " | Best Achievement: %s (%d XP)" TEST_COLOR_RESET, _sisyphus_best_achievement, _sisyphus_best_achievement_xp); \
