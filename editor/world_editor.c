@@ -23,6 +23,9 @@ int region_size_index   = 0;
 int local_size_index    = 0;
 int z_height_size_index = 0;
 
+int grid_x = 0;
+int grid_y = 0;
+
 World_t* map = NULL;
 
 void e_InitWorldEditor( void )
@@ -290,9 +293,9 @@ static void e_WorldEditorDoLoop( float dt )
       int edge_y = ( SCREEN_HEIGHT / 2 ) - ( ( map->world_height * CELL_SIZE ) / 2 );
       mousex = ( ( app.mouse.x - edge_x ) / CELL_SIZE );
       mousey = ( ( app.mouse.y - edge_y ) / CELL_SIZE );
-      int grid_x = ( mousex < 0 ) ? 0 : ( ( mousex >= map->world_width  )
+      grid_x = ( mousex < 0 ) ? 0 : ( ( mousex >= map->world_width  )
         ? map->world_width  - 1 : mousex );
-      int grid_y = ( mousey < 0 ) ? 0 : ( ( mousey >= map->world_height )
+      grid_y = ( mousey < 0 ) ? 0 : ( ( mousey >= map->world_height )
         ? map->world_height - 1 : mousey );
       
       printf( "%d, %d\n", grid_x, grid_y );
@@ -326,8 +329,16 @@ static void e_WorldEditorRenderLoop( float dt )
         + ( col * CELL_SIZE );
       int w = CELL_SIZE;
       int h = CELL_SIZE;
+      if ( grid_x == x && grid_y == y )
+      {
+        a_DrawRect( x, y, w, h, 255, 2555, 0, 255 );
 
-      a_DrawRect( x, y, w, h, 255, 255, 0, 255 );
+      }
+      else
+      {
+        a_DrawRect( x, y, w, h, 0, 128, 128, 255 );
+
+      }
     }
 
   }
