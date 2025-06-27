@@ -22,6 +22,7 @@ typedef struct
   uint8_t temperature;
   uint8_t elevation;
   uint8_t is_passable;
+  uint8_t selected;
 } GameTile_t;
 
 typedef struct
@@ -32,6 +33,8 @@ typedef struct
   float temperature_factor; // every local cell in this region
   float elevation_factor; // every local cell in this region
   // float (1 is 100%, 0.5 is 50%, etc.)
+  uint8_t selected;
+
 } RegionCell_t;
 
 typedef struct
@@ -50,6 +53,7 @@ typedef struct
   // floats (1 is 100%, 0.5 is 50%, etc.)
   float temperature_factor; // every region in this world cell
   float elevation_factor; // every region in this world cell
+  uint8_t selected;
   
 } World_t;
 
