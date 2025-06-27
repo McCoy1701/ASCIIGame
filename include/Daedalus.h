@@ -1235,7 +1235,13 @@ void d_SliceString(dString_t* sb, const char* text, int start, int end);
  // =============================================================================
  // CONDITIONAL AND RATE-LIMITED LOGGING
  // =============================================================================
-
+ // Rate limiting behavior flags
+ typedef enum {
+     // Hashes the final, fully-rendered message. Prone to issues with formatted strings.
+     D_LOG_RATE_LIMIT_FLAG_HASH_FINAL_MESSAGE = 0,
+     // Hashes the format string itself. Correctly limits repeated formatted calls.
+     D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING = 1
+ } dLogRateLimitFlag_t;
  /*
   * Log only if condition is true
   *
@@ -1275,13 +1281,15 @@ void d_SliceString(dString_t* sb, const char* text, int start, int end);
  /*
   * Rate-limited logging with formatting
   *
+  * `flag` - Determines what to hash for rate limiting (the format string or the final message)
   * `level` - Log level
   * `max_count` - Maximum logs allowed in time window
   * `time_window` - Time window in seconds
   * `format` - Printf-style format string
   * `...` - Variable arguments
   */
- void d_LogRateLimitedF(dLogLevel_t level, uint32_t max_count, double time_window, const char* format, ...);
+ void d_LogRateLimitedF(dLogRateLimitFlag_t flag, dLogLevel_t level, uint32_t max_count, double time_window, const char* format, ...);
+
 
  // =============================================================================
  // UTILITY FUNCTIONS
@@ -1367,6 +1375,25 @@ void d_SliceString(dString_t* sb, const char* text, int start, int end);
   */
  void d_ResetLogStats(dLogger_t* logger);
 
+ /*
+  * Resets the global rate limiter cache, clearing all tracked messages.
+  *
+  * -- FOR TESTING AND DEBUGGING USE ONLY.
+  * -- This function is not thread-safe and should be called when no other
+  * threads are performing logging.
+  * -- It clears all history, allowing rate-limited messages to be logged again.
+  */
+ void d_ResetRateLimiterCache(void);
+
+ /*
+  * Gets the current number of unique messages being tracked by the rate limiter.
+  *
+  * `size_t` - The number of entries in the rate limiter's cache.
+  *
+  * -- FOR TESTING AND DEBUGGING USE ONLY.
+  * -- Can be used to verify that the cache is growing as expected.
+  */
+ size_t d_GetRateLimiterCacheEntryCount(void);
  // =============================================================================
  // ZERO-OVERHEAD MACROS
  // =============================================================================

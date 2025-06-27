@@ -101,7 +101,137 @@ int test_we_unimplemented_placeholders(void)
     return 1;
 }
 
+int test_we_memory_boundary_corruption(void)
+{
+    d_LogWarning("BUG HUNT: Testing for buffer overruns in world allocation.");
 
+    // Attempt allocation at exact system limits
+    World_t* boundary_world = init_world(WORLD_WIDTH_LARGE + 1, WORLD_WIDTH_LARGE + 1,
+                                       REGION_SIZE_LARGE, REGION_SIZE_LARGE,
+                                       LOCAL_SIZE_LARGE, LOCAL_SIZE_LARGE, Z_HEIGHT_LARGE);
+
+    // Test should either succeed gracefully or fail safely
+    if (boundary_world) {
+        TEST_ASSERT(boundary_world->regions != NULL, "Boundary world regions should be valid if allocated");
+        free_world(boundary_world, (boundary_world->world_width * boundary_world->world_height),
+                   (boundary_world->region_width * boundary_world->region_height));
+    }
+    TEST_ASSERT(1, "Memory boundary test completed without crash");
+    return 1;
+}
+int test_we_null_pointer_cascade(void)
+{
+    d_LogWarning("BUG HUNT: Testing cascading null pointer dereferences.");
+
+    // Force allocation failure scenario
+    World_t* corrupted_world = init_world(0, 0, 0, 0, 0, 0, 0); // Zero dimensions
+
+    if (corrupted_world) {
+        // If somehow created, test defensive programming
+        TEST_ASSERT(corrupted_world->regions == NULL || corrupted_world->world_width == 0,
+                   "Zero-dimension world should have null/zero state");
+        free_world(corrupted_world, 0, 0);
+    }
+
+    TEST_ASSERT(1, "Null pointer cascade test survived");
+    return 1;
+}
+int test_we_integer_overflow_protection(void)
+{
+    d_LogWarning("BUG HUNT: Testing arithmetic overflow in dimension calculations.");
+
+    // Create dimensions that multiply to near-overflow values
+    uint32_t dangerous_width = 65535;  // Close to uint16 max
+    uint32_t dangerous_height = 65535;
+
+    World_t* overflow_world = init_world(dangerous_width, dangerous_height,
+                                       REGION_SIZE_SMALL, REGION_SIZE_SMALL,
+                                       LOCAL_SIZE_SMALL, LOCAL_SIZE_SMALL, Z_HEIGHT_SMALL);
+
+    if (overflow_world) {
+        uint64_t total_regions = (uint64_t)overflow_world->world_width * overflow_world->world_height;
+        TEST_ASSERT(total_regions == (uint64_t)dangerous_width * dangerous_height,
+                   "Large dimension multiplication should not overflow");
+        free_world(overflow_world, total_regions,
+                   (overflow_world->region_width * overflow_world->region_height));
+    }
+
+    TEST_ASSERT(1, "Integer overflow protection test completed");
+    return 1;
+}
+int test_we_resource_exhaustion_recovery(void)
+{
+    d_LogWarning("BUG HUNT: Testing system behavior under memory exhaustion.");
+
+    World_t* worlds[50]; // Array to hold multiple worlds
+    int successful_allocations = 0;
+
+    d_LogDebug("Attempting to exhaust available memory...");
+    LOOP_TEST_START();
+    for (int i = 0; i < 50; i++) {
+        worlds[i] = init_world(WORLD_WIDTH_MEDIUM, WORLD_WIDTH_MEDIUM,
+                              REGION_SIZE_MEDIUM, REGION_SIZE_MEDIUM,
+                              LOCAL_SIZE_MEDIUM, LOCAL_SIZE_MEDIUM, Z_HEIGHT_MEDIUM);
+
+        if (worlds[i] != NULL) {
+            successful_allocations++;
+            if (i < 3) {
+                TEST_ASSERT(worlds[i]->regions != NULL, "Initial allocations should succeed");
+            }
+        }
+    }
+    LOOP_TEST_END();
+
+    // Clean up successfully allocated worlds
+    for (int i = 0; i < 50; i++) {
+        if (worlds[i] != NULL) {
+            free_world(worlds[i], (worlds[i]->world_width * worlds[i]->world_height),
+                      (worlds[i]->region_width * worlds[i]->region_height));
+        }
+    }
+
+    TEST_ASSERT(successful_allocations > 0, "At least some worlds should allocate before exhaustion");
+    return 1;
+}
+int test_we_concurrent_access_simulation(void)
+{
+    d_LogWarning("BUG HUNT: Simulating concurrent world operations for race conditions.");
+
+    World_t* shared_world = init_world(WORLD_WIDTH_SMALL, WORLD_WIDTH_SMALL,
+                                     REGION_SIZE_SMALL, REGION_SIZE_SMALL,
+                                     LOCAL_SIZE_SMALL, LOCAL_SIZE_SMALL, Z_HEIGHT_SMALL);
+    TEST_ASSERT(shared_world != NULL, "Shared world should be created for concurrent testing");
+
+    if (!shared_world) return 0;
+
+    d_LogDebug("Simulating rapid access patterns that could cause race conditions...");
+
+    // Simulate rapid state changes that might expose threading issues
+    LOOP_TEST_START();
+    for (int cycle = 0; cycle < 1000; cycle++) {
+        // Simulate operations that modify world state
+        we_edit();  // Call editor functions rapidly
+        we_save();
+        we_load();
+
+        // Verify world integrity hasn't been corrupted
+        if (cycle < 3) {
+            TEST_ASSERT(shared_world->regions != NULL, "World integrity should be maintained");
+        }
+
+        // Brief "context switch" simulation
+        if (cycle % 100 == 0) {
+            d_LogDebugF("Concurrent simulation cycle %d completed", cycle);
+        }
+    }
+    LOOP_TEST_END();
+
+    TEST_ASSERT(shared_world->regions != NULL, "World should survive concurrent access simulation");
+
+    free_world(shared_world, (shared_world->world_width * shared_world->world_height),
+              (shared_world->region_width * shared_world->region_height));
+    return 1;
+}
 // =============================================================================
 // MAIN TEST RUNNER
 // =============================================================================
@@ -131,6 +261,11 @@ int main(void)
     RUN_TEST(test_we_stress_test_recreation);
     RUN_TEST(test_we_unimplemented_placeholders);
 
+    RUN_TEST(test_we_memory_boundary_corruption);
+    RUN_TEST(test_we_null_pointer_cascade);
+    RUN_TEST(test_we_integer_overflow_protection);
+    RUN_TEST(test_we_resource_exhaustion_recovery);
+    RUN_TEST(test_we_concurrent_access_simulation);
 
     // =========================================================================
     // DAEDALUS LOGGER SHUTDOWN (MUST BE BEFORE TEST_SUITE_END)

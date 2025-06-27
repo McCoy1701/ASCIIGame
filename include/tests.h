@@ -1237,7 +1237,7 @@ static double get_time_precise(void) {
         if (_sisyphus_loop_iteration >= 3) { \
             printf(TEST_COLOR_GRAY "      ... (condensed %d subsequent messages)\n" TEST_COLOR_RESET, _sisyphus_loop_iteration - 3); \
         } \
-        printf(TEST_COLOR_CYAN "  🌀 Repetitive Trial Complete." TEST_COLOR_RESET "\n"); \
+        printf(TEST_COLOR_CYAN "    Repetitive Trial Complete. 🌀" TEST_COLOR_RESET "\n"); \
         _sisyphus_in_loop = 0; \
     } while(0)
 
