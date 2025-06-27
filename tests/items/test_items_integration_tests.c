@@ -1215,7 +1215,7 @@ int test_extreme_durability_stress(void)
 
 int main(void)
 {
-    srand(12345);
+    srand(123345);
     TEST_SUITE_START("Items System Integration Tests");
 
     // Run comprehensive integration tests

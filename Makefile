@@ -136,55 +136,79 @@ always:
 TEST_DIR=tests
 TEST_CFLAGS = -Wall -Wextra -ggdb $(CINC)
 
-# Individual test targets
+# --- Object File Rules for All Testable Code ---
+
+# Rule for compiling main game sources needed for some tests
+$(OBJ_DIR)/items.o: src/items.c
+	$(CC) -c $< -o $@ $(TEST_CFLAGS)
+
+# A list of ALL editor modules that our tests will need to link against.
+# CRITICAL FIX: We have REMOVED editor.o from this list because it contains a 'main' function
+# which conflicts with the test's own 'main' function. The undefined references this
+# creates must be solved in the test file itself (see Step 2 below).
+EDITOR_MODULE_OBJS = \
+    $(OBJ_DIR)/world_editor.o \
+    $(OBJ_DIR)/init_editor.o \
+    $(OBJ_DIR)/items_editor.o \
+    $(OBJ_DIR)/entity_editor.o \
+    $(OBJ_DIR)/color_editor.o \
+    $(OBJ_DIR)/ui_editor.o
+
+# Generic pattern rule to build any editor object file from its source file.
+# This avoids conflicts with other rules and keeps the Makefile clean.
+$(OBJ_DIR)/%.o: editor/%.c
+	$(CC) -c $< -o $@ $(TEST_CFLAGS)
+
+
+# --- Individual Test Targets ---
+
 .PHONY: test-items-creation-destruction
 test-items-creation-destruction: always $(OBJ_DIR)/items.o
 	$(CC) $(TEST_CFLAGS) -o $(BIN_DIR)/test_items_creation_destruction $(TEST_DIR)/items/test_items_creation_destruction.c $(OBJ_DIR)/items.o -lm -lDaedalus -lArchimedes
-
 
 .PHONY: test-items-type-checking
 test-items-type-checking: always $(OBJ_DIR)/items.o
 	$(CC) $(TEST_CFLAGS) -o $(BIN_DIR)/test_items_type_checking $(TEST_DIR)/items/test_items_type_checking_and_access.c $(OBJ_DIR)/items.o -lm -lDaedalus -lArchimedes
 
-
 .PHONY: test-items-material-system
 test-items-material-system: always $(OBJ_DIR)/items.o
 	$(CC) $(TEST_CFLAGS) -o $(BIN_DIR)/test_items_material_system $(TEST_DIR)/items/test_items_material_system.c $(OBJ_DIR)/items.o -lm -lDaedalus -lArchimedes
-
 
 .PHONY: test-items-properties
 test-items-properties: always $(OBJ_DIR)/items.o
 	$(CC) $(TEST_CFLAGS) -o $(BIN_DIR)/test_items_properties $(TEST_DIR)/items/test_items_properties.c $(OBJ_DIR)/items.o -lm -lDaedalus -lArchimedes
 
-
 .PHONY: test-items-durability
 test-items-durability: always $(OBJ_DIR)/items.o
 	$(CC) $(TEST_CFLAGS) -o $(BIN_DIR)/test_items_durability $(TEST_DIR)/items/test_items_durability.c $(OBJ_DIR)/items.o -lm -lDaedalus -lArchimedes
-
 
 .PHONY: test-items-inventory
 test-items-inventory: always $(OBJ_DIR)/items.o
 	$(CC) $(TEST_CFLAGS) -o $(BIN_DIR)/test_items_inventory $(TEST_DIR)/items/test_items_inventory.c $(OBJ_DIR)/items.o -lm -lDaedalus -lArchimedes
 
+.PHONY: test-items-integration-tests
+test-items-integration-tests: always $(OBJ_DIR)/items.o
+	$(CC) $(TEST_CFLAGS) -o $(BIN_DIR)/test_items_integration_tests $(TEST_DIR)/items/test_items_integration_tests.c $(OBJ_DIR)/items.o -lm -lDaedalus -lArchimedes
 
 .PHONY: test-items-usage
 test-items-usage: always $(OBJ_DIR)/items.o
 	$(CC) $(TEST_CFLAGS) -o $(BIN_DIR)/test_items_usage $(TEST_DIR)/items/test_items_usage.c $(OBJ_DIR)/items.o -lm -lDaedalus -lArchimedes
 
-
 .PHONY: test-items-helper-functions
 test-items-helper-functions: always $(OBJ_DIR)/items.o
 	$(CC) $(TEST_CFLAGS) -o $(BIN_DIR)/test_items_helper_functions $(TEST_DIR)/items/test_items_helper_functions.c $(OBJ_DIR)/items.o -lm -lDaedalus -lArchimedes
 
-.PHONY: test-items-integration-tests
-test-items-integration-tests: always $(OBJ_DIR)/items.o
-	$(CC) $(TEST_CFLAGS) -o $(BIN_DIR)/test_items_integration_tests $(TEST_DIR)/items/test_items_integration_tests.c $(OBJ_DIR)/items.o -lm -lDaedalus -lArchimedes
+# The world editor tests depend on ALL other editor modules.
+.PHONY: test-world-editor-basic
+test-world-editor-basic: always $(EDITOR_MODULE_OBJS)
+	$(CC) $(TEST_CFLAGS) -o $(BIN_DIR)/test_world_editor_basic tests/editor/test_world_editor_basic.c $(EDITOR_MODULE_OBJS) -lm -lDaedalus -lArchimedes
 
-# Compile items.c as object file for testing
-$(OBJ_DIR)/items.o: $(SRC_DIR)/items.c
-	$(CC) -c $< -o $@ $(TEST_CFLAGS)
+.PHONY: test-world-editor-advanced
+test-world-editor-advanced: always $(EDITOR_MODULE_OBJS)
+	$(CC) $(TEST_CFLAGS) -o $(BIN_DIR)/test_world_editor_advanced tests/editor/test_world_editor_advanced.c $(EDITOR_MODULE_OBJS) -lm -lDaedalus -lArchimedes
 
-# Individual test runners (for detailed output)
+
+# --- Individual Test Runners (for detailed output) ---
 .PHONY: run-test-items-creation-destruction
 run-test-items-creation-destruction: test-items-creation-destruction
 	@./$(BIN_DIR)/test_items_creation_destruction
@@ -192,22 +216,6 @@ run-test-items-creation-destruction: test-items-creation-destruction
 .PHONY: run-test-items-type-checking
 run-test-items-type-checking: test-items-type-checking
 	@./$(BIN_DIR)/test_items_type_checking
-
-.PHONY: run-test-items-material-system
-run-test-items-material-system: test-items-material-system
-	@./$(BIN_DIR)/test_items_material_system
-
-.PHONY: run-test-items-properties
-run-test-items-properties: test-items-properties
-	@./$(BIN_DIR)/test_items_properties
-
-.PHONY: run-test-items-durability
-run-test-items-durability: test-items-durability
-	@./$(BIN_DIR)/test_items_durability
-
-.PHONY: run-test-items-inventory
-run-test-items-inventory: test-items-inventory
-	@./$(BIN_DIR)/test_items_inventory
 
 .PHONY: run-test-items-usage
 run-test-items-usage: test-items-usage
@@ -217,45 +225,37 @@ run-test-items-usage: test-items-usage
 run-test-items-helper-functions: test-items-helper-functions
 	@./$(BIN_DIR)/test_items_helper_functions
 
+.PHONY: run-test-items-material-system
+run-test-items-material-system: test-items-material-system
+	@./$(BIN_DIR)/test_items_material_system
+
+.PHONY: run-test-items-durability
+run-test-items-durability: test-items-durability
+	@./$(BIN_DIR)/test_items_durability
+
+.PHONY: run-test-items-inventory
+run-items-inventory: test-items-inventory
+	@./$(BIN_DIR)/test_items_inventory
+
+.PHONY: run-test-items-properties
+run-test-items-properties: test-items-properties
+	@./$(BIN_DIR)/test_items_properties
+
 .PHONY: run-test-items-integration-tests
 run-test-items-integration-tests: test-items-integration-tests
 	@./$(BIN_DIR)/test_items_integration_tests
 
-# Demo test for framework improvements
-.PHONY: test-framework-demo
-test-framework-demo: always
-	$(CC) $(TEST_CFLAGS) -o $(BIN_DIR)/test_framework_demo test_framework_demo.c -lm
+.PHONY: run-test-world-editor-basic
+run-test-world-editor-basic: test-world-editor-basic
+	@./$(BIN_DIR)/test_world_editor_basic
 
-.PHONY: run-test-framework-demo
-run-test-framework-demo: test-framework-demo
-	@./$(BIN_DIR)/test_framework_demo
 
-# Test for comma formatting and XP requirements
-.PHONY: test-comma-xp
-test-comma-xp: always
-	$(CC) $(TEST_CFLAGS) -o $(BIN_DIR)/test_comma_and_xp test_comma_and_xp.c -lm
+.PHONY: run-test-world-editor-advanced
+run-test-world-editor-advanced: test-world-editor-advanced
+	@./$(BIN_DIR)/test_world_editor_advanced
 
-.PHONY: run-test-comma-xp
-run-test-comma-xp: test-comma-xp
-	@./$(BIN_DIR)/test_comma_and_xp
 
-# Global test runner (summary output)
+# --- Global Test Runner ---
 .PHONY: test
 test:
 	@./run_tests.sh
-
-# Test help
-.PHONY: test-help
-test-help:
-	@echo "Available test commands:"
-	@echo "  make test                              - Run all tests with global summary"
-	@echo "  make run-test-framework-demo           - Run test framework demo (shows new features)"
-	@echo "  make run-test-items-creation-destruction - Run item creation/destruction tests (detailed)"
-	@echo "  make run-test-items-type-checking        - Run type checking/access tests (detailed)"
-	@echo "  make run-test-items-material-system      - Run material system tests (detailed)"
-	@echo "  make run-test-items-properties            - Run item properties tests (detailed)"
-	@echo "  make run-test-items-durability            - Run item durability tests (detailed)"
-	@echo "  make run-test-items-inventory             - Run inventory management tests (detailed)"
-	@echo "  make run-test-items-usage                 - Run item usage & effects tests (detailed)"
-	@echo "  make run-test-items-helper-functions      - Run item helper functions tests (detailed)"
-	@echo "  make test-help                         - Show this help message"
