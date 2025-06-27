@@ -358,6 +358,14 @@ char* d_CreateStringFromFile(const char *filename);
  *
  * -- Must be destroyed with d_DestroyString() to free memory
  * -- Initial capacity is 32 bytes but will grow automatically
+ * -- MEMORY OWNERSHIP: Caller owns returned pointer and must free it
+ * -- ALLOCATION STRATEGY: Uses calloc() for structure, malloc() for buffer
+ * -- INITIALIZATION STATE: Buffer is null-terminated empty string
+ * -- FAILURE MODES: Returns NULL if either allocation fails
+ * -- CLEANUP ON FAILURE: Automatically frees partial allocations
+ * -- MINIMUM CAPACITY: Always starts with d_string_builder_min_size bytes
+ * -- RELATED FUNCTIONS: Must pair with d_DestroyString() to prevent leaks
+ * -- POSTCONDITIONS: On success, returns valid string builder with len=0, alloced>=32
  */
 dString_t *d_InitString(void);
 /*
@@ -367,6 +375,13 @@ dString_t *d_InitString(void);
  *
  * -- After calling this function, the pointer is invalid and should not be used
  * -- Calling with NULL is safe and does nothing
+ * -- MEMORY CLEANUP: Frees both internal buffer and structure itself
+ * -- DOUBLE-FREE PROTECTION: Safe to call multiple times with same pointer
+ * -- DANGLING POINTER RISK: Caller must set pointer to NULL after calling
+ * -- RELATED FUNCTIONS: Paired with d_InitString() for complete lifecycle
+ * -- THREAD SAFETY: Not thread-safe if multiple threads access same builder
+ * -- DEBUG CONSIDERATION: Consider zeroing memory in debug builds
+ * -- PRECONDITIONS: sb must be NULL or valid pointer from d_InitString()
  */
 void d_DestroyString(dString_t* sb);
 /*
@@ -379,8 +394,36 @@ void d_DestroyString(dString_t* sb);
  * -- If len is 0, strlen() is called to determine the length
  * -- If len > 0, exactly len characters are copied (partial strings allowed)
  * -- Does nothing if sb or str is NULL, or if str is empty
+ * -- SELF-APPEND SAFETY: Handles case where str points within sb->str buffer
+ * -- BUFFER MANAGEMENT: Automatically grows buffer using d_StringBuilderEnsureSpace()
+ * -- NULL BYTE HANDLING: When len > 0, can append strings containing null bytes
+ * -- PERFORMANCE: O(len) for copying, O(len) for strlen() when len=0
+ * -- MEMORY OVERLAP: Uses memmove() for safe overlapping memory operations
+ * -- EDGE CASES: Empty strings with len=0 are detected and skipped
+ * -- POINTER INVALIDATION: May invalidate existing pointers to sb->str
+ * -- THREAD SAFETY: Not thread-safe, caller must synchronize access
+ * -- PRECONDITIONS: sb must be valid, str must be valid or NULL
+ * -- POSTCONDITIONS: sb->len increased by actual characters appended, always null-terminated
  */
 void d_AppendString(dString_t* sb, const char* str, size_t len);
+/*
+ * Add a limited portion of a string to the string builder
+ *
+ * `sb` - Pointer to string builder
+ * `str` - String to append (must be null-terminated if max_len exceeds actual string)
+ * `max_len` - Maximum number of characters to append
+ *
+ * -- Appends at most max_len characters from str
+ * -- If str is shorter than max_len, appends the entire string
+ * -- Safe with NULL pointers (does nothing)
+ * -- Does not require str to be null-terminated if max_len <= actual length
+ * -- Useful for controlled truncation and substring operations
+ * -- Handles self-append scenarios safely (appending string to itself)
+ * -- Uses same memory management as d_AppendString for consistency
+ * -- Performance: O(min(max_len, strlen(str))) for length calculation
+ * -- Thread safety: Not thread-safe, caller must synchronize access
+ */
+void d_AppendStringN(dString_t* sb, const char* str, size_t max_len);
 /*
  * Add a single character to the string builder
  *

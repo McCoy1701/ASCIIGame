@@ -2086,6 +2086,7 @@ show_motivational_message() {
         "👻 A RIVAL'S GHOST|'He was better than me,' Daedalus mutters, staring at an elegant function you wrote. 'So much promise. Such a waste.' He is not talking about your code."
         "🗼 THE VIEW FROM THE ACROPOLIS|Daedalus stands by the high window, looking down. 'From a great height,' he says, his voice hollow, 'everything looks small enough to be discarded. A dangerous perspective.'"
         "👐 THE IDLE HANDS OF A MURDERER|You see Daedalus holding his hands over the candlelight, examining them. 'These hands have created wonders,' he whispers, 'and committed horrors. I wonder which the gods will remember.'"
+        "👻 DAEDALUS WARNS|Daedalus mutters from his workbench, not looking up from his scrolls: 'The foundation stones are always the first to crumble. Test what should never break—because that is precisely what will shatter when the Minotaur grows restless.'"
 
         # --- The Prisoner's Perspective ---
         "🪨 THE ECHOING BOULDER|In the dead silence, you can almost hear the scrape of a great boulder on a stone path. You realize with horror that the sound is only in your head, a memory of a simpler torment."
@@ -2371,7 +2372,7 @@ show_motivational_message() {
 
         # Narrative-driven technical achievements that advance the story
         if [ "$compile_change" -gt 0 ]; then
-            echo -e "${CYAN}🏗️ DAEDALUS'S BLUEPRINTS PERFECTED! $compile_change architectural flaws corrected${NC}"
+            echo -e "${CYAN}🏗️  DAEDALUS'S BLUEPRINTS PERFECTED! $compile_change architectural flaws corrected${NC}"
             echo -e "    ${FADED}'The foundation stones no longer crack. Your craftsmanship rivals my own.' -Daedalus${NC}"
         fi
         if [ "$runtime_change" -gt 0 ]; then
@@ -2426,7 +2427,7 @@ show_motivational_message() {
         if [ "$total_curr_issues" -eq 0 ]; then
             # Perfect state - existential achievement messages
             local perfect_messages=(
-                "${GREEN}🏛️ THE ETERNAL MOMENT! In this instant, Sisyphus, the boulder rests at the summit${NC}|'Impossible,' whispers Daedalus. 'We have achieved what the gods deemed eternal punishment.'"
+                "${GREEN}🏛️  THE ETERNAL MOMENT! In this instant, Sisyphus, the boulder rests at the summit${NC}|'Impossible,' whispers Daedalus. 'We have achieved what the gods deemed eternal punishment.'"
                 "${GREEN}👑 MINOS'S SILENT APPROVAL! The King stares in wonder at the perfect Labyrinth${NC}|For once, the tyrant has no demands. Your work has exceeded even his cruel imagination."
                 "${GREEN}🌟 THE ABSURD TRANSCENDED! In perfecting the meaningless, you have found meaning${NC}|This is the secret Camus never told: embrace the absurd completely, and it becomes sacred."
                 "${GREEN}🐂 THE MINOTAUR BOWS! Even the beast recognizes the perfection of its prison${NC}|In the deepest chamber, a mournful lowing becomes something almost like... gratitude?"
@@ -2523,7 +2524,7 @@ show_motivational_message() {
         "🧠 'The most elegant temple needs no ornaments' - Athena's minimalist architecture!"
         "🔧 'Build it to stand, perfect it to last, optimize it to soar' - Hephaestus's forge trinity!"
         "🎯 'True mastery lies in making the complex appear simple' - Apollo's divine sophistication!"
-        "🏗️ 'Scrolls are read by many, but written by few' - Daedalus's architectural clarity!"
+        "🏗️  'Scrolls are read by many, but written by few' - Daedalus's architectural clarity!"
         "💡 'Strategy wins wars, not the swing of swords' - Athena's tactical insight!"
         "🌊 'The best prophecy is one that prevents disaster' - Oracle's error wisdom!"
         "💎 'Rushing to perfection often ruins the foundation' - Aristotle's cautious balance!"
@@ -3006,7 +3007,7 @@ fi
         "👑 THE KING'S DECREE|King Minos addresses you from his throne, not looking at you. 'You will help my architect build a prison of logic and stone. It will be perfect. It will be endless. You will not fail.'"
         "⛓️ THE WEIGHT OF CODE|Your first bug. A simple off-by-one error. As you fix it, you feel a familiar weight settle on your shoulders. It is not stone, but the infinite mass of possibility."
         "🐂 A DISTANT ROAR|From somewhere deep below the foundations, a sound echoes—a roar of immense pain and rage. Daedalus flinches. 'Pay it no mind,' he says quickly. 'It is merely the... client.'"
-        "👤 THE QUEEN'S SHADOW|A figure in royal robes watches from a distant balcony as you work. When you look up, she vanishes. Daedalus notices your glance. 'Queen Pasiphaë,' he whispers. 'She comes to watch... but never to speak.'"
+        "👤 THE QUEEN'S SHADOW|You spot a lone figure in royal robes on a distant balcony, her gaze fixed not on you, but on the ground beneath the workshop. 'Queen Pasiphaë,' Daedalus says without looking up. 'She is listening for her son. Pray she never hears him answer."
         "🔒 THE SEALED CHAMBER|Daedalus shows you the blueprint's center—a room marked with symbols you don't recognize. 'This chamber,' he says, his voice tight, 'must never be accessible from the outside. Only from within. The King's specific orders.'"
         "⚔️ THE CAPTAIN'S INSPECTION|A scarred guard captain arrives to review your progress. His eyes linger on your hands as you code. 'I've executed architects before,' he says casually. 'The King values... precision.' Daedalus's hand trembles as he rolls up the blueprints."
         "📐 THE IMPOSSIBLE SPECIFICATION|Daedalus hands you a new requirement scroll. The mathematics make no sense—corridors that loop back on themselves, doors that open both ways simultaneously. 'Make it work,' he says desperately. 'The King requested the logic himself.'"
@@ -3017,7 +3018,7 @@ fi
     # Theme: Rising action. The mystery deepens. The Labyrinth is more than a building,
     # and the characters' true natures begin to surface.
     declare -a act_two_greetings=(
-        "🏰 MEMORIES OF CORINTH|You catch yourself designing an elegant archway—the same style you once commissioned for your palace. 'You were a king,' Daedalus observes quietly. 'I can see it in how you structure the logic. You built for beauty once. Now we build for horror.'"
+        "🏰 ECHOES OF CORINTH|An archway you design is perfectly proportioned, an echo of a time you built palaces, not prisons. Daedalus pauses. 'That arch,' he says quietly, his voice tinged with something like pity, 'is too beautiful for this place. Minos will not approve. Tear it down and build it again, but this time, build it like a cage.'"
         "🍷 THE ARCHITECT'S TREMOR|Daedalus's hands shake as he draws. Not from wine this time—from something else. He keeps glancing at a locked drawer in his desk. 'Some prisons,' he mutters, 'hold more than monsters. Some hold the reasons we deserve to be here.'"
         "💔 THE WEIGHT OF BETRAYAL|'I know what you did,' Daedalus says suddenly over his cups. 'Cheated death, betrayed the gods' hospitality. But at least your crime was against immortals. Mine...' He stops, staring at his hands. 'Mine was against someone who trusted me.'"
         "🪶 A CHILD'S DRAWING|While organizing blueprints, a small parchment falls out—a child's drawing of a bird-man flying over the sea. Daedalus snatches it away, but not before you see the inscription: 'For Papa, when we fly together - I.' His eyes are wild with panic."
@@ -3039,7 +3040,7 @@ fi
         "🌙 A MOTHER'S LULLABY|The rampage stops abruptly. Through the chaos, you hear it—a woman's voice, singing softly. The beast's roars fade to whimpers. Guards whisper of the Queen walking alone into the ruins, emerging unharmed. 'Even monsters,' Daedalus says quietly, 'remember their mothers.'"
         "🪶 THE WORKSHOP BETRAYAL|You find a half-built wing frame hidden in Daedalus's quarters. But it's child-sized. 'You're building escape for someone,' you confront him. His eyes fill with tears. 'The King has my son. Everything I build... it's all for Icarus.'"
         "🗡️ THE CAPTAIN'S SUSPICION|The guard captain corners you alone. 'Architects who whisper at night often whisper their last,' he warns. 'Whatever conspiracy you're weaving into those walls... I'm watching.' His hand rests on his sword."
-        "💀 SISYPHUS BREAKS|You realize with horror: you've been happy. Solving problems, creating elegant code—you've forgotten this is a tomb. You punch the wall, bloodying your knuckles. 'I'm not their pet architect!' But you return to coding. You always return."
+        "💀 THE HORROR OF HAPPINESS|You fix a particularly complex bug and a wave of pure, intellectual satisfaction washes over you. And then the horror hits: you were happy. You found joy in polishing a gear in a machine of death. The realization is a heavier blow than any boulder. You stare at your hands, not as a builder, but as a monster's accomplice."
         "📜 THE KING'S NEW DEMAND|Minos arrives unannounced, Theseus's name on his lips like poison. 'Change everything,' he commands. 'Make it crueler. If heroes are coming, let them find not a maze, but a meat grinder.' Daedalus's stylus snaps in his grip."
         "🌊 THE POINT OF NO RETURN|'We could stop,' Daedalus whispers one night. 'Refuse. Let them kill us.' You both know it's a lie. The work has consumed you. The Labyrinth isn't just your prison—it's your child. And like all parents, you're damned to see it complete."
         "🔮 THE ORACLE'S WARNING|A priestess arrives with a prophecy: 'Two shall enter the workshop as builders. Only one shall leave as a man. The other...' She looks at you with pity. 'The other shall leave as something else entirely.'"
@@ -3056,7 +3057,7 @@ fi
         "🔧 THE SECRET WORKSHOP|Behind a false wall, you've built a second laboratory. Here, physics bends to desperate will. The wings take shape—part engineering, part prayer. 'Each feather must be perfect,' Daedalus insists. 'One flaw and Icarus falls.'"
         "📐 SISYPHUS'S MATHEMATICS|Your curse becomes crucial. You calculate wind patterns obsessively, test weight distributions endlessly. 'I can push this boulder forever,' you realize. 'I can perfect these wings through infinite iteration.' Daedalus watches in awe as you refine the impossible."
         "🌙 THE GUARD ROTATIONS|You've mapped every sentry's pattern. The tribute ships arrive in seven days—chaos will reign. 'During the ceremony,' Daedalus plans, 'all eyes on the maze entrance. We launch from the north tower. Fifteen minutes to reach Icarus.'"
-        "🎭 THE FINAL DECEPTION|By day, you embed more cruelties into the Labyrinth, pleasing Minos. By night, you encode escape routes so subtle even Daedalus misses some. 'You're playing a deeper game,' he observes. You nod. 'We're playing a deeper game.'"
+        "🎭 THE TWO LABYRINTHS|By day, you build the Labyrinth Minos desires. By night, you build a second, invisible one within it—a maze of hope only a true hero could navigate. Daedalus looks over your shoulder, his face pale. 'This is a dangerous game,' he whispers. You don't look up from the code. 'I have an eternity to play it.'"
         "⚡ TOMORROW WE FLY|The wings are complete. Tested in secret midnight flights from the tower. Daedalus trembles with hope and terror. 'Tomorrow, when the tributes arrive, we strike. Icarus will be free.' He pauses. 'We fly at dawn, before the sun rises too high.'"
     )
 
@@ -3066,7 +3067,7 @@ fi
         "🌅 THE DAWN OF FREEDOM|The tribute ships arrive in chaos. Guards rush to the harbor. You and Daedalus climb the north tower, Icarus between you, wings strapped tight. 'Remember,' Daedalus tells his son, 'not too high.' The boy nods, eyes bright with dreams of sky."
         "🕊️ THE IMPOSSIBLE FLIGHT|They leap. By all laws of gods and men, they should plummet. But they rise. Icarus laughs—a sound of pure, defiant joy. For one perfect moment, you've beaten them all. The boy soars higher, drunk on freedom, reaching for the sun..."
         "💔 THE FALL AND THE SILENCE|Icarus falls. Daedalus screams. The sound tears the morning apart—a father's soul breaking. Then... nothing. No splash. No crash. Just absence. When you look again, the sky is empty. Both of them—gone. You stand alone on the tower."
-        "🏛️ THE KING'S KNOWING SMILE|You return to find Minos at your terminal, calm as stone. 'They flew,' he says. It's not a question. 'The father escaped. The boy... who can say? The sea keeps its secrets.' He gestures to your keyboard. 'But you remain. Interesting.'"
+        "🏛️ THE KING'S GAMBIT|You return to find Minos at your terminal, a single feather resting on the keyboard. 'So, the architect escapes,' he says, his voice devoid of anger. 'A calculated loss. But you, the immortal engine... you remain.' He smiles, a terrible, knowing smile. 'The Labyrinth still requires a caretaker. And now, Sisyphus, you have my undivided attention.'"
         "⚖️ THE DEVIL'S BARGAIN|'Here's my offer,' Minos says. 'Maintain the Labyrinth. Make it kinder. Save who you can. In return, I won't hunt Daedalus.' He smiles coldly. 'Refuse, and I'll make the maze a slaughterhouse. Your choice, eternal one.'"
         "✨ THE REVELATION|As your fingers find the keys, you understand: you were never meant to escape. Daedalus built wings. You built purpose. The gods didn't curse you—they prepared you. For this. For choosing to stay when you could have fled."
         "📝 THE CODER'S MANIFESTO|You write a new function: compassion.exe. Then another: hope.dll. The Labyrinth becomes your canvas. Each algorithm is a small kindness, each bug fix a life saved. You're not pushing a boulder. You're sculpting salvation."

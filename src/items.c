@@ -6,268 +6,125 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
-// =============================================================================
-// HELPER FUNCTIONS
-// =============================================================================
+#include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
+
+#define MAX_ITEM_NAME_LENGTH 64
+#define MAX_ITEM_ID_LENGTH 32
+
+// Static Helper Functions to have at top of file
+static bool _populate_consumable_desc(dString_t* dest, uint8_t value);
+static Material_t _create_default_material(void);
+static bool _populate_key_desc(dString_t* dest, const Lock_t* lock);
+static bool _populate_ammunition_desc(dString_t* dest, const Material_t* material, uint8_t min_dmg, uint8_t max_dmg);
+static Material_t _create_consumable_material(void);
+static bool _populate_rarity(dString_t* dest, const char* rarity);
+static bool _populate_armor_desc(dString_t* dest, const Material_t* material);
+static bool item_resists_durability_loss(const Item_t* item);
+static bool _populate_weapon_desc(dString_t* dest, const Material_t* material);
+static bool _populate_string_field(dString_t* dest, const char* src);
+static bool _validate_and_truncate_string(dString_t* dest, const char* src, size_t max_length, const char* field_name);
 /*
- * Helper function to create and assign a dString_t field from a const char*
- * Returns true on success, false on failure
+ * Safely validates a material structure for basic sanity
  */
-static bool _populate_string_field(dString_t* dest, const char* src) {
-    if (src == NULL || dest == NULL) {
+static bool _is_material_valid(const Material_t* material) {
+    if (material == NULL) {
         return false;
     }
-
-    dString_t* temp = d_InitString();
-    if (temp == NULL) {
-        return false;
+    
+    if (material->name != NULL) {
+        if ((void*)material->name <= (void*)0x1000) {
+            // RATE LIMIT THIS:
+            d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_WARNING,
+                              1, 10.0, "Material has suspicious name pointer");
+            return false;
+        }
+        if (material->name->str != NULL && (void*)material->name->str <= (void*)0x1000) {
+            // RATE LIMIT THIS:
+            d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_WARNING,
+                              1, 10.0, "Material name has suspicious str pointer");
+            return false;
+        }
     }
-
-    d_AppendString(temp, src, 0);
-    *dest = *temp;  // Copy struct content
-    free(temp);     // Free wrapper, keep string data
     return true;
 }
-/*
- * Helper function to populate item description for weapons
- */
- static bool _populate_weapon_desc(dString_t* dest, const Material_t* material) {
-     if (dest == NULL || material == NULL) {
-         return false;
-     }
 
-     // BUG FIX: Check if material->name is NULL
-     if (material->name == NULL) {
-         return false;  // or provide a default description
-     }
-
-     dString_t* temp = d_InitString();
-     if (temp == NULL) {
-         return false;
-     }
-
-     d_AppendString(temp, "A weapon made of ", 0);
-     d_AppendString(temp, material->name->str, 0);  // Now safe!
-     *dest = *temp;
-     free(temp);
-     return true;
- }
- // Helper function to determine if item resists durability loss
- // Returns true if item should NOT lose durability
- static bool item_resists_durability_loss(const Item_t* item)
- {
-     if (item == NULL) {
-         return false;
-     }
-
-     // Base chance is 5% to avoid durability loss
-     float base_chance = 0.05f;
-     float resistance_chance = base_chance * item->material_data.properties.durability_fact;
-
-     // Cap at 95% maximum resistance (always have some chance of wear)
-     if (resistance_chance > 0.95f) {
-         resistance_chance = 0.95f;
-     }
-
-     // Generate random number between 0.0 and 1.0
-     float random_roll = (float)rand() / (float)RAND_MAX;
-
-     return random_roll < resistance_chance;
- }
-
-/*
- * Helper function to populate item description for armor
- */
-static bool _populate_armor_desc(dString_t* dest, const Material_t* material) {
-    if (dest == NULL || material == NULL) {
-        return false;
-    }
-
-    dString_t* temp = d_InitString();
-    if (temp == NULL) {
-        return false;
-    }
-
-    d_AppendString(temp, "Armor made of ", 0);
-    d_AppendString(temp, material->name->str, 0);
-    *dest = *temp;
-    free(temp);
-    return true;
-}
-/*
- * Helper function to populate item rarity
- */
-static bool _populate_rarity(dString_t* dest, const char* rarity) {
-    if (dest == NULL || rarity == NULL) {
-        return false;
-    }
-
-    return _populate_string_field(dest, rarity);
-}
-/*
- * Helper function to populate item description for keys
- */
- static bool _populate_key_desc(dString_t* dest, const Lock_t* lock) {
-     LOG("Entering _populate_key_desc");
-     if (dest == NULL || lock == NULL) {
-         LOG("Error: NULL pointer passed to _populate_key_desc");
-         return false;
-     }
-
-     // Check if lock->name is valid
-     if (lock->name == NULL || lock->name->str == NULL) {
-         LOG("Error: Lock name is NULL");
-         return false;
-     }
-
-     // Directly populate the destination string
-     d_AppendString(dest, "A key that opens: ", 0);
-     d_AppendString(dest, lock->name->str, 0);
-
-     return true;
- }
-
-
-/*
- * Helper function to create a default neutral material for keys
- */
-static Material_t _create_default_material(void) {
-    Material_t material;
-
-    material.name = d_InitString();
-    d_AppendString(material.name, "default", 0);
-
-    // Initialize all properties to neutral (1.0f)
-    material.properties.weight_fact = 1.0f;
-    material.properties.value_coins_fact = 1.0f;
-    material.properties.durability_fact = 1.0f;
-    material.properties.min_damage_fact = 1.0f;
-    material.properties.max_damage_fact = 1.0f;
-    material.properties.armor_value_fact = 1.0f;
-    material.properties.evasion_value_fact = 1.0f;
-    material.properties.stealth_value_fact = 1.0f;
-    material.properties.enchant_value_fact = 1.0f;
-
-    return material;
-}
-/*
-* Helper function to create a default organic material for consumables
-*/
-static Material_t _create_consumable_material(void) {
-    Material_t material;
-
-    // Set material name to "organic" using helper
-    material.name = d_InitString();
-    if (!material.name) {
-        LOG("Consumable creation failed; Failed to allocate memory for material name");
-        return material;
-    }
-    if (!_populate_string_field(material.name, "organic")) {
-        LOG("Consumable creation failed; Failed to populate material name");
-        free(material.name->str);
-        free(material.name);
-        return material;
-    }
-
-    // Initialize all properties to neutral (1.0f)
-    material.properties.weight_fact = 1.0f;
-    material.properties.value_coins_fact = 1.0f;
-    material.properties.durability_fact = 1.0f;
-    material.properties.min_damage_fact = 1.0f;
-    material.properties.max_damage_fact = 1.0f;
-    material.properties.armor_value_fact = 1.0f;
-    material.properties.evasion_value_fact = 1.0f;
-    material.properties.stealth_value_fact = 1.0f;
-    material.properties.enchant_value_fact = 1.0f;
-
-    return material;
-}
-
-/*
- * Helper function to populate item description for consumables with value info
- */
-static bool _populate_consumable_desc(dString_t* dest, uint8_t value) {
-    if (dest == NULL) {
-        return false;
-    }
-
-    dString_t* temp = d_InitString();
-    if (temp == NULL) {
-        return false;
-    }
-
-    d_AppendString(temp, "A consumable item with magical properties (Potency: ", 0);
-    d_AppendInt(temp, value);
-    d_AppendChar(temp, ')');
-    *dest = *temp;
-    free(temp);
-    return true;
-}
-/*
- * Helper function to populate item description for ammunition
- */
-static bool _populate_ammunition_desc(dString_t* dest, const Material_t* material, uint8_t min_dmg, uint8_t max_dmg) {
-    if (dest == NULL || material == NULL) {
-        return false;
-    }
-
-    dString_t* temp = d_InitString();
-    if (temp == NULL) {
-        return false;
-    }
-
-    d_AppendString(temp, "Ammunition made of ", 0);
-    d_AppendString(temp, material->name->str, 0);
-    d_AppendString(temp, " (Damage: ", 0);
-    d_AppendInt(temp, min_dmg);
-    d_AppendChar(temp, '-');
-    d_AppendInt(temp, max_dmg);
-    d_AppendChar(temp, ')');
-    *dest = *temp;
-    free(temp);
-    return true;
-}
 // =============================================================================
 // ITEM CREATION & DESTRUCTION
 // =============================================================================
+
+/*
+ * Creates a weapon with specified damage range and material properties
+ */
 Item_t* create_weapon(const char* name, const char* id, Material_t material,
                      uint8_t min_dmg, uint8_t max_dmg, uint8_t range, char glyph)
-{
-
+{   
+    // Validate material before using it
+    if (!_is_material_valid(&material)) {
+        d_LogWarningF("Invalid material passed to create_%s, using default", "weapon");
+        material = _create_default_material();
+    }
+    
+    // Early parameter validation
+    d_LogIf(name == NULL || id == NULL, D_LOG_LEVEL_ERROR, 
+            "Invalid weapon parameters - name or ID is NULL");
+    
     if (name == NULL || id == NULL) {
-        LOG("Invalid Weapon name or ID provided");
         return NULL;
     }
 
     Item_t* item = (Item_t*)malloc(sizeof(Item_t));
     if (item == NULL) {
-        LOG("Failed to allocate memory for Weapon");
+        d_LogErrorF("Memory allocation failed for weapon '%s'", name);
         return NULL;
     }
 
-    // Set item type
+    // Initialize ALL pointers to NULL first - critical for safe cleanup
+    item->name = NULL;
+    item->id = NULL;
+    item->description = NULL;
+    item->rarity = NULL;
+    item->material_data.name = NULL;
+
+    // Set item type early
     item->type = ITEM_TYPE_WEAPON;
 
-    // Populate name using helper
+    // Populate name using helper FIRST
     item->name = d_InitString();
-    if (!_populate_string_field(item->name, name)) {
-        free(item);
-        LOG("Failed to allocate memory for Weapon name");
-        return NULL;
+    if (item->name == NULL || !_validate_and_truncate_string(item->name, name, MAX_ITEM_NAME_LENGTH, "Item name")) {
+        d_LogErrorF("Failed to populate name for weapon '%s'", name);
+        goto cleanup_and_fail;
     }
 
     // Populate id using helper
     item->id = d_InitString();
-    if (!_populate_string_field(item->id, id)) {
-        LOG("Failed to allocate memory for Weapon ID");
-        free(item->name->str);
-        free(item);
-        return NULL;
+    if (item->id == NULL || !_validate_and_truncate_string(item->id, id, MAX_ITEM_ID_LENGTH, "Item ID")) {
+        d_LogErrorF("Failed to populate ID for weapon '%s'", name);
+        goto cleanup_and_fail;
     }
+
+    // NOW log weapon creation attempt with validated names - no more spam!
+    d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_DEBUG,
+                      5, 3.0, "Creating weapon: %s (%s) [dmg:%d-%d, range:%d]", 
+                      item->name->str, item->id->str, min_dmg, max_dmg, range);
 
     // Set basic properties
     item->glyph = glyph;
-    item->material_data = material;
+    item->material_data.properties = material.properties;
+    
+    // Create a COPY of the material name to avoid double-free
+    item->material_data.name = d_InitString();
+    if (item->material_data.name == NULL) {
+        d_LogErrorF("Failed to allocate material name for weapon '%s'", name);
+        goto cleanup_and_fail;
+    }
+    
+    if (material.name && material.name->str) {
+        d_AppendString(item->material_data.name, material.name->str, 0);
+    } else {
+        d_AppendString(item->material_data.name, "unknown", 0);
+    }
 
     // Initialize weapon-specific data
     item->data.weapon.min_damage = min_dmg;
@@ -287,65 +144,120 @@ Item_t* create_weapon(const char* name, const char* id, Material_t material,
 
     // Populate description using helper
     item->description = d_InitString();
-    if (!_populate_weapon_desc(item->description, &material)) {
-        LOG("Failed to allocate memory for Weapon Description");
-        free(item->name->str);
-        free(item->id->str);
-        free(item);
-        return NULL;
+    if (item->description == NULL || !_populate_weapon_desc(item->description, &item->material_data)) {
+        d_LogErrorF("Failed to populate description for weapon '%s'", name);
+        goto cleanup_and_fail;
     }
 
     // Populate rarity using helper
     item->rarity = d_InitString();
-    if (!_populate_rarity(item->rarity, "common")) {
-        LOG("Failed to allocate memory for Rarity");
-        free(item->name->str);
-        free(item->id->str);
-        free(item->description->str);
-        free(item);
-        return NULL;
+    if (item->rarity == NULL || !_populate_rarity(item->rarity, "common")) {
+        d_LogErrorF("Failed to populate rarity for weapon '%s'", name);
+        goto cleanup_and_fail;
     }
 
-    return item;
-}
+    // Log successful creation with validated name
+    d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_DEBUG, 3, 5.0,
+         "Weapon '%s' forged successfully [value:%d coins, weight:%.2f kg]", 
+               item->name->str, item->value_coins, item->weight_kg);
 
+    return item;
+
+cleanup_and_fail:
+    // Clean up any allocated resources - destroy_item handles NULL pointers safely
+    if (item != NULL) {
+        // Clean up dString_t fields properly
+        if (item->name != NULL) {
+            d_DestroyString(item->name);
+        }
+        if (item->id != NULL) {
+            d_DestroyString(item->id);
+        }
+        if (item->description != NULL) {
+            d_DestroyString(item->description);
+        }
+        if (item->rarity != NULL) {
+            d_DestroyString(item->rarity);
+        }
+        if (item->material_data.name != NULL) {
+            d_DestroyString(item->material_data.name);
+        }
+        
+        free(item);
+    }
+    return NULL;
+}
+/*
+ * Creates armor with specified protection and stealth values
+ */
 Item_t* create_armor(const char* name, const char* id, Material_t material,
                     uint8_t armor_val, uint8_t evasion_val, char glyph,
                     uint8_t stealth_val, uint8_t enchant_val)
 {
+    // Validate material before using it
+    if (!_is_material_valid(&material)) {
+        d_LogWarningF("Invalid material passed to create_%s, using default", "armor");
+        material = _create_default_material();
+    }
+    
+    d_LogIf(name == NULL || id == NULL, D_LOG_LEVEL_ERROR,
+            "Invalid armor parameters - name or ID is NULL");
+    
     if (name == NULL || id == NULL) {
-        LOG("Invalid name or id provided");
         return NULL;
     }
 
     Item_t* item = (Item_t*)malloc(sizeof(Item_t));
     if (item == NULL) {
-        LOG("Failed to allocate memory for Armor");
+        d_LogErrorF("Memory allocation failed for armor '%s'", name);
         return NULL;
     }
 
-    // Set item type
+    // Initialize ALL pointers to NULL first - CRITICAL!
+    item->name = NULL;
+    item->id = NULL;
+    item->description = NULL;
+    item->rarity = NULL;
+    item->material_data.name = NULL;
+
+    // Set item type early
     item->type = ITEM_TYPE_ARMOR;
 
-    // Populate name and id using helpers
+    // Populate name using helper FIRST
     item->name = d_InitString();
-    if (!_populate_string_field(item->name, name)) {
-        free(item);
-        LOG("Failed to allocate memory for name");
-        return NULL;
+    if (item->name == NULL || !_validate_and_truncate_string(item->name, name, MAX_ITEM_NAME_LENGTH, "Item name")) {
+        d_LogErrorF("Failed to populate name for armor '%s'", name);
+        goto cleanup_and_fail;
     }
 
+    // Populate id using helper
     item->id = d_InitString();
-    if (!_populate_string_field(item->id, id)) {
-        free(item->name->str);
-        free(item);
-        LOG("Failed to allocate memory for id");
-        return NULL;
+    if (item->id == NULL || !_validate_and_truncate_string(item->id, id, MAX_ITEM_ID_LENGTH, "Item ID")) {
+        d_LogErrorF("Failed to populate ID for armor '%s'", name);
+        goto cleanup_and_fail;
     }
+
+    // NOW log armor creation attempt with validated names - no more spam!
+    d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_DEBUG,
+                      5, 3.0, "Creating armor: %s (%s) [armor:%d, evasion:%d, stealth:%d]", 
+                      item->name->str, item->id->str, armor_val, evasion_val, stealth_val);
 
     // Set basic properties
     item->glyph = glyph;
-    item->material_data = material;
+    item->material_data.properties = material.properties;
+    
+    // Create a COPY of the material name to avoid double-free
+    item->material_data.name = d_InitString();
+    if (item->material_data.name == NULL) {
+        d_LogErrorF("Failed to allocate material name for armor '%s'", name);
+        goto cleanup_and_fail;
+    }
+    
+    if (material.name && material.name->str) {
+        d_AppendString(item->material_data.name, material.name->str, 0);
+    } else {
+        d_AppendString(item->material_data.name, "unknown", 0);
+    }
 
     // Initialize armor-specific data
     item->data.armor.armor_value = armor_val;
@@ -361,185 +273,297 @@ Item_t* create_armor(const char* name, const char* id, Material_t material,
 
     // Populate description using helper
     item->description = d_InitString();
-    if (!_populate_armor_desc(item->description, &material)) {
-        free(item->name->str);
-        free(item->id->str);
-        free(item);
-        LOG("Failed to allocate memory for description");
-        return NULL;
+    if (item->description == NULL || !_populate_armor_desc(item->description, &item->material_data)) {
+        d_LogErrorF("Failed to populate description for armor '%s'", name);
+        goto cleanup_and_fail;
     }
 
     // Populate rarity using helper
     item->rarity = d_InitString();
-    if (!_populate_rarity(item->rarity, "common")) {
-        free(item->name->str);
-        free(item->id->str);
-        free(item->description->str);
-        free(item);
-        LOG("Failed to allocate memory for rarity");
-        return NULL;
+    if (item->rarity == NULL || !_populate_rarity(item->rarity, "common")) {
+        d_LogErrorF("Failed to populate rarity for armor '%s'", name);
+        goto cleanup_and_fail;
     }
 
-    return item;
-}
+    // Log successful creation with validated name
+    d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_DEBUG, 1, 6.0,
+        "Armor '%s' crafted successfully [protection:%d, value:%d coins]", 
+               item->name->str, armor_val, item->value_coins);
 
+    return item;
+
+cleanup_and_fail:
+    // Clean up any allocated resources
+    if (item != NULL) {
+        if (item->name != NULL) {
+            d_DestroyString(item->name);
+        }
+        if (item->id != NULL) {
+            d_DestroyString(item->id);
+        }
+        if (item->description != NULL) {
+            d_DestroyString(item->description);
+        }
+        if (item->rarity != NULL) {
+            d_DestroyString(item->rarity);
+        }
+        if (item->material_data.name != NULL) {
+            d_DestroyString(item->material_data.name);
+        }
+        
+        free(item);
+    }
+    return NULL;
+}
+/*
+ * Creates a key that can open a specific lock
+ */
 Item_t* create_key(const char* name, const char* id, Lock_t lock, char glyph)
 {
-    dString_t* log_message = d_InitString();
-    d_AppendString(log_message, "Creating key: ", 0);
-    d_AppendString(log_message, name, 0);
-    d_AppendString(log_message, " (", 0);
-    d_AppendString(log_message, id, 0);
-    d_AppendString(log_message, ")", 0);
-    LOG(log_message->str);
-    d_DestroyString(log_message);
-
+    d_LogIf(name == NULL || id == NULL, D_LOG_LEVEL_ERROR,
+            "Invalid key parameters - name or ID is NULL");
+    
     if (name == NULL || id == NULL) {
-        LOG("Invalid name or id provided for key");
         return NULL;
     }
 
     Item_t* item = (Item_t*)malloc(sizeof(Item_t));
     if (item == NULL) {
-        LOG("Failed to allocate memory for key");
+        d_LogErrorF("Memory allocation failed for key '%s'", name);
         return NULL;
     }
 
-    // Set item type
+    // Initialize ALL pointers to NULL first - CRITICAL!
+    item->name = NULL;
+    item->id = NULL;
+    item->description = NULL;
+    item->rarity = NULL;
+    item->material_data.name = NULL;
+    item->data.key.lock.name = NULL;
+    item->data.key.lock.description = NULL;
+
+    // Set item type early
     item->type = ITEM_TYPE_KEY;
+    d_LogDebug("Item type set to ITEM_TYPE_KEY");
 
-    LOG("Item->type = ITEM_TYPE_KEY");
-
-    // Populate name and id using helpers
+    // Populate name using helper
     item->name = d_InitString();
-    if (!_populate_string_field(item->name, name)) {
-        LOG("Failed to allocate memory for key name");
-        free(item);
-        return NULL;
+    if (item->name == NULL || !_validate_and_truncate_string(item->name, name, MAX_ITEM_NAME_LENGTH, "Item name")) {
+        d_LogErrorF("Failed to populate name for key '%s'", name);
+        goto cleanup_and_fail;
     }
-    dString_t* log_message2 = d_InitString();
-    d_AppendString(log_message2, "Item->name = ", 0);
-    d_AppendString(log_message2, item->name->str, 0);
-    LOG(log_message2->str);
-    d_DestroyString(log_message2);
+    d_LogDebugF("Key name populated: %s", item->name->str);
 
+    // Populate id using helper
     item->id = d_InitString();
-    if (!_populate_string_field(item->id, id)) {
-        LOG("Failed to allocate memory for key id");
-        free(item->name->str);
-        free(item);
-        return NULL;
+    if (item->id == NULL || !_validate_and_truncate_string(item->id, id, MAX_ITEM_ID_LENGTH, "Item ID")) {
+        d_LogErrorF("Failed to populate ID for key '%s'", name);
+        goto cleanup_and_fail;
     }
-    dString_t* log_message3 = d_InitString();
-    d_AppendString(log_message3, "Item->id = ", 0);
-    d_AppendString(log_message3, item->id->str, 0);
-    LOG(log_message3->str);
-    d_DestroyString(log_message3);
+    d_LogDebugF("Key ID populated: %s", item->id->str);
 
     // Set basic properties
     item->glyph = glyph;
 
-    // Keys don't have materials, so use default neutral material
-    item->material_data = _create_default_material();
-    dString_t* log_message4 = d_InitString();
-    d_AppendString(log_message4, "Item->material_data = ", 0);
-    d_AppendString(log_message4, item->material_data.name->str, 0);
-    LOG(log_message4->str);
-    d_DestroyString(log_message4);
+    // Keys don't have materials, so create default neutral material
+    item->material_data.properties = create_default_material_properties();
+    d_LogDebug("Creating default material properties with neutral factors");
+    d_LogDebug("Default material properties initialized");
+    
+    item->material_data.name = d_InitString();
+    if (item->material_data.name == NULL) {
+        d_LogErrorF("Failed to allocate material name for key '%s'", name);
+        goto cleanup_and_fail;
+    }
+    d_AppendString(item->material_data.name, "default", 0);
+    d_LogDebugF("Key material set to: %s", item->material_data.name->str);
 
-    // Initialize key-specific data - DEEP COPY the lock
+    // Initialize key-specific data - DEEP COPY the lock with length limiting
     item->data.key.lock.name = d_InitString();
-    d_AppendString(item->data.key.lock.name, lock.name->str, 0);
+    if (item->data.key.lock.name == NULL) {
+        d_LogErrorF("Failed to allocate lock name copy for key '%s'", name);
+        goto cleanup_and_fail;
+    }
 
+    if (lock.name && lock.name->str) {
+        // Apply length limiting to prevent absurdly long lock names in logs
+        if (!_validate_and_truncate_string(item->data.key.lock.name, lock.name->str, MAX_ITEM_NAME_LENGTH, "Lock name")) {
+            d_LogErrorF("Failed to populate lock name for key '%s'", name);
+            goto cleanup_and_fail;
+        }
+    } else {
+        d_AppendString(item->data.key.lock.name, "Unknown Lock", 0);
+    }
+
+    // NOW log the key creation with the truncated lock name - no more spam!
+    d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_DEBUG,
+                      3, 2.0, "Creating key: %s (%s) for lock '%s'", 
+                      item->name->str, item->id->str, 
+                      item->data.key.lock.name->str);
+
+    d_LogDebug("Entering key description population");
+    
     item->data.key.lock.description = d_InitString();
-    d_AppendString(item->data.key.lock.description, lock.description->str, 0);
+    if (item->data.key.lock.description == NULL) {
+        d_LogErrorF("Failed to allocate lock description copy for key '%s'", name);
+        goto cleanup_and_fail;
+    }
+    
+    if (lock.description && lock.description->str) {
+        d_AppendString(item->data.key.lock.description, lock.description->str, 0);
+    } else {
+        d_AppendString(item->data.key.lock.description, "No description", 0);
+    }
 
     item->data.key.lock.pick_difficulty = lock.pick_difficulty;
     item->data.key.lock.jammed_seconds = lock.jammed_seconds;
 
+    d_LogDebugF("Key description generated for lock: %s", item->data.key.lock.name->str);
+
     // Set default values
     item->weight_kg = 0.1f; // Keys are light but not weightless
     item->value_coins = 5; // Base value
-    item->stackable = 1; // Keys cannot stack (though this seems like it should be 0?)
+    item->stackable = 1; // Keys can stack
 
     // Populate description using helper
     item->description = d_InitString();
-    if (!_populate_key_desc(item->description, &lock)) {
-        LOG("Failed to allocate memory for key description");
-        free(item->name->str);
-        free(item->id->str);
-        // Clean up material name if it was allocated
-        if (item->material_data.name->str != NULL) {
-            free(item->material_data.name->str);
-        }
-        free(item);
-        return NULL;
+    if (item->description == NULL || !_populate_key_desc(item->description, &lock)) {
+        d_LogErrorF("Failed to populate description for key '%s'", name);
+        goto cleanup_and_fail;
     }
 
     // Populate rarity using helper
     item->rarity = d_InitString();
-    if (!_populate_rarity(item->rarity, "common")) {
-        LOG("Failed to allocate memory for key rarity");
-        free(item->name->str);
-        free(item->id->str);
-        free(item->description->str);
-        if (item->material_data.name->str != NULL) {
-            free(item->material_data.name->str);
-        }
-        free(item);
-        return NULL;
+    if (item->rarity == NULL || !_populate_rarity(item->rarity, "common")) {
+        d_LogErrorF("Failed to populate rarity for key '%s'", name);
+        goto cleanup_and_fail;
     }
 
+    // Log successful key creation with truncated lock name
+    d_LogInfoF("Key '%s' forged successfully [opens:%s, difficulty:%d]", 
+               item->name->str, item->data.key.lock.name->str, lock.pick_difficulty);
+
     return item;
+
+cleanup_and_fail:
+    // Clean up any allocated resources - PROPER dString_t cleanup
+    if (item != NULL) {
+        if (item->name != NULL) {
+            d_DestroyString(item->name);
+        }
+        if (item->id != NULL) {
+            d_DestroyString(item->id);
+        }
+        if (item->description != NULL) {
+            d_DestroyString(item->description);
+        }
+        if (item->rarity != NULL) {
+            d_DestroyString(item->rarity);
+        }
+        if (item->material_data.name != NULL) {
+            d_DestroyString(item->material_data.name);
+        }
+        if (item->data.key.lock.name != NULL) {
+            d_DestroyString(item->data.key.lock.name);
+        }
+        if (item->data.key.lock.description != NULL) {
+            d_DestroyString(item->data.key.lock.description);
+        }
+        
+        free(item);
+    }
+    return NULL;
 }
 
+/*
+ * Creates a lock with specified difficulty and jam properties
+ */
 Lock_t create_lock(const char* name, const char* description, uint8_t pick_difficulty, uint8_t jammed_seconds)
 {
     Lock_t lock;
+    
+    // Initialize all pointers to NULL first for safe cleanup
+    lock.name = NULL;
+    lock.description = NULL;
+    lock.pick_difficulty = 0;
+    lock.jammed_seconds = 0;
 
     // Initialize dString_t fields
     lock.name = d_InitString();
     if (lock.name == NULL) {
-        LOG("Lock name string initialization failed");
-        // Return empty lock on allocation failure
-        Lock_t empty_lock = {0};
-        return empty_lock;
+        d_LogError("Lock name string initialization failed");
+        goto cleanup_and_fail;
     }
 
     lock.description = d_InitString();
     if (lock.description == NULL) {
-        LOG("Lock description string initialization failed");
-        // Clean up and return empty lock
-        d_DestroyString(lock.name);
-        Lock_t empty_lock = {0};
-        return empty_lock;
+        d_LogError("Lock description string initialization failed");
+        goto cleanup_and_fail;
     }
 
-    // Populate string fields
+    // Validate and populate name field FIRST, then log with truncated name
     if (name != NULL) {
-        d_AppendString(lock.name, name, 0);
+        if (!_validate_and_truncate_string(lock.name, name, MAX_ITEM_NAME_LENGTH, "Lock name")) {
+            d_LogErrorF("Failed to populate lock name: %s", name);
+            goto cleanup_and_fail;
+        }
+    } else {
+        d_AppendString(lock.name, "Unnamed Lock", 0);
     }
 
+    // NOW log lock creation with the validated/truncated name - no more spam!
+    d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_DEBUG,
+                      5, 3.0, "Creating lock: %s [difficulty:%d, jammed:%ds]", 
+                      lock.name->str, pick_difficulty, jammed_seconds);
+
+    // Populate description field
     if (description != NULL) {
-        d_AppendString(lock.description, description, 0);
+        if (!_validate_and_truncate_string(lock.description, description, MAX_ITEM_NAME_LENGTH * 2, "Lock description")) {
+            d_LogWarningF("Failed to populate lock description, using default");
+            d_AppendString(lock.description, "No description", 0);
+        }
+    } else {
+        d_AppendString(lock.description, "No description", 0);
     }
 
     // Set numeric properties
     lock.pick_difficulty = pick_difficulty;
     lock.jammed_seconds = jammed_seconds;
 
+    // Log successful lock creation with validated name
+    d_LogInfoF("Lock '%s' assembled successfully [security level:%d]", 
+               lock.name->str, pick_difficulty);
+
     return lock;
+
+cleanup_and_fail:
+    // Clean up any allocated resources and return empty lock
+    if (lock.name != NULL) {
+        d_DestroyString(lock.name);
+    }
+    if (lock.description != NULL) {
+        d_DestroyString(lock.description);
+    }
+    
+    // Return zeroed lock structure
+    Lock_t empty_lock = {0};
+    return empty_lock;
 }
 
 /*
- * Destroys a lock and frees its memory
+ * Destroys a lock and frees all associated memory
  */
 void destroy_lock(Lock_t* lock)
 {
     if (lock == NULL) {
-        LOG("Destruction Failed; Lock is NULL");
+        d_LogWarning("Cannot destroy NULL lock");
         return;
     }
+
+    // Log destruction with lock name if available
+    d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_DEBUG,
+                      10, 5.0, "Destroying lock: %s", 
+                      (lock->name && lock->name->str) ? lock->name->str : "Unknown");
 
     if (lock->name != NULL) {
         d_DestroyString(lock->name);
@@ -553,126 +577,216 @@ void destroy_lock(Lock_t* lock)
 
     lock->pick_difficulty = 0;
     lock->jammed_seconds = 0;
+
+    d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_DEBUG,
+                  1, 1.0, "Lock destruction completed");
 }
 
-Item_t* create_consumable(const char* name, const char* id, uint8_t value,
+/*
+ * Creates a consumable item with effect callback and duration
+ */
+Item_t* create_consumable(const char* name, const char* id, int value,
                          void (*on_consume)(uint8_t), char glyph)
 {
+    d_LogIf(name == NULL || id == NULL || on_consume == NULL, D_LOG_LEVEL_ERROR,
+            "Invalid consumable parameters - name, ID, or callback is NULL");
+    
     if (name == NULL || id == NULL || on_consume == NULL) {
-        LOG("Consumable creation failed; Invalid parameters");
         return NULL;
     }
 
     Item_t* item = (Item_t*)malloc(sizeof(Item_t));
     if (item == NULL) {
-        LOG("Consumable creation failed; Memory allocation failed");
+        d_LogErrorF("Memory allocation failed for consumable '%s'", name);
         return NULL;
     }
 
-    // Set item type
+    // Initialize ALL pointers to NULL first - CRITICAL!
+    item->name = NULL;
+    item->id = NULL;
+    item->description = NULL;
+    item->rarity = NULL;
+    item->material_data.name = NULL;
+
+    // Set item type early
     item->type = ITEM_TYPE_CONSUMABLE;
 
-    // Populate name and id using helpers
-    item->name = d_InitString();
-    if (!_populate_string_field(item->name, name)) {
-        LOG("Consumable creation failed; Failed to populate name");
-        free(item);
-        return NULL;
+    // Handle value clamping FIRST - this fixes test_consumable_extreme_values
+    uint8_t clamped_value = value;
+    if (value > 255) {
+        clamped_value = 255;
+        d_LogWarningF("Consumable value %d exceeds uint8_t maximum, clamping to 255", value);
     }
 
-    item->id = d_InitString();
-    if (!_populate_string_field(item->id, id)) {
-        LOG("Consumable creation failed; Failed to populate id");
-        free(item->name->str);
-        free(item);
-        return NULL;
+    // Populate name using helper FIRST
+    item->name = d_InitString();
+    if (item->name == NULL || !_validate_and_truncate_string(item->name, name, MAX_ITEM_NAME_LENGTH, "Item name")) {
+        d_LogErrorF("Failed to populate name for consumable '%s'", name);
+        goto cleanup_and_fail;
     }
+
+    // Populate id using helper
+    item->id = d_InitString();
+    if (item->id == NULL || !_validate_and_truncate_string(item->id, id, MAX_ITEM_ID_LENGTH, "Item ID")) {
+        d_LogErrorF("Failed to populate ID for consumable '%s'", name);
+        goto cleanup_and_fail;
+    }
+
+    // NOW log consumable creation attempt with validated names - use clamped_value
+    d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_DEBUG,
+                      5, 3.0, "Creating consumable: %s (%s) [value:%d]", 
+                      item->name->str, item->id->str, clamped_value);
 
     // Set basic properties
     item->glyph = glyph;
 
-    // Consumables don't have materials, so use default organic material
-    item->material_data = _create_consumable_material();
+    // Create consumable material - get the properties and copy the name
+    Material_t consumable_material = _create_consumable_material();
+    item->material_data.properties = consumable_material.properties;
+    
+    // Create a COPY of the consumable material name
+    item->material_data.name = d_InitString();
+    if (item->material_data.name == NULL) {
+        d_LogErrorF("Failed to allocate material name for consumable '%s'", name);
+        goto cleanup_and_fail;
+    }
+    
+    if (consumable_material.name && consumable_material.name->str) {
+        d_AppendString(item->material_data.name, consumable_material.name->str, 0);
+    } else {
+        d_AppendString(item->material_data.name, "organic", 0);
+    }
 
-    // Initialize consumable-specific data
+    // Clean up the temporary material name to prevent memory leak
+    if (consumable_material.name) {
+        d_DestroyString(consumable_material.name);
+    }
+
+    // Initialize consumable-specific data - use clamped_value consistently
     item->data.consumable.on_consume = on_consume;
     item->data.consumable.on_duration_end = NULL; // Optional
     item->data.consumable.on_duration_tick = NULL; // Optional
-    item->data.consumable.value = value;
+    item->data.consumable.value = clamped_value;  // Use clamped value here!
     item->data.consumable.duration_seconds = 0; // Instant effect by default
 
-    // Set default values
+    // Set default values - use clamped_value for consistency
     item->weight_kg = 0.1f; // Consumables are light but not weightless
-    item->value_coins = value; // Default value based on effect strength
+    item->value_coins = clamped_value; // Use clamped value for item value too
     item->stackable = 16; // Can stack up to 16
 
-    // Populate description using helper
+    // Populate description using helper - use clamped_value
     item->description = d_InitString();
-    if (!_populate_consumable_desc(item->description, item->data.consumable.value)) {
-        LOG("Consumable creation failed; Failed to populate description");
-        free(item->name->str);
-        free(item->id->str);
-        // Clean up material name if it was allocated
-        if (item->material_data.name->str != NULL) {
-            free(item->material_data.name->str);
-        }
-        free(item);
-        return NULL;
+    if (item->description == NULL || !_populate_consumable_desc(item->description, clamped_value)) {
+        d_LogErrorF("Failed to populate description for consumable '%s'", name);
+        goto cleanup_and_fail;
     }
 
     // Populate rarity using helper
     item->rarity = d_InitString();
-    if (!_populate_rarity(item->rarity, "common")) {
-        LOG("Consumable creation failed; Failed to populate rarity");
-        free(item->name->str);
-        free(item->id->str);
-        free(item->description->str);
-        if (item->material_data.name->str != NULL) {
-            free(item->material_data.name->str);
-        }
-        free(item);
-        return NULL;
+    if (item->rarity == NULL || !_populate_rarity(item->rarity, "common")) {
+        d_LogErrorF("Failed to populate rarity for consumable '%s'", name);
+        goto cleanup_and_fail;
     }
 
-    return item;
-}
+    // Log successful consumable creation with clamped value
+    d_LogInfoF("Consumable '%s' brewed successfully [potency:%d, stacks:%d]", 
+               item->name->str, clamped_value, item->stackable);
 
+    return item;
+
+cleanup_and_fail:
+    // Clean up any allocated resources
+    if (item != NULL) {
+        if (item->name != NULL) {
+            d_DestroyString(item->name);
+        }
+        if (item->id != NULL) {
+            d_DestroyString(item->id);
+        }
+        if (item->description != NULL) {
+            d_DestroyString(item->description);
+        }
+        if (item->rarity != NULL) {
+            d_DestroyString(item->rarity);
+        }
+        if (item->material_data.name != NULL) {
+            d_DestroyString(item->material_data.name);
+        }
+        
+        free(item);
+    }
+    return NULL;
+}
+/*
+ * Creates ammunition with specified damage range and material
+ */
 Item_t* create_ammunition(const char* name, const char* id, Material_t material,
                          uint8_t min_dmg, uint8_t max_dmg, char glyph)
 {
+    // Validate material before using it
+    if (!_is_material_valid(&material)) {
+        d_LogWarningF("Invalid material passed to create_%s, using default", "ammunition");
+        material = _create_default_material();
+    }
+    
+    d_LogIf(name == NULL || id == NULL, D_LOG_LEVEL_ERROR,
+            "Invalid ammunition parameters - name or ID is NULL");
+    
     if (name == NULL || id == NULL) {
-        LOG("Create ammunition failed; Invalid name or id");
         return NULL;
     }
 
     Item_t* item = (Item_t*)malloc(sizeof(Item_t));
     if (item == NULL) {
-        LOG("Create ammunition failed; Failed to allocate memory");
+        d_LogErrorF("Memory allocation failed for ammunition '%s'", name);
         return NULL;
     }
 
-    // Set item type
+    // Initialize ALL pointers to NULL first - CRITICAL!
+    item->name = NULL;
+    item->id = NULL;
+    item->description = NULL;
+    item->rarity = NULL;
+    item->material_data.name = NULL;
+
+    // Set item type early
     item->type = ITEM_TYPE_AMMUNITION;
 
-    // Populate name and id using helpers
+    // Populate name using helper FIRST
     item->name = d_InitString();
-    if (!_populate_string_field(item->name, name)) {
-        LOG("Create ammunition failed; Failed to allocate memory for name");
-        free(item);
-        return NULL;
+    if (item->name == NULL || !_validate_and_truncate_string(item->name, name, MAX_ITEM_NAME_LENGTH, "Item name")) {
+        d_LogErrorF("Failed to populate name for ammunition '%s'", name);
+        goto cleanup_and_fail;
     }
 
+    // Populate id using helper
     item->id = d_InitString();
-    if (!_populate_string_field(item->id, id)) {
-        LOG("Create ammunition failed; Failed to allocate memory for id");
-        free(item->name->str);
-        free(item);
-        return NULL;
+    if (item->id == NULL || !_validate_and_truncate_string(item->id, id, MAX_ITEM_ID_LENGTH, "Item ID")) {
+        d_LogErrorF("Failed to populate ID for ammunition '%s'", name);
+        goto cleanup_and_fail;
     }
+
+    // NOW log ammunition creation attempt with validated names - no more spam!
+    d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_DEBUG,
+                      5, 3.0, "Creating ammunition: %s (%s) [dmg:%d-%d]", 
+                      item->name->str, item->id->str, min_dmg, max_dmg);
 
     // Set basic properties
     item->glyph = glyph;
-    item->material_data = material;
+    item->material_data.properties = material.properties;
+    
+    // Create a COPY of the material name to avoid double-free
+    item->material_data.name = d_InitString();
+    if (item->material_data.name == NULL) {
+        d_LogErrorF("Failed to allocate material name for ammunition '%s'", name);
+        goto cleanup_and_fail;
+    }
+    
+    if (material.name && material.name->str) {
+        d_AppendString(item->material_data.name, material.name->str, 0);
+    } else {
+        d_AppendString(item->material_data.name, "unknown", 0);
+    }
 
     // Initialize ammunition-specific data
     item->data.ammo.min_damage = min_dmg;
@@ -685,120 +799,332 @@ Item_t* create_ammunition(const char* name, const char* id, Material_t material,
 
     // Populate description using helper
     item->description = d_InitString();
-    if (!_populate_ammunition_desc(item->description, &material, min_dmg, max_dmg)) {
-        LOG("Create ammunition failed; Failed to allocate memory for description");
-        free(item->name->str);
-        free(item->id->str);
-        free(item);
-        return NULL;
+    if (item->description == NULL || !_populate_ammunition_desc(item->description, &item->material_data, min_dmg, max_dmg)) {
+        d_LogErrorF("Failed to populate description for ammunition '%s'", name);
+        goto cleanup_and_fail;
     }
 
     // Populate rarity using helper
     item->rarity = d_InitString();
-    if (!_populate_rarity(item->rarity, "common")) {
-        LOG("Create ammunition failed; Failed to allocate memory for rarity");
-        free(item->name->str);
-        free(item->id->str);
-        free(item->description->str);
-        free(item);
-        return NULL;
+    if (item->rarity == NULL || !_populate_rarity(item->rarity, "common")) {
+        d_LogErrorF("Failed to populate rarity for ammunition '%s'", name);
+        goto cleanup_and_fail;
     }
 
+   // RATE LIMIT THIS - Called during every ammunition creation in stress tests
+    d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_INFO,
+                    5, 3.0, "Ammunition '%s' crafted successfully [damage:%d-%d, stacks:%d]", 
+                    item->name->str, min_dmg, max_dmg, item->stackable);
+
     return item;
+
+cleanup_and_fail:
+    // Clean up any allocated resources
+    if (item != NULL) {
+        if (item->name != NULL) {
+            d_DestroyString(item->name);
+        }
+        if (item->id != NULL) {
+            d_DestroyString(item->id);
+        }
+        if (item->description != NULL) {
+            d_DestroyString(item->description);
+        }
+        if (item->rarity != NULL) {
+            d_DestroyString(item->rarity);
+        }
+        if (item->material_data.name != NULL) {
+            d_DestroyString(item->material_data.name);
+        }
+        
+        free(item);
+    }
+    return NULL;
 }
-
-
+/*
+ * Destroys an item and frees all associated memory
+ */
 void destroy_item(Item_t* item)
 {
     if (item == NULL) {
+        d_LogWarning("Cannot destroy NULL item");
         return;
     }
 
+    // Log item destruction with type information
+    const char* type_names[] = {
+        "WEAPON", "ARMOR", "CONSUMABLE", "KEY", "AMMUNITION", "UNKNOWN"
+    };
+    const char* type_name = (item->type < 5) ? type_names[item->type] : type_names[5];
+    
+    d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_DEBUG,
+                      10, 5.0, "Destroying %s: %s", type_name,
+                      (item->name && item->name->str) ? item->name->str : "Unknown");
+
+    // Clean up all string fields - ONLY if they appear to be valid dString_t pointers
+    if (item->name != NULL) {
+        // Additional safety check - ensure it looks like a valid dString_t
+        if ((void*)item->name > (void*)0x1000) {  // Basic sanity check for valid pointer
+            d_DestroyString(item->name);
+            item->name = NULL;
+        }
+    }
+    
+    if (item->id != NULL) {
+        if ((void*)item->id > (void*)0x1000) {
+            d_DestroyString(item->id);
+            item->id = NULL;
+        }
+    }
+    
+    if (item->description != NULL) {
+        if ((void*)item->description > (void*)0x1000) {
+            d_DestroyString(item->description);
+            item->description = NULL;
+        }
+    }
+    
+    if (item->rarity != NULL) {
+        if ((void*)item->rarity > (void*)0x1000) {
+            d_DestroyString(item->rarity);
+            item->rarity = NULL;
+        }
+    }
+
+    // Clean up material string if allocated - BE EXTRA CAREFUL
+    if (item->material_data.name != NULL) {
+        // Verify this looks like a valid dString_t pointer before destroying
+        if ((void*)item->material_data.name > (void*)0x1000) {
+            d_DestroyString(item->material_data.name);
+            item->material_data.name = NULL;
+        }
+    }
+
+    // For keys, clean up the embedded lock strings
+    if (item->type == ITEM_TYPE_KEY) {
+        if (item->data.key.lock.name != NULL) {
+            if ((void*)item->data.key.lock.name > (void*)0x1000) {
+                d_DestroyString(item->data.key.lock.name);
+                item->data.key.lock.name = NULL;
+            }
+        }
+        if (item->data.key.lock.description != NULL) {
+            if ((void*)item->data.key.lock.description > (void*)0x1000) {
+                d_DestroyString(item->data.key.lock.description);
+                item->data.key.lock.description = NULL;
+            }
+        }
+    }
+
+    // Finally free the item itself
     free(item);
+    
+    d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_DEBUG,
+                  1, 1.0, "Item destruction completed");
 }
 
 // =============================================================================
 // ITEM TYPE CHECKING & ACCESS
 // =============================================================================
 
+/*
+ * Validates item as weapon type with null safety
+ */
 bool is_weapon(const Item_t* item)
 {
+    d_LogIf(item == NULL, D_LOG_LEVEL_DEBUG, "Type check requested for NULL item - returning false");
+    
     if (item == NULL) {
         return false;
     }
-    return item->type == ITEM_TYPE_WEAPON;
+    
+    bool result = item->type == ITEM_TYPE_WEAPON;
+    d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_DEBUG,
+                      10, 5.0, "Item '%s' weapon check: %s", 
+                      item->name ? item->name->str : "Unknown", 
+                      result ? "TRUE" : "FALSE");
+    
+    return result;
 }
 
+/*
+ * Validates item as armor type with null safety
+ */
 bool is_armor(const Item_t* item)
 {
+    d_LogIf(item == NULL, D_LOG_LEVEL_DEBUG, "Armor type check requested for NULL item");
+    
     if (item == NULL) {
         return false;
     }
-    return item->type == ITEM_TYPE_ARMOR;
+    
+    bool result = item->type == ITEM_TYPE_ARMOR;
+    d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_DEBUG,
+                      10, 5.0, "Item '%s' armor check: %s", 
+                      item->name ? item->name->str : "Unknown", 
+                      result ? "TRUE" : "FALSE");
+    
+    return result;
 }
 
+/*
+ * Validates item as key type with null safety
+ */
 bool is_key(const Item_t* item)
 {
+    d_LogIf(item == NULL, D_LOG_LEVEL_DEBUG, "Key type check requested for NULL item");
+    
     if (item == NULL) {
         return false;
     }
-    return item->type == ITEM_TYPE_KEY;
+    
+    bool result = item->type == ITEM_TYPE_KEY;
+    d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_DEBUG,
+                      10, 5.0, "Item '%s' key check: %s", 
+                      item->name ? item->name->str : "Unknown", 
+                      result ? "TRUE" : "FALSE");
+    
+    return result;
 }
 
+/*
+ * Validates item as consumable type with null safety
+ */
 bool is_consumable(const Item_t* item)
 {
+    d_LogIf(item == NULL, D_LOG_LEVEL_DEBUG, "Consumable type check requested for NULL item");
+    
     if (item == NULL) {
         return false;
     }
-    return item->type == ITEM_TYPE_CONSUMABLE;
+    
+    bool result = item->type == ITEM_TYPE_CONSUMABLE;
+    d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_DEBUG,
+                      10, 5.0, "Item '%s' consumable check: %s", 
+                      item->name ? item->name->str : "Unknown", 
+                      result ? "TRUE" : "FALSE");
+    
+    return result;
 }
 
+/*
+ * Validates item as ammunition type with null safety
+ */
 bool is_ammunition(const Item_t* item)
 {
+    d_LogIf(item == NULL, D_LOG_LEVEL_DEBUG, "Ammunition type check requested for NULL item");
+    
     if (item == NULL) {
         return false;
     }
-    return item->type == ITEM_TYPE_AMMUNITION;
+    
+    bool result = item->type == ITEM_TYPE_AMMUNITION;
+    d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_DEBUG,
+                      10, 5.0, "Item '%s' ammunition check: %s", 
+                      item->name ? item->name->str : "Unknown", 
+                      result ? "TRUE" : "FALSE");
+    
+    return result;
 }
 
-// Safe data access functions
+/*
+ * Safely retrieves weapon data with type validation
+ */
 Weapon__Item_t* get_weapon_data(Item_t* item)
 {
+    d_LogIf(item == NULL, D_LOG_LEVEL_WARNING, "Cannot retrieve weapon data from NULL item");
+    d_LogIf(item != NULL && item->type != ITEM_TYPE_WEAPON, D_LOG_LEVEL_WARNING, 
+            "Attempted to get weapon data from non-weapon item");
+    
     if (item == NULL || item->type != ITEM_TYPE_WEAPON) {
         return NULL;
     }
+    
+    d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_DEBUG,
+                      5, 3.0, "Weapon data accessed for '%s' [dmg:%d-%d]", 
+                      item->name->str, item->data.weapon.min_damage, item->data.weapon.max_damage);
+    
     return &item->data.weapon;
 }
 
+/*
+ * Safely retrieves armor data with type validation
+ */
 Armor__Item_t* get_armor_data(Item_t* item)
 {
+    d_LogIf(item == NULL, D_LOG_LEVEL_WARNING, "Cannot retrieve armor data from NULL item");
+    d_LogIf(item != NULL && item->type != ITEM_TYPE_ARMOR, D_LOG_LEVEL_WARNING, 
+            "Attempted to get armor data from non-armor item");
+    
     if (item == NULL || item->type != ITEM_TYPE_ARMOR) {
         return NULL;
     }
+    
+    d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_DEBUG,
+                      5, 3.0, "Armor data accessed for '%s' [armor:%d, evasion:%d]", 
+                      item->name->str, item->data.armor.armor_value, item->data.armor.evasion_value);
+    
     return &item->data.armor;
 }
 
+/*
+ * Safely retrieves key data with type validation
+ */
 Key__Item_t* get_key_data(Item_t* item)
 {
+    d_LogIf(item == NULL, D_LOG_LEVEL_WARNING, "Cannot retrieve key data from NULL item");
+    d_LogIf(item != NULL && item->type != ITEM_TYPE_KEY, D_LOG_LEVEL_WARNING, 
+            "Attempted to get key data from non-key item");
+    
     if (item == NULL || item->type != ITEM_TYPE_KEY) {
         return NULL;
     }
+    
+    d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_DEBUG,
+                      5, 3.0, "Key data accessed for '%s' [opens:%s]", 
+                      item->name->str, 
+                      item->data.key.lock.name ? item->data.key.lock.name->str : "Unknown");
+    
     return &item->data.key;
 }
 
+/*
+ * Safely retrieves consumable data with type validation
+ */
 Consumable__Item_t* get_consumable_data(Item_t* item)
 {
+    d_LogIf(item == NULL, D_LOG_LEVEL_WARNING, "Cannot retrieve consumable data from NULL item");
+    d_LogIf(item != NULL && item->type != ITEM_TYPE_CONSUMABLE, D_LOG_LEVEL_WARNING, 
+            "Attempted to get consumable data from non-consumable item");
+    
     if (item == NULL || item->type != ITEM_TYPE_CONSUMABLE) {
         return NULL;
     }
+    
+    d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_DEBUG,
+                      5, 3.0, "Consumable data accessed for '%s' [value:%d, duration:%ds]", 
+                      item->name->str, item->data.consumable.value, item->data.consumable.duration_seconds);
+    
     return &item->data.consumable;
 }
 
+/*
+ * Safely retrieves ammunition data with type validation
+ */
 Ammunition__Item_t* get_ammunition_data(Item_t* item)
 {
+    d_LogIf(item == NULL, D_LOG_LEVEL_WARNING, "Cannot retrieve ammunition data from NULL item");
+    d_LogIf(item != NULL && item->type != ITEM_TYPE_AMMUNITION, D_LOG_LEVEL_WARNING, 
+            "Attempted to get ammunition data from non-ammunition item");
+    
     if (item == NULL || item->type != ITEM_TYPE_AMMUNITION) {
         return NULL;
     }
+    
+    d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_DEBUG,
+                      5, 3.0, "Ammunition data accessed for '%s' [dmg:%d-%d]", 
+                      item->name->str, item->data.ammo.min_damage, item->data.ammo.max_damage);
+    
     return &item->data.ammo;
 }
 
@@ -806,29 +1132,55 @@ Ammunition__Item_t* get_ammunition_data(Item_t* item)
 // MATERIAL SYSTEM
 // =============================================================================
 
+/*
+ * Creates material with specified properties and validates input
+ */
 Material_t create_material(const char* name, MaterialProperties_t properties)
 {
+    d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_DEBUG,
+                      5, 3.0, "Creating material: %s", name ? name : "NULL");
+    
     Material_t material;
     material.name = d_InitString();
+    
+    if (material.name == NULL) {
+        d_LogError("Failed to initialize material name string");
+        memset(&material, 0, sizeof(Material_t));
+        return material;
+    }
+    
     if (name == NULL) {
-        LOG("Material name is NULL");
-        // Return a default material if name is NULL
+        d_LogWarning("Material name is NULL - using default name");
         _populate_string_field(material.name, "Default Material");
         material.properties = create_default_material_properties();
+        d_LogInfo("Default material created due to NULL name");
         return material;
     }
 
     // Copy name safely
-    _populate_string_field(material.name, name);
+    if (!_populate_string_field(material.name, name)) {
+        d_LogErrorF("Failed to populate material name: %s", name);
+        _populate_string_field(material.name, "Failed Material");
+        material.properties = create_default_material_properties();
+        return material;
+    }
 
     // Set the properties
     material.properties = properties;
+    
+    d_LogInfoF("Material '%s' created successfully [weight:%.2f, value:%.2f, durability:%.2f]", 
+               name, properties.weight_fact, properties.value_coins_fact, properties.durability_fact);
 
     return material;
 }
 
+/*
+ * Initializes neutral material properties for standard items
+ */
 MaterialProperties_t create_default_material_properties(void)
 {
+    d_LogDebug("Creating default material properties with neutral factors");
+    
     MaterialProperties_t props = {
         .weight_fact = 1.0f,
         .value_coins_fact = 1.0f,
@@ -840,22 +1192,36 @@ MaterialProperties_t create_default_material_properties(void)
         .stealth_value_fact = 1.0f,
         .enchant_value_fact = 1.0f
     };
+    
+    d_LogDebug("Default material properties initialized");
     return props;
 }
 
+/*
+ * Applies material modifiers to weapon statistics
+ */
 void apply_material_to_weapon(Item_t* item)
 {
+    d_LogIf(item == NULL, D_LOG_LEVEL_ERROR, "Cannot apply material to NULL weapon");
+    d_LogIf(item != NULL && item->type != ITEM_TYPE_WEAPON, D_LOG_LEVEL_ERROR, 
+            "Cannot apply weapon material to non-weapon item");
+    
     if (item == NULL || item->type != ITEM_TYPE_WEAPON) {
         return;
     }
 
     Weapon__Item_t* weapon = &item->data.weapon;
     Material_t* material = &item->material_data;
+    
+    // Store original values for logging
+    uint8_t orig_min = weapon->min_damage;
+    uint8_t orig_max = weapon->max_damage;
+    float orig_weight = item->weight_kg;
+    uint8_t orig_value = item->value_coins;
 
     // Apply material factors to weapon stats
     weapon->min_damage = (uint8_t)(weapon->min_damage * material->properties.min_damage_fact);
     weapon->max_damage = (uint8_t)(weapon->max_damage * material->properties.max_damage_fact);
-    // NOTE: Durability is no longer modified by material - stays at 255
     weapon->stealth_value = (uint8_t)(weapon->stealth_value * material->properties.stealth_value_fact);
     weapon->enchant_value = (uint8_t)(weapon->enchant_value * material->properties.enchant_value_fact);
 
@@ -865,17 +1231,34 @@ void apply_material_to_weapon(Item_t* item)
 
     float new_value = item->value_coins * material->properties.value_coins_fact;
     item->value_coins = (new_value < 0.0f) ? 0 : (uint8_t)new_value;
+    
+    d_LogInfoF("Material applied to weapon '%s': dmg[%d-%d→%d-%d], weight[%.2f→%.2f], value[%d→%d]", 
+               item->name->str, orig_min, orig_max, weapon->min_damage, weapon->max_damage,
+               orig_weight, item->weight_kg, orig_value, item->value_coins);
 }
 
-
+/*
+ * Applies material modifiers to armor statistics
+ */
 void apply_material_to_armor(Item_t* item)
 {
+    d_LogIf(item == NULL, D_LOG_LEVEL_ERROR, "Cannot apply material to NULL armor");
+    d_LogIf(item != NULL && item->type != ITEM_TYPE_ARMOR, D_LOG_LEVEL_ERROR, 
+            "Cannot apply armor material to non-armor item");
+    
     if (item == NULL || item->type != ITEM_TYPE_ARMOR) {
         return;
     }
 
     Armor__Item_t* armor = &item->data.armor;
     Material_t* material = &item->material_data;
+    
+    // Store original values for logging
+    uint8_t orig_armor = armor->armor_value;
+    uint8_t orig_evasion = armor->evasion_value;
+    uint8_t orig_durability = armor->durability;
+    float orig_weight = item->weight_kg;
+    uint8_t orig_value = item->value_coins;
 
     // Apply material factors to armor stats
     armor->armor_value = (uint8_t)(armor->armor_value * material->properties.armor_value_fact);
@@ -890,16 +1273,33 @@ void apply_material_to_armor(Item_t* item)
 
     float new_value = item->value_coins * material->properties.value_coins_fact;
     item->value_coins = (new_value < 0.0f) ? 0 : (uint8_t)new_value;
+    
+    d_LogInfoF("Material applied to armor '%s': armor[%d→%d], evasion[%d→%d], durability[%d→%d], weight[%.2f→%.2f]", 
+               item->name->str, orig_armor, armor->armor_value, orig_evasion, armor->evasion_value,
+               orig_durability, armor->durability, orig_weight, item->weight_kg);
 }
 
+/*
+ * Applies material modifiers to ammunition statistics
+ */
 void apply_material_to_ammunition(Item_t* item)
 {
+    d_LogIf(item == NULL, D_LOG_LEVEL_ERROR, "Cannot apply material to NULL ammunition");
+    d_LogIf(item != NULL && item->type != ITEM_TYPE_AMMUNITION, D_LOG_LEVEL_ERROR, 
+            "Cannot apply ammunition material to non-ammunition item");
+    
     if (item == NULL || item->type != ITEM_TYPE_AMMUNITION) {
         return;
     }
 
     Ammunition__Item_t* ammo = &item->data.ammo;
     Material_t* material = &item->material_data;
+    
+    // Store original values for logging
+    uint8_t orig_min = ammo->min_damage;
+    uint8_t orig_max = ammo->max_damage;
+    float orig_weight = item->weight_kg;
+    uint8_t orig_value = item->value_coins;
 
     // Apply material factors to ammunition stats
     ammo->min_damage = (uint8_t)(ammo->min_damage * material->properties.min_damage_fact);
@@ -911,27 +1311,47 @@ void apply_material_to_ammunition(Item_t* item)
 
     float new_value = item->value_coins * material->properties.value_coins_fact;
     item->value_coins = (new_value < 0.0f) ? 0 : (uint8_t)new_value;
+    
+    d_LogInfoF("Material applied to ammunition '%s': dmg[%d-%d→%d-%d], weight[%.2f→%.2f], value[%d→%d]", 
+               item->name->str, orig_min, orig_max, ammo->min_damage, ammo->max_damage,
+               orig_weight, item->weight_kg, orig_value, item->value_coins);
 }
 
+/*
+ * Calculates item's final weight including material modifiers
+ */
 float calculate_final_weight(const Item_t* item)
 {
+    d_LogIf(item == NULL, D_LOG_LEVEL_WARNING, "Cannot calculate weight for NULL item");
+    
     if (item == NULL) {
-        LOG("calculate_final_weight: Item is NULL");
         return 0.0f;
     }
 
     // Weight is already calculated with material factors applied
+    d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_DEBUG,
+                      10, 5.0, "Final weight for '%s': %.2f kg", 
+                      item->name->str, item->weight_kg);
+    
     return item->weight_kg;
 }
 
+/*
+ * Calculates item's final value including material modifiers
+ */
 uint8_t calculate_final_value(const Item_t* item)
 {
+    d_LogIf(item == NULL, D_LOG_LEVEL_WARNING, "Cannot calculate value for NULL item");
+    
     if (item == NULL) {
-        LOG("calculate_final_value: Item is NULL");
         return 0;
     }
 
     // Value is already calculated with material factors applied
+    d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_DEBUG,
+                      10, 5.0, "Final value for '%s': %d coins", 
+                      item->name->str, item->value_coins);
+    
     return item->value_coins;
 }
 
@@ -1572,7 +1992,7 @@ bool is_inventory_full(const Inventory_t* inventory)
 bool use_consumable(Item_t* item)
 {
     if (item == NULL || item->type != ITEM_TYPE_CONSUMABLE) {
-        LOG("Invalid input for use_consumable");
+        d_LogError("Invalid input for use_consumable - item is NULL or not consumable");
         return false;
     }
 
@@ -1580,15 +2000,18 @@ bool use_consumable(Item_t* item)
 
     // Check if the consumable has a valid on_consume callback
     if (consumable->on_consume == NULL) {
-        LOG("Invalid input for use_consumable");
+        d_LogWarningF("Consumable '%s' has no effect callback - cannot be used", 
+                      item->name ? item->name->str : "Unknown");
         return false;
     }
 
+    // Log successful usage with rate limiting to prevent spam during testing
+    d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_INFO,
+                      3, 2.0, "Using consumable '%s' with value %d", 
+                      item->name->str, consumable->value);
+
     // Execute the consumable effect
     consumable->on_consume(consumable->value);
-
-    // If the consumable has duration effects, those will be handled separately
-    // by the game's timer system calling trigger_consumable_duration_tick()
 
     return true;
 }
@@ -1596,21 +2019,28 @@ bool use_consumable(Item_t* item)
 void trigger_consumable_duration_tick(Item_t* item)
 {
     if (item == NULL || item->type != ITEM_TYPE_CONSUMABLE) {
-        LOG("Invalid input for trigger_consumable_duration_tick");
+        d_LogError("Invalid input for trigger_consumable_duration_tick");
         return;
     }
 
     Consumable__Item_t* consumable = &item->data.consumable;
 
-    // Only trigger if there's a duration tick callback and duration remaining
-    if (consumable->on_duration_tick != NULL && consumable->duration_seconds > 0) {
-        consumable->on_duration_tick(consumable->value);
+    // Only proceed if there's duration remaining
+    if (consumable->duration_seconds > 0) {
+        // Execute tick callback if it exists
+        if (consumable->on_duration_tick != NULL) {
+            d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_DEBUG,
+                              1, 5.0, "Duration tick for '%s': %d seconds remaining", 
+                              item->name->str, consumable->duration_seconds);
+            consumable->on_duration_tick(consumable->value);
+        }
 
-        // Decrement duration (this assumes the function is called once per second)
+        // ALWAYS decrement duration, regardless of callback presence
         consumable->duration_seconds--;
 
-        // If duration has ended, trigger the end effect
+        // Trigger end effect when duration reaches 0
         if (consumable->duration_seconds == 0) {
+            d_LogInfoF("Duration effect ended for consumable '%s'", item->name->str);
             trigger_consumable_duration_end(item);
         }
     }
@@ -1619,7 +2049,7 @@ void trigger_consumable_duration_tick(Item_t* item)
 void trigger_consumable_duration_end(Item_t* item)
 {
     if (item == NULL || item->type != ITEM_TYPE_CONSUMABLE) {
-        LOG("Invalid input for trigger_consumable_duration_end");
+        d_LogError("Invalid input for trigger_consumable_duration_end");
         return;
     }
 
@@ -1627,6 +2057,7 @@ void trigger_consumable_duration_end(Item_t* item)
 
     // Trigger the end effect if it exists
     if (consumable->on_duration_end != NULL) {
+        d_LogDebugF("Triggering end effect for consumable '%s'", item->name->str);
         consumable->on_duration_end(consumable->value);
     }
 
@@ -1636,27 +2067,416 @@ void trigger_consumable_duration_end(Item_t* item)
 
 bool can_key_open_lock(const Item_t* key, const Lock_t* lock)
 {
+    // Use LogIf for efficient conditional logging
+    d_LogIf(key == NULL, D_LOG_LEVEL_WARNING, "Key/Lock check failed: key is NULL");
+    d_LogIf(lock == NULL, D_LOG_LEVEL_WARNING, "Key/Lock check failed: lock is NULL");
+    
     if (key == NULL || lock == NULL) {
-        LOG("Can Key Open Lock? No, because key or lock is NULL");
         return false;
     }
 
     // Only keys can open locks
     if (key->type != ITEM_TYPE_KEY) {
-        LOG("Can Key Open Lock? No, because key is not a key");
+        d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_DEBUG,
+                          2, 3.0, "Item '%s' is not a key (type: %d)", 
+                          key->name->str, key->type);
         return false;
     }
 
-    // Check if the lock is jammed
+    // Check if the lock is jammed - THIS WAS THE SPAM SOURCE!
     if (lock->jammed_seconds > 0) {
-        LOG("Can Key Open Lock? No, because lock is jammed");
-        return false; // Can't open jammed locks
+        // Aggressive rate limiting for jammed lock messages - only 1 per 10 seconds
+        d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_WARNING,
+                          1, 10.0, "Lock '%s' is jammed (%d seconds remaining)", 
+                          lock->name->str, lock->jammed_seconds);
+        return false;
     }
 
-    // For now, use simple string comparison of lock names/IDs
-    // In a more complex system, you might have master keys, lock levels, etc.
     const Lock_t* key_lock = &key->data.key.lock;
+    bool can_open = strcmp(key_lock->name->str, lock->name->str) == 0;
 
-    // Keys can open locks with matching names
-    return strcmp(key_lock->name->str, lock->name->str) == 0;
+    // Log successful/failed key attempts with moderate rate limiting
+    d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_DEBUG,
+                      2, 5.0, "Key '%s' %s open lock '%s'", 
+                      key->name->str, can_open ? "CAN" : "CANNOT", lock->name->str);
+
+    return can_open;
+}
+// =============================================================================
+// HELPER FUNCTIONS
+// =============================================================================
+
+/*
+ * Safely copies string data into dString_t structure
+ */
+static bool _populate_string_field(dString_t* dest, const char* src) 
+{
+    d_LogIf(src == NULL || dest == NULL, D_LOG_LEVEL_ERROR,
+            "Cannot populate string field with NULL parameters");
+    
+    if (src == NULL || dest == NULL) {
+        return false;
+    }
+
+    dString_t* temp = d_InitString();
+    if (temp == NULL) {
+        d_LogError("Failed to initialize temporary string for field population");
+        return false;
+    }
+
+    d_AppendString(temp, src, 0);
+    *dest = *temp;  // Copy struct content
+    free(temp);     // Free wrapper, keep string data
+    
+    d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_DEBUG,
+                      10, 5.0, "String field populated: %s", src);
+    
+    return true;
+}
+
+/*
+ * Generates descriptive text for weapon items based on material
+ */
+static bool _populate_weapon_desc(dString_t* dest, const Material_t* material) 
+{
+    d_LogIf(dest == NULL, D_LOG_LEVEL_ERROR, "Cannot populate weapon description - destination NULL");
+    d_LogIf(material == NULL, D_LOG_LEVEL_ERROR, "Cannot populate weapon description - material NULL");
+    
+    if (dest == NULL || material == NULL) {
+        return false;
+    }
+
+    // Check if material->name is valid
+    if (material->name == NULL || material->name->str == NULL) {
+        d_LogError("Material name is NULL - cannot generate weapon description");
+        return false;
+    }
+
+    dString_t* temp = d_InitString();
+    if (temp == NULL) {
+        d_LogError("Failed to allocate temporary string for weapon description");
+        return false;
+    }
+
+    d_AppendString(temp, "A weapon made of ", 0);
+    d_AppendString(temp, material->name->str, 0);
+    *dest = *temp;
+    free(temp);
+    
+    // RATE LIMIT THIS - Called during every weapon creation
+    d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_DEBUG,
+                      5, 3.0, "Weapon description generated for material: %s", 
+                      material->name->str);
+    return true;
+}
+
+/*
+ * Calculates durability resistance based on material properties
+ */
+static bool item_resists_durability_loss(const Item_t* item)
+{
+    d_LogIf(item == NULL, D_LOG_LEVEL_WARNING, "Cannot check durability resistance for NULL item");
+    
+    if (item == NULL) {
+        return false;
+    }
+
+    // Base chance is 5% to avoid durability loss
+    float base_chance = 0.05f;
+    float resistance_chance = base_chance * item->material_data.properties.durability_fact;
+
+    // Cap at 95% maximum resistance (always have some chance of wear)
+    if (resistance_chance > 0.95f) {
+        resistance_chance = 0.95f;
+    }
+
+    // Generate random number between 0.0 and 1.0
+    float random_roll = (float)rand() / (float)RAND_MAX;
+    bool resists = random_roll < resistance_chance;
+
+    d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_DEBUG,
+                      5, 10.0, "Durability check for '%s': %.1f%% resistance, %s", 
+                      item->name->str, resistance_chance * 100.0f, 
+                      resists ? "RESISTED" : "damaged");
+
+    return resists;
+}
+
+/*
+ * Generates descriptive text for armor items based on material
+ */
+static bool _populate_armor_desc(dString_t* dest, const Material_t* material) 
+{
+    d_LogIf(dest == NULL, D_LOG_LEVEL_ERROR, "Cannot populate armor description - destination NULL");
+    d_LogIf(material == NULL, D_LOG_LEVEL_ERROR, "Cannot populate armor description - material NULL");
+    
+    if (dest == NULL || material == NULL) {
+        return false;
+    }
+
+    // Validate material name
+    if (material->name == NULL || material->name->str == NULL) {
+        d_LogError("Material name is NULL - cannot generate armor description");
+        return false;
+    }
+
+    dString_t* temp = d_InitString();
+    if (temp == NULL) {
+        d_LogError("Failed to allocate temporary string for armor description");
+        return false;
+    }
+
+    d_AppendString(temp, "Armor made of ", 0);
+    d_AppendString(temp, material->name->str, 0);
+    *dest = *temp;
+    free(temp);
+    
+    // RATE LIMIT THIS - Called during every armor creation
+    d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_DEBUG,
+                      5, 3.0, "Armor description generated for material: %s", 
+                      material->name->str);
+    return true;
+}
+
+/*
+ * Sets item rarity string using standard rarity levels
+ */
+static bool _populate_rarity(dString_t* dest, const char* rarity) 
+{
+    d_LogIf(dest == NULL, D_LOG_LEVEL_ERROR, "Cannot populate rarity - destination NULL");
+    d_LogIf(rarity == NULL, D_LOG_LEVEL_ERROR, "Cannot populate rarity - rarity string NULL");
+    
+    if (dest == NULL || rarity == NULL) {
+        return false;
+    }
+
+    bool success = _populate_string_field(dest, rarity);
+    
+    d_LogIf(!success, D_LOG_LEVEL_ERROR, "Failed to populate rarity field");
+    d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_DEBUG,
+                      10, 5.0, "Item rarity set to: %s", rarity);
+    
+    return success;
+}
+
+static bool _populate_key_desc(dString_t* dest, const Lock_t* lock) 
+{
+    // RATE LIMIT THIS - Entry logging can spam during bulk key creation
+    d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_DEBUG,
+                      8, 4.0, "Entering key description population");
+    
+    d_LogIf(dest == NULL, D_LOG_LEVEL_ERROR, "Cannot populate key description - destination NULL");
+    d_LogIf(lock == NULL, D_LOG_LEVEL_ERROR, "Cannot populate key description - lock NULL");
+    
+    if (dest == NULL || lock == NULL) {
+        return false;
+    }
+
+    // Check if lock->name is valid
+    if (lock->name == NULL || lock->name->str == NULL) {
+        d_LogError("Lock name is NULL - cannot generate key description");
+        return false;
+    }
+
+    // Directly populate the destination string
+    d_AppendString(dest, "A key that opens: ", 0);
+    d_AppendString(dest, lock->name->str, 0);
+
+    // RATE LIMIT THIS - Success logging can flood during key generation
+    d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_DEBUG,
+                      5, 3.0, "Key description generated for lock: %s", 
+                      lock->name->str);
+    return true;
+}
+/*
+ * Creates neutral material properties for basic items
+ */
+static Material_t _create_default_material(void) 
+{
+    // RATE LIMIT THIS - Called frequently as fallback material
+    d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_DEBUG,
+                      10, 5.0, "Creating default neutral material");
+    
+    Material_t material;
+
+    material.name = d_InitString();
+    if (material.name == NULL) {
+        d_LogError("Failed to initialize default material name");
+        // Return zeroed material on failure
+        memset(&material, 0, sizeof(Material_t));
+        return material;
+    }
+    
+    d_AppendString(material.name, "default", 0);
+
+    // Initialize all properties to neutral (1.0f)
+    material.properties.weight_fact = 1.0f;
+    material.properties.value_coins_fact = 1.0f;
+    material.properties.durability_fact = 1.0f;
+    material.properties.min_damage_fact = 1.0f;
+    material.properties.max_damage_fact = 1.0f;
+    material.properties.armor_value_fact = 1.0f;
+    material.properties.evasion_value_fact = 1.0f;
+    material.properties.stealth_value_fact = 1.0f;
+    material.properties.enchant_value_fact = 1.0f;
+
+    // RATE LIMIT THIS - Success logging during bulk operations
+    d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_DEBUG,
+                      5, 5.0, "Default material created with neutral properties");
+    return material;
+}
+
+/*
+ * Creates organic material properties for consumable items
+ */
+static Material_t _create_consumable_material(void) 
+{
+    // RATE LIMIT THIS - Called during every consumable creation
+    d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_DEBUG,
+                      10, 3.0, "Creating organic material for consumables");
+    
+    Material_t material;
+
+    // Set material name to "organic" using helper
+    material.name = d_InitString();
+    if (material.name == NULL) {
+        d_LogError("Failed to initialize consumable material name");
+        memset(&material, 0, sizeof(Material_t));
+        return material;
+    }
+    
+    if (!_populate_string_field(material.name, "organic")) {
+        d_LogError("Failed to populate organic material name");
+        d_DestroyString(material.name);
+        memset(&material, 0, sizeof(Material_t));
+        return material;
+    }
+
+    // Initialize all properties to neutral (1.0f)
+    material.properties.weight_fact = 1.0f;
+    material.properties.value_coins_fact = 1.0f;
+    material.properties.durability_fact = 1.0f;
+    material.properties.min_damage_fact = 1.0f;
+    material.properties.max_damage_fact = 1.0f;
+    material.properties.armor_value_fact = 1.0f;
+    material.properties.evasion_value_fact = 1.0f;
+    material.properties.stealth_value_fact = 1.0f;
+    material.properties.enchant_value_fact = 1.0f;
+
+    // RATE LIMIT THIS - Success logging for consumable material creation
+    d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_DEBUG,
+                      5, 5.0, "Organic material created for consumables");
+    return material;
+}
+
+/*
+ * Generates descriptive text for consumable items with potency value
+ */
+static bool _populate_consumable_desc(dString_t* dest, uint8_t value) 
+{
+    d_LogIf(dest == NULL, D_LOG_LEVEL_ERROR, "Cannot populate consumable description - destination NULL");
+    
+    if (dest == NULL) {
+        return false;
+    }
+
+    dString_t* temp = d_InitString();
+    if (temp == NULL) {
+        d_LogError("Failed to allocate temporary string for consumable description");
+        return false;
+    }
+
+    d_AppendString(temp, "A consumable item with magical properties (Potency: ", 0);
+    d_AppendInt(temp, value);
+    d_AppendChar(temp, ')');
+    *dest = *temp;
+    free(temp);
+    
+    // RATE LIMIT THIS - Called during every consumable creation
+    d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_DEBUG,
+                      8, 4.0, "Consumable description generated with potency: %d", value);
+    return true;
+}
+/*
+ * Generates descriptive text for ammunition items with damage range
+ */
+static bool _populate_ammunition_desc(dString_t* dest, const Material_t* material, uint8_t min_dmg, uint8_t max_dmg) 
+{
+    d_LogIf(dest == NULL, D_LOG_LEVEL_ERROR, "Cannot populate ammunition description - destination NULL");
+    d_LogIf(material == NULL, D_LOG_LEVEL_ERROR, "Cannot populate ammunition description - material NULL");
+    
+    if (dest == NULL || material == NULL) {
+        return false;
+    }
+
+    // Validate material name
+    if (material->name == NULL || material->name->str == NULL) {
+        d_LogError("Material name is NULL - cannot generate ammunition description");
+        return false;
+    }
+
+    dString_t* temp = d_InitString();
+    if (temp == NULL) {
+        d_LogError("Failed to allocate temporary string for ammunition description");
+        return false;
+    }
+
+    d_AppendString(temp, "Ammunition made of ", 0);
+    d_AppendString(temp, material->name->str, 0);
+    d_AppendString(temp, " (Damage: ", 0);
+    d_AppendInt(temp, min_dmg);
+    d_AppendChar(temp, '-');
+    d_AppendInt(temp, max_dmg);
+    d_AppendChar(temp, ')');
+    *dest = *temp;
+    free(temp);
+    
+    // RATE LIMIT THIS - Called during every ammunition creation
+    d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_DEBUG,
+                      5, 3.0, "Ammunition description generated: %s [%d-%d dmg]", 
+                      material->name->str, min_dmg, max_dmg);
+    return true;
+}
+static bool _validate_and_truncate_string(dString_t* dest, const char* src, size_t max_length, const char* field_name)
+{
+    // Extremely aggressive NULL checks with explicit logging
+    if (dest == NULL) {
+        fprintf(stderr, "FATAL: Destination string is NULL for field: %s\n", field_name);
+        abort(); // Immediately terminate the program
+    }
+
+    if (src == NULL) {
+        fprintf(stderr, "FATAL: Source string is NULL for field: %s\n", field_name);
+        abort(); // Immediately terminate the program
+    }
+
+    // Verify d_AppendStringN function pointer is available
+    typedef void (*AppendStringNFunc)(dString_t*, const char*, size_t);
+    AppendStringNFunc appendFunc = d_AppendStringN;
+
+    if (appendFunc == NULL) {
+        fprintf(stderr, "CRITICAL FAILURE: d_AppendStringN function is NOT LINKED!\n");
+        fprintf(stderr, "Field attempting to use function: %s\n", field_name);
+        fprintf(stderr, "Source string: %s\n", src);
+        fprintf(stderr, "MAX LENGTH: %zu\n", max_length);
+        
+        // Diagnostic crash with maximum information
+        // raise(SIGABRT);
+    }
+
+    size_t src_len = strlen(src);
+    
+    // Aggressive length checking
+    if (src_len > max_length) {
+        fprintf(stderr, "WARNING: Truncating %s from %zu to %zu characters\n", 
+                field_name, src_len, max_length);
+        
+        // Use the function with EXPLICIT function pointer call
+        appendFunc(dest, src, max_length);
+    } else {
+        // Use standard append for full-length strings
+        d_AppendString(dest, src, 0);
+    }
+    
+    return true;
 }

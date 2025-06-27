@@ -371,7 +371,7 @@ static const char* _act_two_part_two_thoughts[] = {
 
 // Act III Part 1 (Levels 21-25): Mental Breakdown
 static const char* _act_three_part_one_thoughts[] = {
-    "I can no longer pretend this is just work - it's systematic murder.",
+    "I can no longer pretend this is just work - it's machine of death and dismay.",
     "My wife would weep to see what I've become - builder of tombs for heroes.",
     "The crown I wore was heavy, but this guilt crushes my very soul.",
     "I'm embedding secret escape routes, but will anyone be clever enough to find them?",
@@ -1237,7 +1237,7 @@ static double get_time_precise(void) {
         if (_sisyphus_loop_iteration >= 3) { \
             printf(TEST_COLOR_GRAY "      ... (condensed %d subsequent messages)\n" TEST_COLOR_RESET, _sisyphus_loop_iteration - 3); \
         } \
-        printf(TEST_COLOR_CYAN "  🌀 Repetitive Trial Complete." TEST_COLOR_RESET "\n"); \
+        printf(TEST_COLOR_CYAN "    Repetitive Trial Complete. 🌀" TEST_COLOR_RESET "\n"); \
         _sisyphus_in_loop = 0; \
     } while(0)
 
