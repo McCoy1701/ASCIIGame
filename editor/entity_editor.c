@@ -10,8 +10,6 @@
 static void e_EntityEditorDoLoop( float );
 static void e_EntityEditorRenderLoop( float );
 
-static aWidget_t* w;
-
 void e_InitEntityEditor( void )
 {
   app.delegate.logic = e_EntityEditorDoLoop;
