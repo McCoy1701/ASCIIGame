@@ -96,7 +96,7 @@ $(OBJ_DIR)/%.o: $(EDITOR_DIR)/%.c | $(OBJ_DIR)
 	$(CC) -c $< -o $@ -ggdb $(CFLAGS)
 
 $(BIN_DIR)/editor: $(EDITOR_OBJS)  | $(BIN_DIR)
-	$(CC) $^ -ggdb -lArchimedes $(CFLAGS) -o $@
+	$(CC) $^ -ggdb -lArchimedes -lDaedalus $(CFLAGS) -o $@
 
 $(EMS_DIR):
 	mkdir -p $(EMS_DIR)

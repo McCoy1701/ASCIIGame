@@ -1,6 +1,7 @@
 #include <stdio.h>
 
 #include "Archimedes.h"
+#include "Daedalus.h"
 #include "world_editor.h"
 #include "item_editor.h"
 #include "entity_editor.h"
@@ -87,6 +88,11 @@ void e_Mainloop( void )
 
 int main( void )
 {
+  dLogConfig_t config = { .default_level = D_LOG_LEVEL_DEBUG };
+  dLogger_t* logger = d_CreateLogger( config );
+  d_SetGlobalLogger( logger );
+  d_AddLogHandler( d_GetGlobalLogger(), d_ConsoleLogHandler, NULL );
+  
   a_Init( SCREEN_WIDTH, SCREEN_HEIGHT, "Archimedes" );
 
   e_InitEditor();
@@ -97,6 +103,7 @@ int main( void )
 
   a_Quit();
 
+  d_DestroyLogger( d_GetGlobalLogger() );
   return 0;
 }
 
