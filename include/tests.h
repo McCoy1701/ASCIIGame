@@ -371,7 +371,7 @@ static const char* _act_two_part_two_thoughts[] = {
 
 // Act III Part 1 (Levels 21-25): Mental Breakdown
 static const char* _act_three_part_one_thoughts[] = {
-    "I can no longer pretend this is just work - it's systematic murder.",
+    "I can no longer pretend this is just work - it's machine of death and dismay.",
     "My wife would weep to see what I've become - builder of tombs for heroes.",
     "The crown I wore was heavy, but this guilt crushes my very soul.",
     "I'm embedding secret escape routes, but will anyone be clever enough to find them?",

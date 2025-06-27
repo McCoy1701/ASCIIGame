@@ -137,6 +137,9 @@ TEST_DIR=tests
 TEST_CFLAGS = -Wall -Wextra -ggdb $(CINC)
 
 # --- Object File Rules for All Testable Code ---
+# Rule for compiling dStrings needed for tests
+$(OBJ_DIR)/dStrings.o: src/dStrings.c
+	$(CC) -c $< -o $@ $(TEST_CFLAGS)
 
 # Rule for compiling main game sources needed for some tests
 $(OBJ_DIR)/items.o: src/items.c
@@ -192,7 +195,10 @@ test-items-integration-tests: always $(OBJ_DIR)/items.o
 
 .PHONY: test-items-usage
 test-items-usage: always $(OBJ_DIR)/items.o
-	$(CC) $(TEST_CFLAGS) -o $(BIN_DIR)/test_items_usage $(TEST_DIR)/items/test_items_usage.c $(OBJ_DIR)/items.o -lm -lDaedalus -lArchimedes
+	$(CC) $(TEST_CFLAGS) -o $(BIN_DIR)/test_items_usage \
+		$(TEST_DIR)/items/test_items_usage.c \
+		$(OBJ_DIR)/items.o \
+		-L./lib -lDaedalus -lArchimedes -lm
 
 .PHONY: test-items-helper-functions
 test-items-helper-functions: always $(OBJ_DIR)/items.o
