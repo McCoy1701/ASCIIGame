@@ -1,6 +1,10 @@
 #ifndef __WORLD_EDITOR_H__
 #define __WORLD_EDITOR_H__
 
+#include "structs.h"
+
+extern World_t* map;
+
 /*
  * Initialize the World Editor subsystem and set up the UI framework
  *
@@ -75,5 +79,8 @@ void we_save( void );
  * -- Should free existing world before loading new one
  */
 void we_load( void );
+
+void we_DrawWorldCell( int index, World_t* map, WorldPosition_t pos );
+void wec_GenerateWorld( void );
 
 #endif

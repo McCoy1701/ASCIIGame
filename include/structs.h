@@ -74,23 +74,25 @@ typedef struct
   uint16_t z_height;
 } FileHeader_t;
 
-// World Position 'world-id:region-id:x/y:x/y'
+// World Position 'world-index:region-index:local-index:z'
 typedef struct // World_Position_t
 {
-  uint16_t world_index;
-  uint16_t region_index;
-  uint32_t local_index;
-  // refer to in game tiles as 'world-id:region-id:x/y:x/y'
-  int16_t local_x, local_y, local_z;
-  uint8_t level;
 
-} World_Position_t;
+  // refer to in game tiles as 'world-index:region-index:z'
+  uint8_t world_index;
+  uint8_t region_index;
+  uint16_t local_index;
+  uint8_t local_z;
+  uint8_t level;  //TODO: needs moved out of here and put into RenderWorldBuffer_t once created
+
+} WorldPosition_t;
 
 // World Objects
 typedef struct // WorldObject_t
 {
     dString_t* name;
     dString_t* description;
+    WorldPosition_t pos;
 } WorldObject_t;
 
 typedef struct // Lock_t

@@ -9,6 +9,7 @@ INC_DIR=include
 BIN_DIR=bin
 OBJ_DIR=obj
 EMS_DIR=ems_obj
+WEO_DIR=obj/world_editor
 LIB_DIR=lib
 INDEX_DIR=index
 EDITOR_DIR=editor
@@ -71,8 +72,8 @@ NATIVE_OBJS = \
 							$(OBJ_DIR)/main.o\
 							$(OBJ_DIR)/game.o
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_DIR)
-	$(CC) -c $< -o $@ -ggdb $(CFLAGS)
+#$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_DIR)
+#	$(CC) -c $< -o $@ -ggdb $(CFLAGS)
 
 
 $(BIN_DIR)/native: $(NATIVE_OBJS) | $(BIN_DIR)
@@ -85,18 +86,23 @@ editor: $(BIN_DIR)/editor
 EDITOR_OBJS = \
 							$(OBJ_DIR)/editor.o\
 							$(OBJ_DIR)/init_editor.o\
+							$(OBJ_DIR)/world_editor/creation.o\
+							$(OBJ_DIR)/world_editor/draw.o\
+							$(OBJ_DIR)/world_editor/utils.o\
 							$(OBJ_DIR)/world_editor.o\
 							$(OBJ_DIR)/items_editor.o\
 							$(OBJ_DIR)/entity_editor.o\
 							$(OBJ_DIR)/color_editor.o\
-							$(OBJ_DIR)/ui_editor.o\
-							#$(OBJ_DIR)/save_editor.o
+							$(OBJ_DIR)/ui_editor.o
 
-$(OBJ_DIR)/%.o: $(EDITOR_DIR)/%.c | $(OBJ_DIR)
+$(OBJ_DIR)/%.o: $(EDITOR_DIR)/%.c | $(OBJ_DIR) $(WEO_DIR)
 	$(CC) -c $< -o $@ -ggdb $(CFLAGS)
 
-$(BIN_DIR)/editor: $(EDITOR_OBJS)  | $(BIN_DIR)
+$(BIN_DIR)/editor: $(EDITOR_OBJS) | $(BIN_DIR)
 	$(CC) $^ -ggdb -lArchimedes -lDaedalus $(CFLAGS) -o $@
+
+$(WEO_DIR):
+	mkdir -p $(WEO_DIR)
 
 $(EMS_DIR):
 	mkdir -p $(EMS_DIR)
