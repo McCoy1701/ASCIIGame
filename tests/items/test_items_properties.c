@@ -1085,7 +1085,6 @@ int main(void)
     };
     dLogger_t* logger = d_CreateLogger(config);
     d_SetGlobalLogger(logger);
-    d_AddLogHandler(d_GetGlobalLogger(), d_ConsoleLogHandler, NULL);
 
     TEST_SUITE_START("Item Properties & Stats Tests");
 
