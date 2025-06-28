@@ -30,10 +30,6 @@ int grid_y = 0;
 
 World_t* map = NULL;
 
-World_t* selected_world       = NULL;
-RegionCell_t* selected_region = NULL;
-GameTile_t* selected_gametile = NULL;
-
 World_Position_t current_pos;
 char* pos_text;
 
@@ -314,18 +310,12 @@ static void e_WorldEditorDoLoop( float dt )
           e_GetCellAtMouse( map->world_width, map->world_height, &grid_x, &grid_y );
 
           current_pos.world_index = INDEX_2(grid_y, grid_x, map->world_width);
-          selected_world    = &map[current_pos.world_index];
-          selected_region   = NULL;
-          selected_gametile = NULL;
           break;
 
         case REGION_LEVEL:
           e_GetCellAtMouse( map->region_width, map->region_height, &grid_x, &grid_y );
           
           current_pos.region_index = INDEX_2( grid_y, grid_x, map->region_width );
-          selected_world    = NULL;
-          selected_region   = &map[current_pos.world_index].regions[current_pos.region_index];
-          selected_gametile = NULL;
           break;
 
         case LOCAL_LEVEL:
@@ -333,10 +323,6 @@ static void e_WorldEditorDoLoop( float dt )
           
           current_pos.local_index = INDEX_3( grid_y, grid_x, current_pos.local_z,
                                              map->local_width, map->local_height );
-          selected_world    = NULL;
-          selected_region   = NULL;
-          selected_gametile = &map[current_pos.world_index].regions[current_pos.region_index].
-            tiles[current_pos.local_index];
           break;
 
         default:
@@ -507,3 +493,4 @@ void e_DestroyWorldEditor( void )
   free( pos_text );
   pos_text = NULL;
 }
+
