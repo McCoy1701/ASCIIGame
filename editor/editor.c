@@ -11,8 +11,6 @@
 static void eDoLoop( float );
 static void eRenderLoop( float );
 
-static aWidget_t* w;
-
 void e_InitEditor( void )
 {
   app.delegate.logic = eDoLoop;
@@ -87,8 +85,8 @@ void e_Mainloop( void )
     app.delegate.draw( delta_time );
 
     // 4. Log with a UNIQUE IDENTIFIER
-    d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_DEBUG, 1, 10.0,
-                      "[e_MainLoop(void)] Delta Time; %.7f - Should be Limited to 1 per 10 seconds [void]", delta_time);
+//    d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_DEBUG, 1, 10.0,
+//                      "[e_MainLoop(void)] Delta Time; %.7f - Should be Limited to 1 per 10 seconds [void]", delta_time);
 
     // 5. Present the scene
     a_PresentScene();
@@ -112,6 +110,7 @@ int main( void )
 
   // Clean up the logger before finishing
   d_DestroyLogger(d_GetGlobalLogger());
+
 
   return 0;
 }

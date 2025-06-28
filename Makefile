@@ -21,7 +21,7 @@ EMS_OBJS =\
 					$(EMS_DIR)/game.o
 
 $(EMS_DIR)/%.o: $(SRC_DIR)/%.c | $(EMS_DIR)
-	$(ECC) -c $< -o $@ $(CINC)
+	$(ECC) -c $< -o $@ $(CINC) $(EFLAGS)
 
 
 $(INDEX_DIR)/index: $(EMS_OBJS) $(LIB_DIR)/libArchimedes.a | $(INDEX_DIR)

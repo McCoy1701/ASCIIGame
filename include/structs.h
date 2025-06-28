@@ -7,6 +7,12 @@
 #include <stdint.h>
 #include <stdint.h>
 
+enum{
+  WORLD_LEVEL = 0,
+  REGION_LEVEL,
+  LOCAL_LEVEL
+};
+
 typedef enum {
     ITEM_TYPE_WEAPON,
     ITEM_TYPE_ARMOR,
@@ -32,6 +38,7 @@ typedef struct
   float temperature_factor; // every local cell in this region
   float elevation_factor; // every local cell in this region
   // float (1 is 100%, 0.5 is 50%, etc.)
+
 } RegionCell_t;
 
 typedef struct
@@ -75,6 +82,7 @@ typedef struct // World_Position_t
   uint32_t local_index;
   // refer to in game tiles as 'world-id:region-id:x/y:x/y'
   int16_t local_x, local_y, local_z;
+  uint8_t level;
 
 } World_Position_t;
 

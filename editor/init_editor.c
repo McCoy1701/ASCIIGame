@@ -28,6 +28,14 @@ World_t* init_world( const int world_width, const int world_height,
   {
     new_world[i].tile = (GameTile_t){.glyph = 0, .elevation = 0, 
       .temperature = 20, .is_passable = 0 };
+    
+    new_world[i].world_width   = world_width;
+    new_world[i].world_height  = world_height;
+    new_world[i].region_width  = region_width;
+    new_world[i].region_height = region_height;
+    new_world[i].local_width   = local_width;
+    new_world[i].local_height  = local_height;
+    new_world[i].z_height      = z_height;
 
     new_world[i].regions = ( RegionCell_t* )malloc( sizeof( RegionCell_t ) *
                                                     ( region_width * region_height ) );
@@ -40,7 +48,7 @@ World_t* init_world( const int world_width, const int world_height,
 
     for ( int j = 0; j < ( region_width * region_height ); j++ )
     {
-      new_world[i].regions[j].tile = (GameTile_t){.glyph = 0, .elevation = 0,
+      new_world[i].regions[j].tile = (GameTile_t){.glyph = 1, .elevation = 0,
         .temperature = 20, .is_passable = 0 };
       
       new_world[i].regions[j].tiles = ( GameTile_t* )malloc( sizeof( GameTile_t ) *
@@ -50,7 +58,14 @@ World_t* init_world( const int world_width, const int world_height,
       {
         free_world( new_world, i, j );
         return NULL;
-      }    
+      }
+
+      for( int k = 0; k < ( local_width * local_height * z_height); k++ )
+      {
+        new_world[i].regions[j].tiles[k] = (GameTile_t){.glyph = 2, .elevation = 0,
+        .temperature = 20, .is_passable = 0 };
+
+      }
 
     }
   }

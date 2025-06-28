@@ -11,8 +11,6 @@
 static void e_ColorEditorDoLoop( float dt );
 static void e_ColorEditorRenderLoop( float dt );
 
-static aWidget_t* w;
-
 void e_InitColorEditor( void )
 {
   app.delegate.logic = e_ColorEditorDoLoop;

@@ -13,16 +13,16 @@
 void g_ChangeColor( uint32_t hex_color_value );
 static void aDoLoop( float );
 static void aRenderLoop( float );
-static void aRenderWorld( float dt );
-static void aRenderRegion( float dt );
-static void aRenderLocal( float dt );
 
-SDL_Surface* surf;
 World_t* g_world;
 aColor_t grid_color;
 
+World_Position_t current_pos;
+char* pos_text;
+
 int originX;
 int originY;
+
 #ifdef __EMSCRIPTEN__
 EMSCRIPTEN_KEEPALIVE
 #endif
@@ -41,94 +41,18 @@ void aInitGame( void )
   app.delegate.logic = aDoLoop;
   app.delegate.draw  = aRenderLoop;
   
-  surf = a_Image( "resources/assets/bullet.png" );
-  if ( surf == NULL )
-  {
-    printf( "Failed to load image\n" );
-  }
+  pos_text = malloc( sizeof(char) * 50 );
 
-  /*g_world = ( World_t* )malloc( sizeof( World_t ) );
-  if ( g_world == NULL )
-  {
-    aError_t new_error;
-    new_error.error_type = FATAL;
-    snprintf( new_error.error_msg, MAX_LINE_LENGTH, "%s: Failed to allocate memory for g_world",
-              log_level_strings[new_error.error_type] );
-    LOG( new_error.error_msg );
-  }
-
-  g_world->regions = ( RegionCell_t* )malloc( sizeof( RegionCell_t ) * WORLD_WIDTH * WORLD_HEIGHT );
-  if ( g_world->regions == NULL )
-  {
-    aError_t new_error;
-    new_error.error_type = FATAL;
-    snprintf( new_error.error_msg, MAX_LINE_LENGTH, "%s: Failed to allocate memory for g_world->regions",
-              log_level_strings[new_error.error_type] );
-    LOG( new_error.error_msg );
-    
-    free( g_world );
-  }
-
-  for ( int r = 0; r < REGION_SIZE * REGION_SIZE; r++ )
-  {
-    g_world->regions[r].cells = ( LocalCell_t* )malloc( sizeof( LocalCell_t ) * REGION_SIZE * REGION_SIZE );
-    if ( g_world->regions[r].cells == NULL )
-    {
-      aError_t new_error;
-      new_error.error_type = FATAL;
-      snprintf( new_error.error_msg, MAX_LINE_LENGTH, "%s: Failed to allocate memory for g_world->regions",
-               log_level_strings[new_error.error_type] );
-      LOG( new_error.error_msg );
-
-      for ( int i = 0; i < r; i++ )
-      {
-        free( g_world->regions[i].cells );
-      }
-
-      free( g_world->regions );
-      free( g_world );
-    }
-
-    for ( int c = 0; c < REGION_SIZE * REGION_SIZE; c++ )
-    {
-      g_world->regions[r].cells[c].tiles = ( GameTile_t* )malloc( sizeof( GameTile_t ) * Z_HEIGHT * LOCAL_SIZE * LOCAL_SIZE );
-      if ( g_world->regions[r].cells[c].tiles == NULL )
-      {
-        aError_t new_error;
-        new_error.error_type = FATAL;
-        snprintf( new_error.error_msg, MAX_LINE_LENGTH, "%s: Failed to allocate memory for g_world->regions",
-                 log_level_strings[new_error.error_type] );
-        LOG( new_error.error_msg );
-        
-        for ( int i = 0; i < r; i++ )
-        {
-          for ( int j = 0; j < REGION_SIZE * REGION_SIZE; j++ )
-          {
-            if ( g_world->regions[i].cells[j].tiles != NULL )
-            {
-              free( g_world->regions[i].cells[j].tiles );
-            }
-          }
-
-          free( g_world->regions[i].cells );
-        }
-
-        for ( int j = 0; j < c; j++ )
-        {
-          if ( g_world->regions[r].cells[j].tiles != NULL )
-          {
-            free( g_world->regions[r].cells[j].tiles );
-          }
-        }
-        
-        free( g_world->regions[r].cells );
-        free( g_world->regions );
-        free( g_world );
-      }
-    }
-
-  }*/
+  current_pos = (World_Position_t){ .world_index = 0, .region_index = 0,
+    .local_index = 0, .level = 0, .local_x = 0, .local_y = 0, .local_z = 0 };
+  snprintf(pos_text, 50, "%d,%d,%d,%d,%d,%d,%d\n", current_pos.world_index,
+           current_pos.region_index, current_pos.local_index, current_pos.level,
+           current_pos.local_x, current_pos.local_y, current_pos.local_z );
   
+  g_world = init_world( WORLD_WIDTH_SMALL, WORLD_HEIGHT_SMALL, REGION_SIZE_SMALL,
+                        REGION_SIZE_SMALL, LOCAL_SIZE_SMALL, LOCAL_SIZE_SMALL,
+                        Z_HEIGHT_SMALL );
+
   originX = SCREEN_WIDTH/2;
   originY = SCREEN_HEIGHT/2;
 
@@ -140,69 +64,161 @@ static void aDoLoop( float dt )
 {
   a_DoInput();
   
-  if ( app.keyboard[ SDL_SCANCODE_ESCAPE ] == 1 )
+  if ( app.mouse.button == 1 )
   {
-    app.running = 0;
+    app.mouse.button = 0;
+    if ( g_world != NULL )
+    {
+      int grid_x, grid_y;
+      
+      switch (current_pos.level)
+      {
+        case WORLD_LEVEL: 
+          g_GetCellAtMouse( g_world->world_width, g_world->world_height, &grid_x, &grid_y );
+
+          current_pos.world_index = INDEX_2(grid_y, grid_x, g_world->world_width);
+          break;
+
+        case REGION_LEVEL:
+          g_GetCellAtMouse( g_world->region_width, g_world->region_height, &grid_x, &grid_y );
+          
+          current_pos.region_index = INDEX_2( grid_y, grid_x, g_world->region_width );
+          break;
+
+        case LOCAL_LEVEL:
+          g_GetCellAtMouse( g_world->local_width, g_world->local_height, &grid_x, &grid_y );
+          
+          current_pos.local_index = INDEX_3( grid_y, grid_x, current_pos.local_z,
+                                             g_world->local_width, g_world->local_height );
+          break;
+
+        default:
+          grid_x = grid_y = 0;
+          break;
+      }
+    } 
   }
   
-  if ( app.keyboard[ SDL_SCANCODE_W ] == 1 )
+  if ( app.keyboard[SDL_SCANCODE_RETURN] == 1 )
   {
-    app.delegate.draw = aRenderWorld;
+    app.keyboard[SDL_SCANCODE_RETURN] = 0;
+
+    if ( current_pos.level >= 0 && current_pos.level < LOCAL_LEVEL )
+    {
+      current_pos.level++;
+    }
+
   }
   
-  if ( app.keyboard[ SDL_SCANCODE_R ] == 1 )
+  if ( app.keyboard[SDL_SCANCODE_BACKSPACE] == 1 )
   {
-    app.delegate.draw = aRenderRegion;
+    app.keyboard[SDL_SCANCODE_BACKSPACE] = 0;
+
+    if ( current_pos.level > 0 && current_pos.level <= LOCAL_LEVEL )
+    {
+      current_pos.level--;
+    }
+
   }
   
-  if ( app.keyboard[ SDL_SCANCODE_L ] == 1 )
+  if ( app.keyboard[SDL_SCANCODE_EQUALS] == 1 )
   {
-    app.delegate.draw = aRenderLocal;
+    app.keyboard[SDL_SCANCODE_EQUALS] = 0;
+    if ( current_pos.local_z >= 0 && current_pos.local_z < g_world->z_height - 1 )
+    {
+      current_pos.local_z++;
+    }
+
+  }
+  
+  if ( app.keyboard[SDL_SCANCODE_MINUS] == 1 )
+  {
+    app.keyboard[SDL_SCANCODE_MINUS] = 0;
+    if ( current_pos.local_z > 0 && current_pos.local_z <= g_world->z_height )
+    {
+      current_pos.local_z--;
+    }
+
   }
 
-  if ( app.mouse.wheel == 1 )
+  if ( app.keyboard[SDL_SCANCODE_ESCAPE] == 1 )
   {
-    printf("scroll up\n");
-    app.mouse.wheel = 0;
+    app.keyboard[SDL_SCANCODE_ESCAPE] = 0;
+    app.running = 0;
   }
-  
 }
 
 static void aRenderLoop( float dt )
 {
-  a_DrawFilledRect( 100, 100, 32, 32,   0, 0, 255, 255 );
-  a_DrawFilledRect( 300, 300, 32, 32, 255, 0,   0, 255 );
-  a_Blit( surf, 200, 200 );
+  if ( g_world != NULL )
+  {
+    if ( current_pos.level == 0 )
+    {
+      for ( uint16_t i = 0; i < ( g_world->world_width * g_world->world_height ); i++ )
+      {
+        int x, y, w, h;
+        g_GetCellSize( i, g_world->world_width, g_world->world_height, &x, &y, &w, &h );
 
-}
+        if ( i == current_pos.world_index )
+        {
+          a_DrawRect( x, y, w, h, 255, 255, 0, 255 );
+        }
 
-static void aRenderWorld( float dt )
-{
-  a_DrawText( "world", 600, 100, 255, 255, 255, app.font_type, TEXT_ALIGN_CENTER, 0 );
-  g_DrawWorldMap( originX, originY, grid_color );
-  //a_DrawFilledRect( 100, 100, 32, 32, blue );
-  //a_DrawFilledRect( 300, 300, 32, 32, red );
-  //a_Blit( surf, 200, 200 );
+        else
+        {
+          a_DrawRect( x, y, w, h, grid_color.r, grid_color.g, grid_color.b, grid_color.a );
+        }
+      }
+    }
 
-}
+    else if ( current_pos.level == 1 )
+    {
+      for ( uint16_t i = 0; i < ( g_world->region_width * g_world->region_height ); i++ )
+      {
+        int x, y, w, h;
+        g_GetCellSize( i, g_world->region_width, g_world->region_height, &x, &y, &w, &h );
 
-static void aRenderRegion( float dt )
-{
-  a_DrawText( "region", 600, 100, 255, 255, 255, app.font_type, TEXT_ALIGN_CENTER, 0 );
-  g_DrawRegionMap( originX, originY, grid_color );
-  //a_DrawFilledRect( 100, 100, 32, 32, blue );
-  //a_DrawFilledRect( 300, 300, 32, 32, red );
-  //a_Blit( surf, 200, 200 );
+        if ( i == current_pos.region_index )
+        {
+          a_DrawRect( x, y, w, h, 255, 255, 0, 255 );
+        } 
 
-}
+        else
+        {
+          a_DrawRect( x, y, w, h, grid_color.r, grid_color.g, grid_color.b, grid_color.a );
+        }
+      }
+    }
+    
+    else if ( current_pos.level == 2 )
+    {
+      for ( int i = 0; i < ( g_world->local_width * g_world->local_height ); i++ )
+      {
+        int x, y, w, h;
+        g_GetCellSize( i, g_world->local_width, g_world->local_height, &x, &y, &w, &h );
+        
+        uint32_t index = ( ( current_pos.local_z * ( g_world->local_width * 
+          g_world->local_height ) ) + i );
 
-static void aRenderLocal( float dt )
-{
-  a_DrawText( "region", 600, 100, 255, 255, 255, app.font_type, TEXT_ALIGN_CENTER, 0 );
-  g_DrawLocalMap( originX, originY, grid_color );
-  //a_DrawFilledRect( 100, 100, 32, 32, blue );
-  //a_DrawFilledRect( 300, 300, 32, 32, red );
-  //a_Blit( surf, 200, 200 );
+        if ( index == current_pos.local_index )
+        {
+          a_DrawRect( x, y, w, h, 255, 255, 0, 255 );
+        } 
+
+        else
+        {
+          a_DrawRect( x, y, w, h, grid_color.r, grid_color.g, grid_color.b, grid_color.a );
+        }
+      }
+    }
+    
+
+    snprintf(pos_text, 50, "%d,%d,%d,%d,%d,%d,%d\n", current_pos.world_index,
+           current_pos.region_index, current_pos.local_index, current_pos.level,
+           current_pos.local_x, current_pos.local_y, current_pos.local_z );
+    a_DrawText( pos_text, 750, 10, 255, 255, 255, app.font_type, TEXT_ALIGN_CENTER, 0 );
+
+  }
 
 }
 
@@ -232,6 +248,12 @@ int main( void )
     }
   #endif
 
+  free_world( g_world, ( g_world->world_width * g_world->world_height ),
+                   ( g_world->region_width * g_world->region_height ) );
+  g_world = NULL;
+  free( pos_text );
+  pos_text = NULL;
+  
   a_Quit();
 
   return 0;

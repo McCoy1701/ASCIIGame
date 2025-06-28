@@ -10,8 +10,6 @@
 static void e_ItemEditorDoLoop( float );
 static void e_ItemEditorRenderLoop( float );
 
-static aWidget_t* w;
-
 void e_InitItemEditor( void )
 {
   app.delegate.logic = e_ItemEditorDoLoop;
