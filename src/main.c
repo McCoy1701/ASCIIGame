@@ -17,7 +17,7 @@ static void aRenderLoop( float );
 World_t* g_world;
 aColor_t grid_color;
 
-World_Position_t current_pos;
+WorldPosition_t current_pos;
 char* pos_text;
 
 int originX;
@@ -43,11 +43,11 @@ void aInitGame( void )
   
   pos_text = malloc( sizeof(char) * 50 );
 
-  current_pos = (World_Position_t){ .world_index = 0, .region_index = 0,
-    .local_index = 0, .level = 0, .local_x = 0, .local_y = 0, .local_z = 0 };
-  snprintf(pos_text, 50, "%d,%d,%d,%d,%d,%d,%d\n", current_pos.world_index,
+  current_pos = (WorldPosition_t){ .world_index = 0, .region_index = 0,
+    .local_index = 0, .level = 0, .local_z = 0 };
+  snprintf(pos_text, 50, "%d,%d,%d,%d,%d\n", current_pos.world_index,
            current_pos.region_index, current_pos.local_index, current_pos.level,
-           current_pos.local_x, current_pos.local_y, current_pos.local_z );
+           current_pos.local_z );
   
   g_world = init_world( WORLD_WIDTH_SMALL, WORLD_HEIGHT_SMALL, REGION_SIZE_SMALL,
                         REGION_SIZE_SMALL, LOCAL_SIZE_SMALL, LOCAL_SIZE_SMALL,
@@ -213,9 +213,9 @@ static void aRenderLoop( float dt )
     }
     
 
-    snprintf(pos_text, 50, "%d,%d,%d,%d,%d,%d,%d\n", current_pos.world_index,
+    snprintf(pos_text, 50, "%d,%d,%d,%d,%d\n", current_pos.world_index,
            current_pos.region_index, current_pos.local_index, current_pos.level,
-           current_pos.local_x, current_pos.local_y, current_pos.local_z );
+           current_pos.local_z );
     a_DrawText( pos_text, 750, 10, 255, 255, 255, app.font_type, TEXT_ALIGN_CENTER, 0 );
 
   }

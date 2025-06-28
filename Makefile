@@ -72,8 +72,8 @@ NATIVE_OBJS = \
 							$(OBJ_DIR)/main.o\
 							$(OBJ_DIR)/game.o
 
-#$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_DIR)
-#	$(CC) -c $< -o $@ -ggdb $(CFLAGS)
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_DIR)
+	$(CC) -c $< -o $@ -ggdb $(CFLAGS)
 
 
 $(BIN_DIR)/native: $(NATIVE_OBJS) | $(BIN_DIR)
@@ -87,7 +87,6 @@ EDITOR_OBJS = \
 							$(OBJ_DIR)/editor.o\
 							$(OBJ_DIR)/init_editor.o\
 							$(OBJ_DIR)/world_editor/creation.o\
-							$(OBJ_DIR)/world_editor/draw.o\
 							$(OBJ_DIR)/world_editor/utils.o\
 							$(OBJ_DIR)/world_editor.o\
 							$(OBJ_DIR)/items_editor.o\

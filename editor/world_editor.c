@@ -230,30 +230,27 @@ static void e_WorldEditorRenderLoop( float dt )
 {
   if ( map != NULL )
   {
-    if ( current_pos.level == 0 )
+    int draw_size = 0;
+    switch ( current_pos.level )
     {
-      for ( uint8_t i = 0; i < ( map->world_width * map->world_height ); i++ )
-      {
-        we_DrawWorldCell( i, map, current_pos );
-      }
+      case WORLD_LEVEL:
+        draw_size = map->world_width * map->world_height;
+        break;
+
+      case REGION_LEVEL:
+        draw_size = map->region_width * map->region_height;
+        break;
+
+      case LOCAL_LEVEL:
+        draw_size = map->local_width * map->local_height;
+        break;
     }
 
-    else if ( current_pos.level == 1 )
+    for ( uint16_t i = 0; i < draw_size; i++ )
     {
-      for ( uint8_t i = 0; i < ( map->region_width * map->region_height ); i++ )
-      {
-        we_DrawWorldCell( i, map, current_pos );
-      }
+      we_DrawWorldCell( i, map, current_pos );
     }
-    
-    else if ( current_pos.level == 2 )
-    {
-      for ( int i = 0; i < ( map->local_width * map->local_height ); i++ )
-      {
-        we_DrawWorldCell( i, map, current_pos );
-      }
-    }
-    
+
 
     snprintf(pos_text, 50, "%d,%d,%d,%d,%d\n", current_pos.world_index,
            current_pos.region_index, current_pos.local_index, current_pos.level, 
