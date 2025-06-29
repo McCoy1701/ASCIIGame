@@ -18,7 +18,9 @@ void we_creation( void )
 
 
   app.active_widget = a_GetWidget( "generation_menu" );
-  aContainerWidget_t* container = a_GetContainerFromWidget( "generation_menu" );
+  aContainerWidget_t* container =
+    a_GetContainerFromWidget( "generation_menu" );
+
   app.active_widget->hidden = 0;
 
   for ( int i = 0; i < container->num_components; i++ )
@@ -62,7 +64,8 @@ void wec_GenerateWorld( void )
   int new_local_size  = 0;
   int new_z_height    = 0;
 
-  aContainerWidget_t* container = ( aContainerWidget_t* )app.active_widget->data;
+  aContainerWidget_t* container =
+    ( aContainerWidget_t* )app.active_widget->data;
 
   for ( int i = 0; i < container->num_components; i++ )
   {
@@ -171,8 +174,9 @@ void wec_GenerateWorld( void )
                      ( map->region_width * map->region_height ) );
   }
 
-  map = init_world( new_world_size, new_world_size, new_region_size, new_region_size,
-                    new_local_size, new_local_size, new_z_height );
+  map = init_world( new_world_size,  new_world_size, new_region_size,
+                    new_region_size, new_local_size, new_local_size,
+                    new_z_height );
 
 }
 

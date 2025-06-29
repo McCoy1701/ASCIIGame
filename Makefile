@@ -87,6 +87,7 @@ EDITOR_OBJS = \
 							$(OBJ_DIR)/editor.o\
 							$(OBJ_DIR)/init_editor.o\
 							$(OBJ_DIR)/world_editor/creation.o\
+							$(OBJ_DIR)/world_editor/edit.o\
 							$(OBJ_DIR)/world_editor/utils.o\
 							$(OBJ_DIR)/world_editor.o\
 							$(OBJ_DIR)/items_editor.o\

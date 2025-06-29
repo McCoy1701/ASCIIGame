@@ -234,6 +234,47 @@
         "bg"      : [ 255, 255, 255, 255 ]
       }
     ]
+  },
+  {
+    "type"       : "WT_CONTAINER",
+    "name"       : "edit_menu",
+    "x"          : 450,
+    "y"          : 570,
+    "label"      : "Edit",
+    "boxed"      : 1,
+    "hidden"     : 1,
+    "padding"    : 6,
+    "flex"       : 2,
+    "spacing"    : 10,
+    "fg"         : [ 255, 255,   0, 255 ],
+    "bg"         : [ 255, 255, 255, 0 ],
+    "components" : [
+      {
+        "type"    : "WT_INPUT",
+        "name"    : "file_name",
+        "x"       : 250,
+        "y"       : 250,
+        "label"   : "File Name",
+        "max_length" : 16,
+        "boxed"   : 1,
+        "hidden"  : 1,
+        "padding" : 1,
+        "fg"      : [   0,   0,   0, 255 ],
+        "bg"      : [ 255, 255, 255, 0 ]
+      },
+      {
+        "type"    : "WT_BUTTON",
+        "name"    : "",
+        "x"       : 250,
+        "y"       : 450,
+        "label"   : "Generate",
+        "boxed"   : 1,
+        "hidden"  : 1,
+        "padding" : 1,
+        "fg"      : [   0,   0,   0, 255 ],
+        "bg"      : [ 255, 255, 255, 255 ]
+      }
+    ]
   }
 ]
 

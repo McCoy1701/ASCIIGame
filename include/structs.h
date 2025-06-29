@@ -2,6 +2,7 @@
 #define __STRUCTS_H__
 
 #include "defs.h"
+#include "Archimedes.h"
 #include "Daedalus.h"
 
 #include <stdint.h>
@@ -11,6 +12,7 @@ enum{
   WORLD_LEVEL = 0,
   REGION_LEVEL,
   LOCAL_LEVEL
+
 };
 
 typedef enum {
@@ -19,7 +21,16 @@ typedef enum {
     ITEM_TYPE_KEY,
     ITEM_TYPE_CONSUMABLE,
     ITEM_TYPE_AMMUNITION
+
 } ItemType_t;
+
+typedef struct
+{
+  SDL_Rect rects[MAX_GLYPHS];
+  SDL_Texture* texture;
+  int count;
+
+} GlyphArray_t;
 
 // World Building Structs
 typedef struct
@@ -28,6 +39,7 @@ typedef struct
   uint8_t temperature;
   uint8_t elevation;
   uint8_t is_passable;
+
 } GameTile_t;
 
 typedef struct
@@ -72,12 +84,12 @@ typedef struct
   uint16_t region_size;
   uint32_t local_size;
   uint16_t z_height;
+
 } FileHeader_t;
 
 // World Position 'world-index:region-index:local-index:z'
 typedef struct // World_Position_t
 {
-
   // refer to in game tiles as 'world-index:region-index:z'
   uint8_t world_index;
   uint8_t region_index;
@@ -93,6 +105,7 @@ typedef struct // WorldObject_t
     dString_t* name;
     dString_t* description;
     WorldPosition_t pos;
+
 } WorldObject_t;
 
 typedef struct // Lock_t
@@ -103,6 +116,7 @@ typedef struct // Lock_t
   uint8_t pick_difficulty; // if its 255 it is unpickable
   // TODO: make a timer system and integrate jammed
   uint8_t jammed_seconds; // 0 is unjammed
+
 } Lock_t;
 
 typedef struct // MaterialProperties_t
@@ -117,6 +131,7 @@ typedef struct // MaterialProperties_t
     float evasion_value_fact;
     float stealth_value_fact;
     float enchant_value_fact;
+
 } MaterialProperties_t;
 
 typedef struct // Material_t
@@ -126,6 +141,7 @@ typedef struct // Material_t
     dString_t* name;
 
     MaterialProperties_t properties;
+
 } Material_t;
 
 // Inventory
@@ -136,6 +152,7 @@ typedef struct // Ammunition__Item_t
 {
     uint8_t min_damage; // will be added to bows/ranged weapons
     uint8_t max_damage;
+
 } Ammunition__Item_t;
 
 typedef struct
@@ -148,6 +165,7 @@ typedef struct
     uint8_t stealth_value; // TODO: add a stealth system (weapon check on attack)
     uint8_t enchant_value; // TODO: add a enchant system
     uint8_t durability; // 255 is 100%
+
 } Weapon__Item_t;
 
 typedef struct // Armor__Item_t
@@ -157,11 +175,13 @@ typedef struct // Armor__Item_t
     uint8_t stealth_value; // TODO: add a stealth system (armor check on move)
     uint8_t enchant_value; // TODO: add a enchant system
     uint8_t durability; // 255 is 100%
+
 } Armor__Item_t;
 
 typedef struct // Key__Item_t
 {
     Lock_t lock;
+
 } Key__Item_t;
 
 typedef struct // Consumable__Item_t
@@ -201,6 +221,7 @@ typedef struct
 
     uint8_t value_coins;
     uint8_t stackable; // 0 or 1 cannot stack , 255 is max stackable
+
 } Item_t;
 
 // -- Final Inventory and Slots
@@ -211,6 +232,7 @@ typedef struct
 
     uint8_t quantity;
     uint8_t is_equipped; // 0 or >= 1 bool
+
 } Inventory_slot_t;
 
 typedef struct
@@ -218,6 +240,7 @@ typedef struct
     Inventory_slot_t* slots;
 
     uint8_t size;
+
 } Inventory_t;
 
 #endif

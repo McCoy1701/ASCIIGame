@@ -11,20 +11,32 @@ void we_DrawWorldCell( int index, World_t* map, WorldPosition_t pos )
 
   switch (pos.level) {
     case WORLD_LEVEL:
-      e_GetCellSize( index, map->world_width, map->world_height, &x, &y, &w, &h );
-      i = ( ( pos.local_z * ( map->world_width * map->world_height ) ) + index );
+      e_GetCellSize( index, map->world_width, map->world_height,
+                     &x, &y, &w, &h );
+
+      i = ( ( pos.local_z * ( map->world_width * map->world_height ) ) +
+              index );
+
       current_index = pos.world_index;
       break;
 
     case REGION_LEVEL:
-      e_GetCellSize( index, map->region_width, map->region_height, &x, &y, &w, &h );
-      i = ( ( pos.local_z * ( map->region_width * map->region_height ) ) + index );
+      e_GetCellSize( index, map->region_width, map->region_height,
+                     &x, &y, &w, &h );
+
+      i = ( ( pos.local_z * ( map->region_width * map->region_height ) ) +
+              index );
+
       current_index = pos.region_index;
       break;
 
     case LOCAL_LEVEL:
-      e_GetCellSize( index, map->local_width, map->local_height, &x, &y, &w, &h );
-      i = ( ( pos.local_z * ( map->local_width * map->local_height ) ) + index );
+      e_GetCellSize( index, map->local_width, map->local_height,
+                     &x, &y, &w, &h );
+
+      i = ( ( pos.local_z * ( map->local_width * map->local_height ) ) +
+              index );
+
       current_index = pos.local_index;
       break;
 
@@ -44,7 +56,8 @@ void we_DrawWorldCell( int index, World_t* map, WorldPosition_t pos )
 
 }
 
-void e_GetCellSize( int index, int width, int height, int* x, int* y, int* w, int* h )
+void e_GetCellSize( int index, int width, int height,
+                    int* x, int* y, int* w, int* h )
 {
   int row = ( index / height );
   int col = ( index % height );

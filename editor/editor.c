@@ -2,25 +2,38 @@
 
 #include "Archimedes.h"
 #include "Daedalus.h"
+#include "init_editor.h"
 #include "world_editor.h"
 #include "item_editor.h"
 #include "entity_editor.h"
 #include "color_editor.h"
 #include "ui_editor.h"
 
-static void eDoLoop( float );
-static void eRenderLoop( float );
+static void eLogic( float );
+static void eDraw( float );
+
+GlyphArray_t* game_glyphs = NULL;
 
 void e_InitEditor( void )
 {
-  app.delegate.logic = eDoLoop;
-  app.delegate.draw  = eRenderLoop;
+  app.delegate.logic = eLogic;
+  app.delegate.draw  = eDraw;
+  
+  if ( game_glyphs == NULL )
+  {
+    game_glyphs = e_InitGlyphs( "resources/fonts/CodePage737Font.png",
+                               9, 16 );
 
+  }
+  printf( "GG: %d\n", game_glyphs->count );
+  
   a_InitWidgets( "resources/widgets/editor/editor.json" );
 
   app.active_widget = a_GetWidget( "tab_bar" );
 
-  aContainerWidget_t* container = ( aContainerWidget_t* )app.active_widget->data;
+  aContainerWidget_t* container = 
+    ( aContainerWidget_t* )app.active_widget->data;
+
   for ( int i = 0; i < container->num_components; i++ )
   {
     aWidget_t* current = &container->components[i];
@@ -53,7 +66,7 @@ void e_InitEditor( void )
 
 }
 
-static void eDoLoop( float dt )
+static void eLogic( float dt )
 {
   a_DoInput();
 
@@ -66,12 +79,17 @@ static void eDoLoop( float dt )
   a_DoWidget();
 }
 
-static void eRenderLoop( float dt )
+static void eDraw( float dt )
 {
   a_DrawFilledRect( 100, 100, 32, 32, 0, 0, 255, 255 );
   a_DrawFilledRect( 300, 300, 32, 32, 255, 0, 0, 255 );
 
   a_DrawWidgets();
+}
+
+void e_DestroyEditor( void )
+{
+  free( game_glyphs );
 }
 
 void e_Mainloop( void )
@@ -91,6 +109,7 @@ void e_Mainloop( void )
     // 5. Present the scene
     a_PresentScene();
 }
+
 int main( void )
 {
   // Initialize Daedalus Logger
@@ -105,6 +124,8 @@ int main( void )
   while( app.running ) {
     e_Mainloop();
   }
+
+  e_DestroyEditor();
 
   a_Quit();
 
