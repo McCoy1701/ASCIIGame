@@ -151,7 +151,7 @@ static void e_WorldEditorDoLoop( float dt )
         case WORLD_LEVEL: 
           e_GetCellAtMouse( map->world_width, map->world_height, &grid_x, &grid_y );
 
-          current_pos.world_index = INDEX_2(grid_y, grid_x, map->world_width);
+          current_pos.world_index = INDEX_2( grid_y, grid_x, map->world_width );
           break;
 
         case REGION_LEVEL:
@@ -252,7 +252,7 @@ static void e_WorldEditorRenderLoop( float dt )
     }
 
 
-    snprintf(pos_text, 50, "%d,%d,%d,%d,%d\n", current_pos.world_index,
+    snprintf( pos_text, 50, "%d,%d,%d,%d,%d\n", current_pos.world_index,
            current_pos.region_index, current_pos.local_index, current_pos.level, 
            current_pos.local_z );
     a_DrawText( pos_text, 750, 10, 255, 255, 255, app.font_type, TEXT_ALIGN_CENTER, 0 );

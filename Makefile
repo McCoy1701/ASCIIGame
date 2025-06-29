@@ -155,6 +155,8 @@ $(OBJ_DIR)/items.o: src/items.c
 # which conflicts with the test's own 'main' function. The undefined references this
 # creates must be solved in the test file itself (see Step 2 below).
 EDITOR_MODULE_OBJS = \
+		$(OBJ_DIR)/world_editor/creation.o\
+		$(OBJ_DIR)/world_editor/utils.o\
     $(OBJ_DIR)/world_editor.o \
     $(OBJ_DIR)/init_editor.o \
     $(OBJ_DIR)/items_editor.o \
@@ -164,7 +166,7 @@ EDITOR_MODULE_OBJS = \
 
 # Generic pattern rule to build any editor object file from its source file.
 # This avoids conflicts with other rules and keeps the Makefile clean.
-$(OBJ_DIR)/%.o: editor/%.c
+$(OBJ_DIR)/%.o: editor/%.c | $(WEO_DIR)
 	$(CC) -c $< -o $@ $(TEST_CFLAGS)
 
 
@@ -203,7 +205,7 @@ test-items-usage: always $(OBJ_DIR)/items.o
 	$(CC) $(TEST_CFLAGS) -o $(BIN_DIR)/test_items_usage \
 		$(TEST_DIR)/items/test_items_usage.c \
 		$(OBJ_DIR)/items.o \
-		-L./lib -lDaedalus -lArchimedes -lm
+		-lDaedalus -lArchimedes -lm
 
 .PHONY: test-items-helper-functions
 test-items-helper-functions: always $(OBJ_DIR)/items.o
