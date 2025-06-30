@@ -40,15 +40,17 @@ static void we_EditLogic( float dt )
     {
       e_MapMouseCheck( &selected_pos );
 
-      e_GlyphMouseCheck( &glyph_index, &selected_glyph_x, &selected_glyph_y );
-
     }
-    
-  }
 
-  if ( map != NULL )
+    e_GlyphMouseCheck( &glyph_index, &selected_glyph_x, &selected_glyph_y );
+    
+
+  }
+  
+  if ( app.mouse.button == 2 )
   {
-    if ( app.mouse.button == 2 )
+    app.mouse.button = 0;
+    if ( map != NULL )
     {
       switch ( selected_pos.level ) {
         case WORLD_LEVEL:

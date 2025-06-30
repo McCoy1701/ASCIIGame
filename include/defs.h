@@ -44,7 +44,9 @@
 // inventory defs
 #define INVENTORY_SIZE 24
 
-#define INDEX_3( x, y, z, width, height ) ( ( z * ( width * height ) ) + ( y * height ) + x )
+#define INDEX_3( x, y, z, width, height ) ( ( z * ( width * height ) )\
+    + ( y * height ) + x )
+
 #define INDEX_2( x, y, height ) ( ( y * height ) + x )
 
 #endif
