@@ -20,7 +20,9 @@ void e_InitColorEditor( void )
   
   app.active_widget = a_GetWidget( "tab_bar" );
 
-  aContainerWidget_t* container = ( aContainerWidget_t* )app.active_widget->data;
+  aContainerWidget_t* container =
+    ( aContainerWidget_t* )app.active_widget->data;
+
   for ( int i = 0; i < container->num_components; i++ )
   {
     aWidget_t* current = &container->components[i];

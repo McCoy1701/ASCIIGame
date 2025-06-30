@@ -1,14 +1,18 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "Archimedes.h"
 #include "structs.h"
 #include "init_editor.h"
 
 World_t* init_world( const int world_width, const int world_height,
                      const int region_width, const int region_height,
-                     const int local_width, const int local_height, const int z_height )
+                     const int local_width, const int local_height,
+                     const int z_height )
 {
-  World_t* new_world = ( World_t* )malloc( sizeof( World_t ) * ( world_width * world_height ) );
+  World_t* new_world = ( World_t* )malloc( sizeof( World_t ) *
+                                          ( world_width * world_height ) );
+
   if ( new_world == NULL )
   {
     printf("Failed to allocate memory for world\n");
@@ -38,7 +42,7 @@ World_t* init_world( const int world_width, const int world_height,
     new_world[i].z_height      = z_height;
 
     new_world[i].regions = ( RegionCell_t* )malloc( sizeof( RegionCell_t ) *
-                                                    ( region_width * region_height ) );
+                                          ( region_width * region_height ) );
     
     if ( new_world[i].regions == NULL )
     {
@@ -51,8 +55,8 @@ World_t* init_world( const int world_width, const int world_height,
       new_world[i].regions[j].tile = (GameTile_t){.glyph = 1, .elevation = 0,
         .temperature = 20, .is_passable = 0 };
       
-      new_world[i].regions[j].tiles = ( GameTile_t* )malloc( sizeof( GameTile_t ) *
-                                                           ( local_width * local_height * z_height ) );
+      new_world[i].regions[j].tiles = ( GameTile_t* )malloc( 
+        sizeof( GameTile_t ) * ( local_width * local_height * z_height ) );
   
       if ( new_world[i].regions[j].tiles == NULL )
       {
@@ -62,8 +66,8 @@ World_t* init_world( const int world_width, const int world_height,
 
       for( int k = 0; k < ( local_width * local_height * z_height); k++ )
       {
-        new_world[i].regions[j].tiles[k] = (GameTile_t){.glyph = 2, .elevation = 0,
-        .temperature = 20, .is_passable = 0 };
+        new_world[i].regions[j].tiles[k] = (GameTile_t){.glyph = 2,
+          .elevation = 0, .temperature = 20, .is_passable = 0 };
 
       }
 
@@ -101,5 +105,66 @@ void free_world( World_t* world, int world_index, int region_index )
 
   free( world );
   world = NULL;
+}
+
+GlyphArray_t* e_InitGlyphs( const char* filename, int glyph_width,
+                            int glyph_height )
+{
+  SDL_Surface* surface, *glyph_surf;
+  SDL_Rect dest, rect;
+  
+  GlyphArray_t* new_glyphs = ( GlyphArray_t* )malloc( sizeof( GlyphArray_t ) );
+  if ( new_glyphs == NULL )
+  {
+    printf( "Failed to allocate memory for new_glyphs %s\n", filename );
+    return NULL;
+  }
+  new_glyphs->texture = NULL;
+  new_glyphs->count = 0;
+  
+  glyph_surf = a_Image( filename );
+  if( glyph_surf == NULL )
+  {
+    printf( "Failed to open font surface %s, %s", filename, SDL_GetError() );
+    return NULL;
+  }
+
+  surface = SDL_CreateRGBSurface( 0, FONT_TEXTURE_SIZE, FONT_TEXTURE_SIZE, 32,
+                                  0, 0, 0, 0xff );
+
+  SDL_SetColorKey( surface, SDL_TRUE, SDL_MapRGBA( surface->format, 0, 0, 0,
+                                                   0 ) );
+
+  dest.x = dest.y = 0;
+  rect.x = rect.y = 0;
+  rect.w = dest.w = glyph_width;
+  rect.h = dest.h = glyph_height;
+
+  while ( rect.x < glyph_surf->w )
+  {
+    if ( dest.x + dest.w >= GAME_GLYPH_TEXTURE_SIZE )
+    {
+      dest.x = 0;
+      dest.y += dest.h + 1;
+      if ( dest.y + dest.h >= GAME_GLYPH_TEXTURE_SIZE )
+      {
+        SDL_LogMessage( SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_CRITICAL,
+                        "Out of glyph space in %dx%d font atlas texture map.",
+                        FONT_TEXTURE_SIZE, FONT_TEXTURE_SIZE );
+        return NULL;
+      }
+    }
+
+    SDL_BlitSurface( glyph_surf, &rect, surface, &dest );
+    
+    new_glyphs->rects[new_glyphs->count++] = dest;
+
+    dest.x += dest.w;
+    rect.x += rect.w;
+  }
+
+  new_glyphs->texture = a_ToTexture( surface, 1 );
+  
+  return new_glyphs;
 }
 
