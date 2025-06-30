@@ -59,10 +59,13 @@ static void we_CreationRenderLoop( float dt )
 
 void wec_GenerateWorld( void )
 {
-  int new_world_size  = 0;
-  int new_region_size = 0;
-  int new_local_size  = 0;
-  int new_z_height    = 0;
+  int new_world_width   = 0;
+  int new_world_height  = 0;
+  int new_region_width  = 0;
+  int new_region_height = 0;
+  int new_local_width   = 0;
+  int new_local_height  = 0;
+  int new_z_height      = 0;
 
   aContainerWidget_t* container =
     ( aContainerWidget_t* )app.active_widget->data;
@@ -99,15 +102,18 @@ void wec_GenerateWorld( void )
   switch ( world_size_index ) {
 
     case 0: //small
-      new_world_size = WORLD_WIDTH_SMALL;
+      new_world_width  = WORLD_WIDTH_SMALL;
+      new_world_height = WORLD_HEIGHT_SMALL;
     break;
 
     case 1: //medium
-      new_world_size = WORLD_WIDTH_MEDIUM;
+      new_world_width  = WORLD_WIDTH_MEDIUM;
+      new_world_height = WORLD_HEIGHT_MEDIUM;
     break;
 
     case 2: //large
-      new_world_size = WORLD_WIDTH_LARGE;
+      new_world_width  = WORLD_WIDTH_LARGE;
+      new_world_height = WORLD_HEIGHT_LARGE;
     break;
 
     default:
@@ -117,15 +123,18 @@ void wec_GenerateWorld( void )
   switch ( region_size_index ) {
 
     case 0: //small
-      new_region_size = REGION_SIZE_SMALL;
+      new_region_width  = REGION_WIDTH_SMALL;
+      new_region_height = REGION_HEIGHT_SMALL;
     break;
 
     case 1: //medium
-      new_region_size = REGION_SIZE_MEDIUM;
+      new_region_width  = REGION_WIDTH_MEDIUM;
+      new_region_height = REGION_HEIGHT_MEDIUM;
     break;
 
     case 2: //large
-      new_region_size = REGION_SIZE_LARGE;
+      new_region_width  = REGION_WIDTH_LARGE;
+      new_region_height = REGION_HEIGHT_LARGE;
     break;
 
     default:
@@ -135,15 +144,18 @@ void wec_GenerateWorld( void )
   switch ( local_size_index ) {
 
     case 0: //small
-      new_local_size = LOCAL_SIZE_SMALL;
+      new_local_width  = LOCAL_WIDTH_SMALL;
+      new_local_height = LOCAL_HEIGHT_SMALL;
     break;
 
     case 1: //medium
-      new_local_size = LOCAL_SIZE_MEDIUM;
+      new_local_width  = LOCAL_WIDTH_MEDIUM;
+      new_local_height = LOCAL_HEIGHT_MEDIUM;
     break;
 
     case 2: //large
-      new_local_size = LOCAL_SIZE_LARGE;
+      new_local_width  = LOCAL_WIDTH_LARGE;
+      new_local_height = LOCAL_WIDTH_LARGE;
     break;
 
     default:
@@ -174,8 +186,8 @@ void wec_GenerateWorld( void )
                      ( map->region_width * map->region_height ) );
   }
 
-  map = init_world( new_world_size,  new_world_size, new_region_size,
-                    new_region_size, new_local_size, new_local_size,
+  map = init_world( new_world_width,  new_world_height, new_region_width,
+                    new_region_height, new_local_width, new_local_height,
                     new_z_height );
 
 }

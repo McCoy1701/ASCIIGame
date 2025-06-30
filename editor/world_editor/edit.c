@@ -30,6 +30,14 @@ void we_edit( void )
 static void we_EditLogic( float dt )
 {
   a_DoInput();
+
+  if ( app.mouse.button == 1 )
+  {
+    e_MouseCheck( &selected_pos );
+
+  }
+  
+  e_LevelZHeightCheck( &selected_pos );
   
   if ( app.keyboard[ SDL_SCANCODE_ESCAPE ] == 1 )
   {

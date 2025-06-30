@@ -23,9 +23,10 @@ void e_InitEditor( void )
   {
     game_glyphs = e_InitGlyphs( "resources/fonts/CodePage737Font.png",
                                9, 16 );
+    printf( "GG: %d\n", game_glyphs->count );
 
   }
-  printf( "GG: %d\n", game_glyphs->count );
+
   
   a_InitWidgets( "resources/widgets/editor/editor.json" );
 
@@ -83,6 +84,11 @@ static void eDraw( float dt )
 {
   a_DrawFilledRect( 100, 100, 32, 32, 0, 0, 255, 255 );
   a_DrawFilledRect( 300, 300, 32, 32, 255, 0, 0, 255 );
+  
+  a_DrawFilledRect( app.mouse.x, app.mouse.y,
+                   game_glyphs->rects[0].w * 4, game_glyphs->rects[0].h * 4,
+                   255, 0, 0, 0 );
+  a_BlitTextureRect( game_glyphs->texture, game_glyphs->rects[0], app.mouse.x, app.mouse.y, 4 );
 
   a_DrawWidgets();
 }

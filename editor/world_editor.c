@@ -144,88 +144,19 @@ static void e_WorldEditorDoLoop( float dt )
   
   if ( app.mouse.button == 1 )
   {
-    if ( map != NULL )
-    {
-      int grid_x, grid_y;
-      
-      switch (current_pos.level) {
-        case WORLD_LEVEL: 
-          e_GetCellAtMouse( map->world_width, map->world_height, &grid_x,
-                            &grid_y );
-
-          current_pos.world_index = INDEX_2( grid_y, grid_x, map->world_width );
-          break;
-
-        case REGION_LEVEL:
-          e_GetCellAtMouse( map->region_width, map->region_height, &grid_x,
-                            &grid_y );
-          
-          current_pos.region_index = INDEX_2( grid_y, grid_x,
-                                              map->region_width );
-          break;
-
-        case LOCAL_LEVEL:
-          e_GetCellAtMouse( map->local_width, map->local_height, &grid_x,
-                            &grid_y );
-          
-          current_pos.local_index = INDEX_3( grid_y, grid_x, 
-                                             current_pos.local_z, 
-                                             map->local_width, 
-                                             map->local_height );
-          break;
-
-        default:
-          break;
-      }
-    } 
+    e_MouseCheck( &current_pos );
   }
   
-  if ( app.keyboard[SDL_SCANCODE_RETURN] == 1 )
-  {
-    app.keyboard[SDL_SCANCODE_RETURN] = 0;
-
-    if ( current_pos.level >= 0 && current_pos.level < LOCAL_LEVEL )
-    {
-      current_pos.level++;
-    }
-
-  }
-  
-  if ( app.keyboard[SDL_SCANCODE_BACKSPACE] == 1 )
-  {
-    app.keyboard[SDL_SCANCODE_BACKSPACE] = 0;
-
-    if ( current_pos.level > 0 && current_pos.level <= LOCAL_LEVEL )
-    {
-      current_pos.level--;
-    }
-
-  }
-  
-  if ( app.keyboard[SDL_SCANCODE_EQUALS] == 1 )
-  {
-    app.keyboard[SDL_SCANCODE_EQUALS] = 0;
-    if ( current_pos.local_z >= 0 && current_pos.local_z < map->z_height - 1 )
-    {
-      current_pos.local_z++;
-    }
-
-  }
-  
-  if ( app.keyboard[SDL_SCANCODE_MINUS] == 1 )
-  {
-    app.keyboard[SDL_SCANCODE_MINUS] = 0;
-    if ( current_pos.local_z > 0 && current_pos.local_z <= map->z_height )
-    {
-      current_pos.local_z--;
-    }
-
-  }
+  e_LevelZHeightCheck( &current_pos );
 
   if ( app.keyboard[SDL_SCANCODE_ESCAPE] == 1 )
   {
     app.keyboard[SDL_SCANCODE_ESCAPE] = 0;
-    e_DestroyWorldEditor();
+    if ( map != NULL )
+    {
+      e_DestroyWorldEditor();
+
+    }
 
     e_InitEditor();
   }
