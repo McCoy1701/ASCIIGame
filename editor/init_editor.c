@@ -142,11 +142,11 @@ GlyphArray_t* e_InitGlyphs( const char* filename, int glyph_width,
 
   while ( rect.x < glyph_surf->w )
   {
-    if ( dest.x + dest.w >= FONT_TEXTURE_SIZE )
+    if ( dest.x + dest.w >= GAME_GLYPH_TEXTURE_SIZE )
     {
       dest.x = 0;
       dest.y += dest.h + 1;
-      if ( dest.y + dest.h >= FONT_TEXTURE_SIZE )
+      if ( dest.y + dest.h >= GAME_GLYPH_TEXTURE_SIZE )
       {
         SDL_LogMessage( SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_CRITICAL,
                         "Out of glyph space in %dx%d font atlas texture map.",

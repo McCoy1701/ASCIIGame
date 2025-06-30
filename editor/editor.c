@@ -23,7 +23,8 @@ void e_InitEditor( void )
   {
     game_glyphs = e_InitGlyphs( "resources/fonts/CodePage737Font.png",
                                9, 16 );
-    printf( "GG: %d\n", game_glyphs->count );
+    printf( "GG: %d, %d, %d\n", game_glyphs->rects[150].x,
+            game_glyphs->rects[150].y, game_glyphs->count );
 
   }
 

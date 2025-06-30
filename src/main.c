@@ -49,9 +49,11 @@ void aInitGame( void )
            current_pos.region_index, current_pos.local_index, current_pos.level,
            current_pos.local_z );
   
-  g_world = init_world( WORLD_WIDTH_SMALL, WORLD_HEIGHT_SMALL, REGION_SIZE_SMALL,
-                        REGION_SIZE_SMALL, LOCAL_SIZE_SMALL, LOCAL_SIZE_SMALL,
-                        Z_HEIGHT_SMALL );
+  game_glyphs = e_InitGlyphs( "resources/fonts/CodePage737Font.png",
+                               9, 16 );
+  g_world = init_world( WORLD_WIDTH_SMALL, WORLD_HEIGHT_SMALL, 
+                        REGION_WIDTH_SMALL, REGION_HEIGHT_SMALL,
+                        LOCAL_WIDTH_SMALL, LOCAL_HEIGHT_SMALL, Z_HEIGHT_SMALL );
 
   originX = SCREEN_WIDTH/2;
   originY = SCREEN_HEIGHT/2;
@@ -69,34 +71,8 @@ static void aDoLoop( float dt )
     app.mouse.button = 0;
     if ( g_world != NULL )
     {
-      int grid_x, grid_y;
-      
-      switch (current_pos.level)
-      {
-        case WORLD_LEVEL: 
-          g_GetCellAtMouse( g_world->world_width, g_world->world_height, &grid_x, &grid_y );
-
-          current_pos.world_index = INDEX_2(grid_y, grid_x, g_world->world_width);
-          break;
-
-        case REGION_LEVEL:
-          g_GetCellAtMouse( g_world->region_width, g_world->region_height, &grid_x, &grid_y );
-          
-          current_pos.region_index = INDEX_2( grid_y, grid_x, g_world->region_width );
-          break;
-
-        case LOCAL_LEVEL:
-          g_GetCellAtMouse( g_world->local_width, g_world->local_height, &grid_x, &grid_y );
-          
-          current_pos.local_index = INDEX_3( grid_y, grid_x, current_pos.local_z,
-                                             g_world->local_width, g_world->local_height );
-          break;
-
-        default:
-          grid_x = grid_y = 0;
-          break;
-      }
-    } 
+      e_MapMouseCheck( g_world, &current_pos );
+    }
   }
   
   if ( app.keyboard[SDL_SCANCODE_RETURN] == 1 )
@@ -152,66 +128,26 @@ static void aRenderLoop( float dt )
 {
   if ( g_world != NULL )
   {
-    if ( current_pos.level == 0 )
+    int draw_size = 0;
+    switch ( current_pos.level )
     {
-      for ( uint16_t i = 0; i < ( g_world->world_width * g_world->world_height ); i++ )
-      {
-        int x, y, w, h;
-        g_GetCellSize( i, g_world->world_width, g_world->world_height, &x, &y, &w, &h );
+      case WORLD_LEVEL:
+        draw_size = g_world->world_width * g_world->world_height;         
+        break;
 
-        if ( i == current_pos.world_index )
-        {
-          a_DrawRect( x, y, w, h, 255, 255, 0, 255 );
-        }
+      case REGION_LEVEL:
+        draw_size = g_world->region_width * g_world->region_height;
+        break;
 
-        else
-        {
-          a_DrawRect( x, y, w, h, grid_color.r, grid_color.g, grid_color.b, grid_color.a );
-        }
-      }
+      case LOCAL_LEVEL:
+        draw_size = g_world->local_width * g_world->local_height;                      
+        break;
     }
 
-    else if ( current_pos.level == 1 )
+    for ( uint16_t i = 0; i < draw_size; i++ )
     {
-      for ( uint16_t i = 0; i < ( g_world->region_width * g_world->region_height ); i++ )
-      {
-        int x, y, w, h;
-        g_GetCellSize( i, g_world->region_width, g_world->region_height, &x, &y, &w, &h );
-
-        if ( i == current_pos.region_index )
-        {
-          a_DrawRect( x, y, w, h, 255, 255, 0, 255 );
-        } 
-
-        else
-        {
-          a_DrawRect( x, y, w, h, grid_color.r, grid_color.g, grid_color.b, grid_color.a );
-        }
-      }
+      we_DrawWorldCell( i, g_world, current_pos );
     }
-    
-    else if ( current_pos.level == 2 )
-    {
-      for ( int i = 0; i < ( g_world->local_width * g_world->local_height ); i++ )
-      {
-        int x, y, w, h;
-        g_GetCellSize( i, g_world->local_width, g_world->local_height, &x, &y, &w, &h );
-        
-        uint32_t index = ( ( current_pos.local_z * ( g_world->local_width * 
-          g_world->local_height ) ) + i );
-
-        if ( index == current_pos.local_index )
-        {
-          a_DrawRect( x, y, w, h, 255, 255, 0, 255 );
-        } 
-
-        else
-        {
-          a_DrawRect( x, y, w, h, grid_color.r, grid_color.g, grid_color.b, grid_color.a );
-        }
-      }
-    }
-    
 
     snprintf(pos_text, 50, "%d,%d,%d,%d,%d\n", current_pos.world_index,
            current_pos.region_index, current_pos.local_index, current_pos.level,

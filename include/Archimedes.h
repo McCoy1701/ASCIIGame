@@ -36,12 +36,14 @@
 #define SCREEN_WIDTH  1280
 #define SCREEN_HEIGHT 720
 
-#define FONT_SIZE 32 
+#define FONT_SIZE         32 
 #define FONT_TEXTURE_SIZE 512
-#define MAX_GLYPHS 400
-#define MAX_GLYPH_SIZE 8
-#define MAX_WORD_LENGTH 32
-#define MAX_LINE_LENGTH 1024
+#define MAX_GLYPHS        400
+#define GLYPH_WIDTH       9
+#define GLYPH_HEIGHT      16
+#define MAX_GLYPH_SIZE    8
+#define MAX_WORD_LENGTH   32
+#define MAX_LINE_LENGTH   1024
 
 #ifndef __DAEDALUS_H__
 
@@ -55,11 +57,20 @@
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
-#define STRCPY( dest, src ) strncpy( dest, src, sizeof( dest ) ); dest[sizeof(dest) - 1] = '\0'
-#define STRNCPY(dest, src, n) strncpy(dest, src, n); dest[n - 1] = '\0'
-#define RANDF(lower, upper) (((float)rand() / (float)(RAND_MAX)) * (upper - lower)) + lower
-#define MAP( value, start0, start1, end0, end1 ) ( ( value - start0 ) * ( ( end1 - end0 ) / ( start1 - start0 ) ) + end0 )
-#define LOG( msg ) printf( "%s | File: %s, Line: %d\n", msg, __FILE__, __LINE__ )
+#define STRCPY( dest, src ) strncpy( dest, src, sizeof( dest ) );\
+  dest[sizeof(dest) - 1] = '\0'
+
+#define STRNCPY(dest, src, n) strncpy(dest, src, n);\
+  dest[n - 1] = '\0'
+
+#define RANDF(lower, upper) (((float)rand() / (float)(RAND_MAX)) *\
+  (upper - lower)) + lower
+
+#define MAP( value, start0, start1, end0, end1 ) ( ( value - start0 ) *\
+  ( ( end1 - end0 ) / ( start1 - start0 ) ) + end0 )
+
+#define LOG( msg ) printf( "%s | File: %s, Line: %d\n", msg,\
+    __FILE__, __LINE__ )
 
 #endif
 

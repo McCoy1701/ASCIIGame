@@ -16,9 +16,6 @@
 static void e_WorldEditorDoLoop( float );
 static void e_WorldEditorRenderLoop( float );
 
-int grid_x = 0;
-int grid_y = 0;
-
 World_t* map = NULL;
 
 WorldPosition_t current_pos;
@@ -144,7 +141,7 @@ static void e_WorldEditorDoLoop( float dt )
   
   if ( app.mouse.button == 1 )
   {
-    e_MouseCheck( &current_pos );
+    e_MapMouseCheck( &current_pos );
   }
   
   e_LevelZHeightCheck( &current_pos );

@@ -95,6 +95,7 @@ typedef struct // World_Position_t
   uint8_t region_index;
   uint16_t local_index;
   uint8_t local_z;
+  uint8_t x, y;
   uint8_t level;  //TODO: needs moved out of here and put into RenderWorldBuffer_t once created
 
 } WorldPosition_t;
