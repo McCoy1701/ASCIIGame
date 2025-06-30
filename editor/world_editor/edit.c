@@ -127,7 +127,7 @@ static void we_EditDraw( float dt )
       a_DrawRect( game_glyphs->rects[i].x + 900,
                   game_glyphs->rects[i].y + 200,
                   game_glyphs->rects[i].w,
-                  game_glyphs->rects[i].h, 255, 255, 0, 255 );
+                  game_glyphs->rects[i].h, 255, 0, 255, 255 );
     }
     
   }
