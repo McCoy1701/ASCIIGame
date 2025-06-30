@@ -36,9 +36,13 @@ static void we_EditLogic( float dt )
 
   if ( app.mouse.button == 1 )
   {
-    e_MapMouseCheck( &selected_pos );
-    
-    e_GlyphMouseCheck( &glyph_index, &selected_glyph_x, &selected_glyph_y );
+    if ( map != NULL )
+    {
+      e_MapMouseCheck( &selected_pos );
+
+      e_GlyphMouseCheck( &glyph_index, &selected_glyph_x, &selected_glyph_y );
+
+    }
     
   }
 

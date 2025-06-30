@@ -141,7 +141,11 @@ static void e_WorldEditorDoLoop( float dt )
   
   if ( app.mouse.button == 1 )
   {
-    e_MapMouseCheck( &current_pos );
+    if ( map != NULL )
+    {
+      e_MapMouseCheck( &current_pos );
+
+    }
   }
   
   e_LevelZHeightCheck( &current_pos );
