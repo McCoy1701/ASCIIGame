@@ -13,5 +13,3 @@ core
 ./resources/world/world_test.dat
 compile_commands.json
 
-.sisyphus/
-sisyphus.legend

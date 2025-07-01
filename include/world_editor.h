@@ -1,6 +1,10 @@
 #ifndef __WORLD_EDITOR_H__
 #define __WORLD_EDITOR_H__
 
+#include "structs.h"
+
+extern World_t* map;
+
 /*
  * Initialize the World Editor subsystem and set up the UI framework
  *
@@ -25,8 +29,14 @@ void e_InitWorldEditor( void );
  * -- After calling, world editor functions become unsafe to use
  */
 void e_DestroyWorldEditor( void );
-void e_GetCellSize( int index, int width, int height, int* x, int* y, int* w, int* h );
-void e_GetCellAtMouse( int width, int height, int* grid_x, int* grid_y );
+void e_GetCellSize( int index, int width, int height,
+                    int* x, int* y, int* w, int* h );
+void e_GetCellAtMouse( int width, int height, int originx, int originy,
+                       int cell_width, int cell_height, uint8_t* grid_x,
+                       uint8_t* grid_y, int centered );
+void e_MapMouseCheck( WorldPosition_t* pos );
+void e_GlyphMouseCheck( int* index, uint8_t* grid_x, uint8_t* grid_y );
+void e_LevelZHeightCheck( WorldPosition_t* pos );
 
 /*
  * Enter world creation mode with generation parameters UI
@@ -75,5 +85,8 @@ void we_save( void );
  * -- Should free existing world before loading new one
  */
 void we_load( void );
+
+void we_DrawWorldCell( int index, World_t* map, WorldPosition_t pos );
+void wec_GenerateWorld( void );
 
 #endif
