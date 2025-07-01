@@ -8,14 +8,21 @@
 #include <stdint.h>
 #include <stdint.h>
 
-enum{
+enum
+{
+  APOLLO_PALETE = 0
+};
+
+enum
+{
   WORLD_LEVEL = 0,
   REGION_LEVEL,
   LOCAL_LEVEL
 
 };
 
-typedef enum {
+typedef enum
+{
     ITEM_TYPE_WEAPON,
     ITEM_TYPE_ARMOR,
     ITEM_TYPE_KEY,
@@ -39,6 +46,8 @@ typedef struct
   uint8_t temperature;
   uint8_t elevation;
   uint8_t is_passable;
+  uint8_t fg;
+  uint8_t bg;
 
 } GameTile_t;
 
