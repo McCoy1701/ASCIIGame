@@ -3,6 +3,8 @@
 #include "editor.h"
 #include "structs.h"
 #include "world_editor.h"
+#include <stdio.h>
+#include <stdlib.h>
 
 void we_DrawWorldCell( int index, World_t* map, WorldPosition_t pos )
 {
@@ -10,6 +12,8 @@ void we_DrawWorldCell( int index, World_t* map, WorldPosition_t pos )
   uint32_t i = 0;
   uint16_t current_index = 0;
   int current_glyph = 0;
+  int current_bg = 0;
+  int current_fg = 0;
 
   switch ( pos.level ) {
     case WORLD_LEVEL:
@@ -20,6 +24,8 @@ void we_DrawWorldCell( int index, World_t* map, WorldPosition_t pos )
 
       current_index = pos.world_index;
       current_glyph = map[i].tile.glyph;
+      current_bg    = map[i].tile.bg;
+      current_fg    = map[i].tile.fg;
       break;
 
     case REGION_LEVEL:
@@ -30,6 +36,8 @@ void we_DrawWorldCell( int index, World_t* map, WorldPosition_t pos )
 
       current_index = pos.region_index;
       current_glyph = map[pos.world_index].regions[i].tile.glyph;
+      current_bg    = map[pos.world_index].regions[i].tile.bg;
+      current_fg    = map[pos.world_index].regions[i].tile.fg;
       break;
 
     case LOCAL_LEVEL:
@@ -42,6 +50,10 @@ void we_DrawWorldCell( int index, World_t* map, WorldPosition_t pos )
       current_index = pos.local_index;
       current_glyph = map[pos.world_index].regions[pos.region_index].
         tiles[i].glyph;
+      current_bg    = map[pos.world_index].regions[pos.region_index].tiles[i]
+        .bg;
+      current_fg    = map[pos.world_index].regions[pos.region_index].tiles[i]
+        .fg;
 
       break;
 
@@ -52,7 +64,9 @@ void we_DrawWorldCell( int index, World_t* map, WorldPosition_t pos )
   if ( i == current_index )
   {
     a_DrawFilledRect( x, y, game_glyphs->rects[current_glyph].w * 2,
-                      game_glyphs->rects[current_glyph].h * 2, 255, 255, 0, 255 );
+                      game_glyphs->rects[current_glyph].h * 2, 
+                      255, 255, 0, 255 );
+
     a_BlitTextureRect( game_glyphs->texture, game_glyphs->rects[current_glyph],
                       x, y, 2 );
   } 
@@ -60,7 +74,11 @@ void we_DrawWorldCell( int index, World_t* map, WorldPosition_t pos )
   else
   {
     a_DrawFilledRect( x, y, game_glyphs->rects[current_glyph].w * 2,
-                      game_glyphs->rects[current_glyph].h * 2, 0, 0, 0, 255 );
+                      game_glyphs->rects[current_glyph].h * 2,
+                      master_colors[APOLLO_PALETE][current_bg].r, 
+                      master_colors[APOLLO_PALETE][current_bg].g,
+                      master_colors[APOLLO_PALETE][current_bg].b, 255 );
+    
     a_BlitTextureRect( game_glyphs->texture, game_glyphs->rects[current_glyph],
                       x, y, 2 );
   }
@@ -201,6 +219,46 @@ void e_LevelZHeightCheck( WorldPosition_t* pos )
     }
 
   }
+
+}
+
+void e_LoadColorPalette( aColor_t palette[MAX_COLOR_GROUPS][MAX_COLOR_PALETTE],
+                       const char * filename )
+{
+  FILE* file;
+  char line[8];
+  unsigned int hex_value;
+  uint8_t r, g, b;
+  int i = 0;
+
+  file = fopen( filename, "rb" );
+  if ( file == NULL )
+  {
+    printf( "Failed to open file %s\n", filename );
+    return;
+  } 
+
+  while( fgets( line, sizeof( line ), file ) != NULL )
+  {
+    hex_value = ( unsigned int )strtol( line, NULL, 16 );
+    r = hex_value >> 16;
+    g = hex_value >> 8;
+    b = hex_value;
+    
+    if ( i >= 0 && i < MAX_COLOR_PALETTE )
+    {
+      palette[APOLLO_PALETE][i].r = r;
+      palette[APOLLO_PALETE][i].g = g;
+      palette[APOLLO_PALETE][i].b = b;
+      palette[APOLLO_PALETE][i].a = 255;
+
+    }
+
+    i++;
+
+  }
+
+  fclose( file );
 
 }
 

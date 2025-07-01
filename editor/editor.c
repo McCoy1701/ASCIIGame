@@ -2,6 +2,7 @@
 
 #include "Archimedes.h"
 #include "Daedalus.h"
+#include "defs.h"
 #include "init_editor.h"
 #include "world_editor.h"
 #include "item_editor.h"
@@ -13,6 +14,7 @@ static void eLogic( float );
 static void eDraw( float );
 
 GlyphArray_t* game_glyphs = NULL;
+aColor_t master_colors[MAX_COLOR_GROUPS][48] = {0};
 
 void e_InitEditor( void )
 {
@@ -23,11 +25,11 @@ void e_InitEditor( void )
   {
     game_glyphs = e_InitGlyphs( "resources/fonts/CodePage737Font.png",
                                9, 16 );
-    printf( "GG: %d, %d, %d\n", game_glyphs->rects[150].x,
-            game_glyphs->rects[150].y, game_glyphs->count );
 
   }
 
+  e_LoadColorPalette( master_colors,
+                      "resources/assets/colorpalette/colors.hex" );
   
   a_InitWidgets( "resources/widgets/editor/editor.json" );
 

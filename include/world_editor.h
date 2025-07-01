@@ -37,6 +37,8 @@ void e_GetCellAtMouse( int width, int height, int originx, int originy,
 void e_MapMouseCheck( WorldPosition_t* pos );
 void e_GlyphMouseCheck( int* index, uint8_t* grid_x, uint8_t* grid_y );
 void e_LevelZHeightCheck( WorldPosition_t* pos );
+void e_LoadColorPalette( aColor_t palette[MAX_COLOR_GROUPS][MAX_COLOR_PALETTE],
+                       const char * filename );
 
 /*
  * Enter world creation mode with generation parameters UI
