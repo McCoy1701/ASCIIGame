@@ -84,16 +84,17 @@ $(BIN_DIR)/native: $(NATIVE_OBJS) | $(BIN_DIR)
 editor: $(BIN_DIR)/editor
 
 EDITOR_OBJS = \
-							$(OBJ_DIR)/editor.o\
-							$(OBJ_DIR)/init_editor.o\
 							$(OBJ_DIR)/world_editor/creation.o\
 							$(OBJ_DIR)/world_editor/edit.o\
 							$(OBJ_DIR)/world_editor/utils.o\
-							$(OBJ_DIR)/world_editor.o\
-							$(OBJ_DIR)/items_editor.o\
-							$(OBJ_DIR)/entity_editor.o\
 							$(OBJ_DIR)/color_editor.o\
-							$(OBJ_DIR)/ui_editor.o
+							$(OBJ_DIR)/editor.o\
+							$(OBJ_DIR)/entity_editor.o\
+							$(OBJ_DIR)/init_editor.o\
+							$(OBJ_DIR)/items_editor.o\
+							$(OBJ_DIR)/save_editor.o\
+							$(OBJ_DIR)/ui_editor.o\
+							$(OBJ_DIR)/world_editor.o
 
 $(OBJ_DIR)/%.o: $(EDITOR_DIR)/%.c | $(OBJ_DIR) $(WEO_DIR)
 	$(CC) -c $< -o $@ -ggdb $(CFLAGS)
