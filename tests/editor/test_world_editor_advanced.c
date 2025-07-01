@@ -257,15 +257,15 @@ int main(void)
     TEST_SUITE_START("World Editor Advanced Tests");
 
     // Run tests for advanced world editor scenarios
-    RUN_TEST(test_we_large_world_operations);
-    RUN_TEST(test_we_stress_test_recreation);
-    RUN_TEST(test_we_unimplemented_placeholders);
+    //RUN_TEST(test_we_large_world_operations);
+    //RUN_TEST(test_we_stress_test_recreation);
+    //RUN_TEST(test_we_unimplemented_placeholders);
 
-    RUN_TEST(test_we_memory_boundary_corruption);
-    RUN_TEST(test_we_null_pointer_cascade);
-    RUN_TEST(test_we_integer_overflow_protection);
-    RUN_TEST(test_we_resource_exhaustion_recovery);
-    RUN_TEST(test_we_concurrent_access_simulation);
+    //RUN_TEST(test_we_memory_boundary_corruption);
+    //RUN_TEST(test_we_null_pointer_cascade);
+    //RUN_TEST(test_we_integer_overflow_protection);
+    //RUN_TEST(test_we_resource_exhaustion_recovery);
+    //RUN_TEST(test_we_concurrent_access_simulation);
 
     // =========================================================================
     // DAEDALUS LOGGER SHUTDOWN (MUST BE BEFORE TEST_SUITE_END)

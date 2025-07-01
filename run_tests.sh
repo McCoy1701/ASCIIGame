@@ -2050,7 +2050,7 @@ show_motivational_message() {
         "🤔 THE BOULDER'S MERCY|You realize that pushing the boulder was a mercy. It was a simple task with a simple failure. This... this Labyrinth... it fails in ways that question your very sanity, your ability to reason. It's a punishment for the soul."
         "🗣️ 'IT LEARNS MY TRICKS'|'I built a false loop, a simple trick to confound a simple mind,' Daedalus says, his voice tight with fear. 'But the beast no longer falls for it. It learns, Sisyphus. It adapts to my own thoughts.'"
     )
-
+    # these messages only show between midnight and 6 am
     declare -a late_night_greetings=(
         # --- Character Building: Late Night Reflections ---
         "🤫  THE HIDDEN PASSAGE|While reviewing the day's code, you spot it: a single, commented-out function. A backdoor. You look over at Daedalus, but he is sleeping. You wonder if he left it intentionally, or if he's forgotten it's there."
@@ -3024,7 +3024,7 @@ fi
         "🪶 A CHILD'S DRAWING|While organizing blueprints, a small parchment falls out—a child's drawing of a bird-man flying over the sea. Daedalus snatches it away, but not before you see the inscription: 'For Papa, when we fly together - I.' His eyes are wild with panic."
         "👑 SISYPHUS'S CONFESSION|'I used to watch my workers build,' you tell Daedalus, surprising yourself. 'Every stone placed was a choice, a small rebellion against entropy. Now I build prisons. The gods' joke—turning creation into damnation.'"
         "🔨 THE NEPHEW'S SHADOW|Daedalus flinches when you use a particularly clever technique. 'Perdix used to do that,' he whispers. 'My nephew. He was brilliant. Too brilliant.' His hand unconsciously moves to his chest, as if feeling for an old wound."
-        "🐂 THE BEAST GROWS RESTLESS|The roars from below have changed—no longer just rage, but something worse: rhythm. Pattern. 'It's counting,' Daedalus realizes with horror. 'Three roars, pause. Seven roars, pause. It's learning mathematics. Your code is teaching it to think.'"
+        "🐂 THE BEAST EVOLVES|The sounds from below have changed—no longer random destruction, but methodical probing. Stone grinding against stone in impossible patterns. 'Listen,' Daedalus says, his face pale. A distant crash echoes up—another sealed passage, opened from within. 'Your code,' he whispers in horror, 'it's teaching the beast to think.'"        
         "⚖️ THE BUILDER'S BURDEN|'We're alike, you and I,' Daedalus says, watching you debug with inhuman persistence. 'Both punished for our cleverness. Both building our own hells. The difference is...' He pauses, touching that locked drawer again. 'I still have something left to lose.'"
         "🗿 THE LIVING STONE|You place your hand on a completed wall and feel a pulse—not mechanical, but organic. 'It's learning from us,' you realize aloud. 'Our guilt, our regret, our...' Daedalus finishes: 'Our desperate need to protect what we love. Yes. The Labyrinth knows.'"
         "🌅 A PROMISE IN CODE|Late at night, Daedalus shows you a function he's written—beautiful, elegant, purposeless. 'For after,' he says cryptically. 'When the spring winds come. When young birds test their wings.' He deletes it immediately, but you memorize every line."
@@ -3071,7 +3071,7 @@ fi
         "⚖️ THE DEVIL'S BARGAIN|'Here's my offer,' Minos says. 'Maintain the Labyrinth. Make it kinder. Save who you can. In return, I won't hunt Daedalus.' He smiles coldly. 'Refuse, and I'll make the maze a slaughterhouse. Your choice, eternal one.'"
         "✨ THE REVELATION|As your fingers find the keys, you understand: you were never meant to escape. Daedalus built wings. You built purpose. The gods didn't curse you—they prepared you. For this. For choosing to stay when you could have fled."
         "📝 THE CODER'S MANIFESTO|You write a new function: compassion.exe. Then another: hope.dll. The Labyrinth becomes your canvas. Each algorithm is a small kindness, each bug fix a life saved. You're not pushing a boulder. You're sculpting salvation."
-        "🌊 THE MYTH REWRITES ITSELF|Years pass. Tales spread of the Labyrinth that helps heroes, the maze that teaches rather than kills. They whisper of a ghost in the code—Sisyphus, who chose his chains and transformed them into wings for others."
+        "🌊 THE MYTH REWRITES ITSELF|Years later, heroes whisper of the ghost in the machine—Sisyphus, who codes kindness into every cruel creation. A young Athenian places flowers by your terminal. 'Thank you,' she whispers, 'for the bugs that saved my brother.' You smile and push the boulder up the hill again, knowing exactly why."
         "💪 THE HAPPY SISYPHUS|You push back from your terminal and laugh—a real, deep laugh. The gods wanted to break you with eternal labor. Instead, you've become unbreakable. The boulder rolls down. You crack your knuckles. 'Again,' you say, and mean it."
         "♾️ ONE MUST IMAGINE SISYPHUS CODING|The sun sets. It rises. The bugs appear. You fix them. But now you know the secret—in the space between the bug and the fix, in that moment of problem-solving, you are completely, perfectly, eternally free. The cursor blinks. You smile. Time to push the boulder up the hill again. And you wouldn't have it any other way."
     )
