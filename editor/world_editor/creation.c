@@ -1,3 +1,8 @@
+// editor/world_editor/creation.c - World Editor Creation Mode
+// Allows user to select world generation parameters
+
+#include <stdio.h>
+
 #include "Archimedes.h"
 #include "init_editor.h"
 #include "structs.h"

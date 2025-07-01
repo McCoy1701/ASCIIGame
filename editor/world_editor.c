@@ -1,3 +1,6 @@
+// editor/world_editor.c - World Editor Subsystem
+// Core World Editor framework and main application loop management
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -8,7 +11,7 @@
 #include "editor.h"
 #include "world_editor.h"
 #include "init_editor.h"
-#include "item_editor.h"
+#include "items_editor.h"
 #include "entity_editor.h"
 #include "color_editor.h"
 #include "ui_editor.h"

@@ -1,3 +1,6 @@
+/* include/world_editor.h - World Editor Subsystem */
+// INSERT WISDOM HERE
+
 #ifndef __WORLD_EDITOR_H__
 #define __WORLD_EDITOR_H__
 
@@ -29,6 +32,23 @@ void e_InitWorldEditor( void );
  * -- After calling, world editor functions become unsafe to use
  */
 void e_DestroyWorldEditor( void );
+/*
+ * Calculate screen position and dimensions for a grid cell at given index
+ *
+ * @param index: Linear index of the cell within the grid (0-based)
+ * @param width: Total width of the grid in cells
+ * @param height: Total height of the grid in cells  
+ * @param x: Output pointer for calculated X screen position
+ * @param y: Output pointer for calculated Y screen position
+ * @param w: Output pointer for calculated cell width in pixels
+ * @param h: Output pointer for calculated cell height in pixels
+ * @return: void
+ * -- Converts linear grid index to 2D screen coordinates for rendering
+ * -- Centers the grid on screen using SCREEN_WIDTH and SCREEN_HEIGHT
+ * -- Uses CELL_WIDTH and CELL_HEIGHT constants for consistent sizing
+ * -- Output pointers must be valid; no bounds checking performed
+ * -- Essential for translating logical grid positions to visual display
+ */
 void e_GetCellSize( int index, int width, int height,
                     int* x, int* y, int* w, int* h );
 void e_GetCellAtMouse( int width, int height, int originx, int originy,

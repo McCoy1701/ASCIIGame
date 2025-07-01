@@ -1,3 +1,6 @@
+// editor/editor.c - Editor Subsystem
+// Core editor framework and main application loop management
+
 #include <stdio.h>
 
 #include "Archimedes.h"
@@ -5,7 +8,7 @@
 #include "defs.h"
 #include "init_editor.h"
 #include "world_editor.h"
-#include "item_editor.h"
+#include "items_editor.h"
 #include "entity_editor.h"
 #include "color_editor.h"
 #include "ui_editor.h"
@@ -16,6 +19,9 @@ static void eDraw( float );
 GlyphArray_t* game_glyphs = NULL;
 aColor_t master_colors[MAX_COLOR_GROUPS][48] = {0};
 
+/*
+ * Initialize the complete Editor subsystem and application framework
+ */
 void e_InitEditor( void )
 {
   app.delegate.logic = eLogic;
@@ -96,11 +102,17 @@ static void eDraw( float dt )
   a_DrawWidgets();
 }
 
+/*
+ * Clean up and destroy the Editor subsystem
+ */
 void e_DestroyEditor( void )
 {
   free( game_glyphs );
 }
 
+/*
+ * Execute one frame of the main editor loop cycle
+ */
 void e_Mainloop( void )
 {
     a_PrepareScene();

@@ -1,3 +1,6 @@
+// editor/world_editor/utils.c - World Editor Utility Functions
+// Provides utility functions for world editor mode
+
 #include "Archimedes.h"
 #include "defs.h"
 #include "editor.h"
@@ -85,6 +88,9 @@ void we_DrawWorldCell( int index, World_t* map, WorldPosition_t pos )
 
 }
 
+/*
+ * Calculate screen position and dimensions for a grid cell at given index
+ */
 void e_GetCellSize( int index, int width, int height,
                     int* x, int* y, int* w, int* h )
 {

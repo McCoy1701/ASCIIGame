@@ -3,7 +3,7 @@
 #include "Archimedes.h"
 #include "editor.h"
 #include "world_editor.h"
-#include "item_editor.h"
+#include "items_editor.h"
 #include "entity_editor.h"
 #include "color_editor.h"
 

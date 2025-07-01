@@ -1,3 +1,6 @@
+// editor/world_editor/edit.c - World Editor Edit Mode
+// Allows user to modify world data using mouse and keyboard
+
 #include <stdlib.h>
 #include <stdio.h>
 

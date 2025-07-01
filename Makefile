@@ -158,12 +158,14 @@ $(OBJ_DIR)/items.o: src/items.c
 EDITOR_MODULE_OBJS = \
 		$(OBJ_DIR)/world_editor/creation.o\
 		$(OBJ_DIR)/world_editor/utils.o\
+		$(OBJ_DIR)/world_editor/edit.o \
     $(OBJ_DIR)/world_editor.o \
     $(OBJ_DIR)/init_editor.o \
     $(OBJ_DIR)/items_editor.o \
     $(OBJ_DIR)/entity_editor.o \
     $(OBJ_DIR)/color_editor.o \
-    $(OBJ_DIR)/ui_editor.o
+    $(OBJ_DIR)/ui_editor.o \
+	#$(OBJ_DIR)/editor.o
 
 # Generic pattern rule to build any editor object file from its source file.
 # This avoids conflicts with other rules and keeps the Makefile clean.
@@ -219,7 +221,7 @@ test-world-editor-basic: always $(EDITOR_MODULE_OBJS)
 
 .PHONY: test-world-editor-advanced
 test-world-editor-advanced: always $(EDITOR_MODULE_OBJS)
-	$(CC) $(TEST_CFLAGS) -o $(BIN_DIR)/test_world_editor_advanced tests/editor/test_world_editor_advanced.c $(EDITOR_MODULE_OBJS) -lm -lDaedalus -lArchimedes
+	$(CC) $(TEST_CFLAGS) -o $(BIN_DIR)/test_world_editor_advanced tests/editor/test_world_editor_advanced.c $(EDITOR_MODULE_OBJS) -lDaedalus -lArchimedes $(CFLAGS)
 
 
 # --- Individual Test Runners (for detailed output) ---

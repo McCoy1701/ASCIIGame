@@ -1,3 +1,6 @@
+/* include/structs.h - Structs and Enums for ASCIIGame */
+// INSERT WISDOM HERE
+
 #ifndef __STRUCTS_H__
 #define __STRUCTS_H__
 

@@ -299,7 +299,7 @@ save_story_to_legend() {
     fi
 }
 
-echo -e "${PURPLE}🚀 Daedalus Test Suite Runner${NC}"
+echo -e "${PURPLE}🚀 ASCIIGame Test Suite Runner${NC}"
 echo -e "${CYAN}Enhanced with Sisyphus Progress Archive & Historical Analysis${NC}"
 echo -e "${GRAY}Run './run_tests.sh help' for available commands${NC}"
 echo "=================================================="

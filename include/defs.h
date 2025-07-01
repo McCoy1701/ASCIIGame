@@ -46,6 +46,33 @@
 // inventory defs
 #define INVENTORY_SIZE 24
 
+// item editor defs
+#define ITEMS_GRID_WIDTH         8
+#define ITEMS_GRID_HEIGHT        6
+#define ITEMS_GRID_START_X       50
+#define ITEMS_GRID_START_Y       100
+#define ITEMS_CELL_WIDTH         18
+#define ITEMS_CELL_HEIGHT        24
+#define ITEM_PROPERTIES_PANEL_X  400
+#define ITEM_PROPERTIES_PANEL_Y  100
+#define ITEM_PROPERTIES_PANEL_WIDTH 250
+#define MATERIALS_GRID_WIDTH     4
+#define MATERIALS_GRID_HEIGHT    3
+#define MATERIALS_PANEL_X        100
+#define MATERIALS_PANEL_Y        300
+#define MATERIALS_CELL_WIDTH     60
+#define MATERIALS_CELL_HEIGHT    40
+#define MATERIALS_GRID_MAX       12
+// Item preview display area
+#define ITEM_PREVIEW_X          700
+#define ITEM_PREVIEW_Y          100
+// Item system limits  
+#define MAX_ITEMS               1000
+#define ITEMS_GRID_MAX          48    
+// Additional useful constants for completeness
+#define ITEM_PREVIEW_SIZE       64    // Size of the large preview icon
+#define MAX_FILTERED_ITEMS      256   // Maximum items after type filtering
+
 #define INDEX_3( x, y, z, width, height ) ( ( z * ( width * height ) )\
     + ( y * height ) + x )
 

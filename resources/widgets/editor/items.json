@@ -74,6 +74,70 @@
       "bg"     : [ 255, 255,   0, 100 ]
     }
     ]
+  },
+  {
+    "type"       : "WT_CONTAINER",
+    "name"       : "world_menu_bar",
+    "x"          : 10,
+    "y"          : 670,
+    "label"      : "Menu",
+    "boxed"      : 1,
+    "hidden"     : 0,
+    "padding"    : 6,
+    "flex"       : 1,
+    "spacing"    : 10,
+    "fg"         : [ 255, 255,   0, 255 ],
+    "bg"         : [ 255, 255, 255, 0 ],
+    "components" : [
+      {
+        "type"    : "WT_BUTTON",
+        "name"    : "creation",
+        "x"       : 10,
+        "y"       : 670,
+        "label"   : "Creation",
+        "boxed"   : 1,
+        "hidden"  : 0,
+        "padding": 1,
+        "fg"      : [   0,   0,   0, 255 ],
+        "bg"      : [ 117, 167, 67, 255 ]
+      },
+      {
+        "type"    : "WT_BUTTON",
+        "name"    : "edit",
+        "x"       : 150,
+        "y"       : 670,
+        "label"   : "Edit",
+        "boxed"   : 1,
+        "hidden"  : 0,
+        "padding": 1,
+        "fg"      : [   0,   0,   0, 255 ],
+        "bg"      : [ 255, 255, 255, 255 ]
+      },
+      {
+        "type"    : "WT_BUTTON",
+        "name"    : "save",
+        "x"       : 220,
+        "y"       : 670,
+        "label"   : "Save",
+        "boxed"   : 1,
+        "hidden"  : 0,
+        "padding": 1,
+        "fg"      : [   0,   0,   0, 255 ],
+        "bg"      : [ 117, 167, 67, 255 ]
+      },
+      {
+        "type"    : "WT_BUTTON",
+        "name"    : "load",
+        "x"       : 303,
+        "y"       : 670,
+        "label"   : "Load",
+        "boxed"   : 1,
+        "hidden"  : 0,
+        "padding": 1,
+        "fg"      : [   0,   0,   0, 255 ],
+        "bg"      : [ 255, 255, 255, 255 ]
+      }
+    ]
   }
 ]
 
