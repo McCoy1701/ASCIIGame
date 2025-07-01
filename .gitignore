@@ -10,6 +10,6 @@ obj/
 index/
 bin/
 core
-resources/world/
+resources/world/*
 compile_commands.json
 
