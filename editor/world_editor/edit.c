@@ -20,7 +20,7 @@ void we_edit( void )
   app.delegate.logic = we_EditLogic;
   app.delegate.draw  = we_EditDraw;
 
-  app.active_widget = a_GetWidget( "edit_menu" );
+  /*app.active_widget = a_GetWidget( "edit_menu" );
   aContainerWidget_t* container = a_GetContainerFromWidget( "edit_menu" );
   app.active_widget->hidden = 0;
 
@@ -29,7 +29,7 @@ void we_edit( void )
     aWidget_t* current = &container->components[i];
     current->hidden = 0;
 
-  }
+  }*/
 
 }
 
