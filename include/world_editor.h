@@ -5,6 +5,13 @@
 
 extern World_t* map;
 
+enum
+{
+  WEM_NONE,
+  WEM_SELECT,
+  WEM_MAX
+};
+
 /*
  * Initialize the World Editor subsystem and set up the UI framework
  *
@@ -90,7 +97,9 @@ void we_save( void );
 void we_load( void );
 
 void we_DrawWorldCell( int index, World_t* map, WorldPosition_t pos, WorldPosition_t highlight );
-GameTileArray_t* e_GetDrawSelectGrid( World_t* map, WorldPosition_t pos,
+GameTileArray_t* e_GetSelectGrid( World_t* map, WorldPosition_t pos,
+                                   WorldPosition_t highlight );
+void e_DrawSelectGrid( World_t* map, WorldPosition_t pos,
                                    WorldPosition_t highlight );
 void e_ChangeGameTileGlyph( World_t* map, WorldPosition_t pos, GameTileArray_t* tile_array, int glyph_index );
 void e_ChangeGameTileColor( World_t* map, WorldPosition_t pos,

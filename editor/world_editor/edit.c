@@ -12,9 +12,19 @@ static void we_EditDraw( float dt );
 static WorldPosition_t selected_pos;
 static WorldPosition_t highlighted_pos;
 int glyph_index = 0;
-int color_index = 0;
+int fg_index = 0;
+int bg_index = 0;
 uint8_t selected_glyph_x = 0, selected_glyph_y = 0;
-uint8_t selected_color_x = 0, selected_color_y = 0;
+uint8_t selected_fg_x = 0, selected_fg_y = 0;
+uint8_t selected_bg_x = 0, selected_bg_y = 0;
+int mode = 0;
+
+char* wem_strings[WEM_MAX+1] =
+{
+  "WEM_NONE",
+  "WEM_SELECT",
+  "WEM_MAX"
+};
 
 void we_edit( void )
 {
@@ -40,12 +50,8 @@ static void we_EditLogic( float dt )
   
   if ( map != NULL )
   {
-    if ( map != NULL )
-    {
-      e_MapMouseCheck( &highlighted_pos );
-
-    }
-
+    e_MapMouseCheck( &highlighted_pos );
+    
   }
   
   if ( app.mouse.button == 1 )
@@ -59,7 +65,7 @@ static void we_EditLogic( float dt )
     }
 
     e_GlyphMouseCheck( &glyph_index, &selected_glyph_x, &selected_glyph_y );
-    e_ColorMouseCheck( &color_index, &selected_color_x, &selected_color_y );
+    e_ColorMouseCheck( &fg_index, &selected_fg_x, &selected_fg_y );
 
   }
   
@@ -85,37 +91,61 @@ static void we_EditLogic( float dt )
       }
     }
   }
+  
   if ( app.mouse.button == 3 )
   {
     app.mouse.button = 0;
-    GameTileArray_t* temp = e_GetDrawSelectGrid( map, selected_pos, highlighted_pos );
-    e_ChangeGameTileGlyph( map, selected_pos, temp, glyph_index );
+    e_ColorMouseCheck( &bg_index, &selected_bg_x, &selected_bg_y );
+    
+    if ( map != NULL )
+    {
+      if ( mode == WEM_SELECT )
+      {
+        GameTileArray_t* temp = e_GetSelectGrid( map, selected_pos, highlighted_pos );
+        e_ChangeGameTileGlyph( map, selected_pos, temp, glyph_index );
+        mode = WEM_NONE;
+      }
+
+    }
 
   }
+
+  if ( app.keyboard[SDL_SCANCODE_S] == 1 )
+  {
+    app.keyboard[SDL_SCANCODE_S] = 0;
+
+    mode = WEM_SELECT;
+  }
+  
   if ( app.keyboard[SDL_SCANCODE_F] == 1 )
   {
     app.keyboard[SDL_SCANCODE_F] = 0;
 
     if ( map != NULL )
     {
-      GameTileArray_t* temp = e_GetDrawSelectGrid( map, selected_pos, highlighted_pos );
-      e_ChangeGameTileColor( map, selected_pos, temp, color_index, 1 );
+      if ( mode == WEM_SELECT )
+      {
+        GameTileArray_t* temp = e_GetSelectGrid( map, selected_pos, highlighted_pos );
+        e_ChangeGameTileColor( map, selected_pos, temp, fg_index, 1 );
+        mode = WEM_NONE;
+
+      }
       
-      /*switch ( selected_pos.level ) {
+      switch ( selected_pos.level ) {
         case WORLD_LEVEL:
-          map[selected_pos.world_index].tile.fg = color_index;
+          map[selected_pos.world_index].tile.fg = fg_index;
           break;
 
         case REGION_LEVEL:
           map[selected_pos.world_index].regions[selected_pos.region_index].
-            tile.fg = color_index;
+            tile.fg = fg_index;
           break;
 
         case LOCAL_LEVEL:
           map[selected_pos.world_index].regions[selected_pos.region_index].
-            tiles[selected_pos.local_index].fg = color_index;
+            tiles[selected_pos.local_index].fg = fg_index;
           break;
-      }*/
+      }
     }
   }
   
@@ -125,24 +155,29 @@ static void we_EditLogic( float dt )
 
     if ( map != NULL )
     {
-      GameTileArray_t* temp = e_GetDrawSelectGrid( map, selected_pos, highlighted_pos );
-      e_ChangeGameTileColor( map, selected_pos, temp, color_index, 0 );
+      if ( mode == WEM_SELECT )
+      {
+        GameTileArray_t* temp = e_GetSelectGrid( map, selected_pos, highlighted_pos );
+        e_ChangeGameTileColor( map, selected_pos, temp, bg_index, 0 );
+        mode = WEM_NONE;
 
-      /*switch ( selected_pos.level ) {
+      }
+
+      switch ( selected_pos.level ) {
         case WORLD_LEVEL:
-          map[selected_pos.world_index].tile.bg = color_index;
+          map[selected_pos.world_index].tile.bg = bg_index;
           break;
 
         case REGION_LEVEL:
           map[selected_pos.world_index].regions[selected_pos.region_index].
-            tile.bg = color_index;
+            tile.bg = bg_index;
           break;
 
         case LOCAL_LEVEL:
           map[selected_pos.world_index].regions[selected_pos.region_index].
-            tiles[selected_pos.local_index].bg = color_index;
+            tiles[selected_pos.local_index].bg = bg_index;
           break;
-      }*/
+      }
     }
   }
   
@@ -183,6 +218,10 @@ static void we_EditDraw( float dt )
       we_DrawWorldCell( i, map, selected_pos, highlighted_pos );
     }
 
+    if ( mode == WEM_SELECT )
+    {
+      e_DrawSelectGrid( map, selected_pos, highlighted_pos );
+    }
 
   }
   
@@ -209,12 +248,20 @@ static void we_EditDraw( float dt )
                       master_colors[APOLLO_PALETE][i].b,
                       master_colors[APOLLO_PALETE][i].a );
 
-    if ( i == color_index )
+    if ( i == fg_index )
     {
       a_DrawRect( x + 927, y + 100,
                   GLYPH_WIDTH, GLYPH_HEIGHT, 255, 0, 255, 255 );
     }
+    
+    if ( i == bg_index )
+    {
+      a_DrawRect( x + 927, y + 100,
+                  GLYPH_WIDTH, GLYPH_HEIGHT, 255, 255, 0, 255 );
+    }
+    
     x += 9;
+
   }
   
   a_DrawFilledRect( 895, 240, 262, 178, 0, 0, 255, 255 ); //Glyph grid background
@@ -247,6 +294,9 @@ static void we_EditDraw( float dt )
   a_BlitTextureRect( game_glyphs->texture, game_glyphs->rects[glyph_index],
                      900, 100, 2, (aColor_t){.r = 255, .g = 255, .b = 255,
                                              .a = 255 } );
+
+  a_DrawText( wem_strings[mode], 1100, 10, 255, 255, 255, app.font_type,
+             TEXT_ALIGN_CENTER, 0 );
 
   a_DrawWidgets();
 

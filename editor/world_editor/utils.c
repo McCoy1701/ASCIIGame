@@ -101,7 +101,7 @@ void we_DrawWorldCell( int index, World_t* map, WorldPosition_t pos, WorldPositi
 
 }
 
-GameTileArray_t* e_GetDrawSelectGrid( World_t* map, WorldPosition_t pos,
+void e_DrawSelectGrid( World_t* map, WorldPosition_t pos,
                                    WorldPosition_t highlight )
 {
   int grid_w    = ( highlight.x - pos.x );
@@ -122,19 +122,6 @@ GameTileArray_t* e_GetDrawSelectGrid( World_t* map, WorldPosition_t pos,
     current_y = highlight.y;
 
   }
-
-  GameTileArray_t* new_game_tile_array = ( GameTileArray_t* )malloc(
-    sizeof( GameTileArray_t ) );
-
-  if ( new_game_tile_array == NULL )
-  {
-    printf( "Failed to allocate memory for new_game_tile_array\n" );
-    return NULL;
-  }
-
-  new_game_tile_array->data = ( int* )malloc( sizeof( int ) *
-                                            ( grid_w + 1 ) * ( grid_h + 1 ) *
-                                              map->z_height );
 
   int x, y, w, h;
 
@@ -179,7 +166,6 @@ GameTileArray_t* e_GetDrawSelectGrid( World_t* map, WorldPosition_t pos,
           current_glyph = map[current_index].tile.glyph;
           current_fg = map[current_index].tile.fg;
           
-          new_game_tile_array->data[k++] = current_index;
           break;
 
         case REGION_LEVEL:
@@ -192,7 +178,6 @@ GameTileArray_t* e_GetDrawSelectGrid( World_t* map, WorldPosition_t pos,
           current_fg = map[pos.world_index].regions[current_index].
             tile.fg;
           
-          new_game_tile_array->data[k++] = current_index;
 
           break;
 
@@ -205,8 +190,6 @@ GameTileArray_t* e_GetDrawSelectGrid( World_t* map, WorldPosition_t pos,
 
           current_glyph = map[pos.world_index].regions[pos.region_index].
             tiles[current_index].glyph;
-
-          new_game_tile_array->data[k++] = current_index;
 
           current_index -= ( map->local_width * map->local_height * pos.local_z );
 
@@ -226,6 +209,103 @@ GameTileArray_t* e_GetDrawSelectGrid( World_t* map, WorldPosition_t pos,
       a_BlitTextureRect( game_glyphs->texture, game_glyphs->rects[current_glyph],
                         x, y, 2, master_colors[APOLLO_PALETE][current_fg] );
       
+    }
+  }
+
+}
+
+GameTileArray_t* e_GetSelectGrid( World_t* map, WorldPosition_t pos,
+                                   WorldPosition_t highlight )
+{
+  int grid_w    = ( highlight.x - pos.x );
+  int grid_h    = ( highlight.y - pos.y );
+  int current_x = pos.x, current_y  = pos.y;
+  int current_z = pos.local_z;
+
+  if ( grid_w < 0 )
+  {
+    grid_w = ( pos.x - highlight.x );
+    current_x = highlight.x;
+
+  }
+
+  if ( grid_h < 0 )
+  {
+    grid_h = ( pos.y - highlight.y );
+    current_y = highlight.y;
+
+  }
+
+  GameTileArray_t* new_game_tile_array = ( GameTileArray_t* )malloc(
+    sizeof( GameTileArray_t ) );
+
+  if ( new_game_tile_array == NULL )
+  {
+    printf( "Failed to allocate memory for new_game_tile_array\n" );
+    return NULL;
+  }
+
+  new_game_tile_array->data = ( int* )malloc( sizeof( int ) *
+                                            ( grid_w + 1 ) * ( grid_h + 1 ) *
+                                              map->z_height );
+
+  int current_index = 0;
+  int current_width = 0, current_height = 0;
+
+  switch ( pos.level )
+  {
+    case WORLD_LEVEL:
+      current_width  = map->world_width;
+      current_height = map->world_height;
+      break;
+    
+    case REGION_LEVEL:
+      current_width  = map->region_width;
+      current_height = map->region_height;
+      break;
+    
+    case LOCAL_LEVEL:
+      current_width  = map->local_width;
+      current_height = map->local_height;
+      break;
+
+    default:
+      break;
+  }
+  
+  int k = 0;
+
+  for ( int i = 0; i < grid_w + 1; i++ )
+  {
+    for ( int j = 0; j < grid_h + 1; j++ )
+    {
+      switch ( pos.level )
+      {
+        case WORLD_LEVEL:
+          current_index = INDEX_2( ( current_x + i ), ( current_y + j ),
+                                  current_height );
+
+          new_game_tile_array->data[k++] = current_index;
+          break;
+
+        case REGION_LEVEL:
+          current_index = INDEX_2( ( current_x + i ), ( current_y + j ),
+                                  current_height );
+
+          new_game_tile_array->data[k++] = current_index;
+
+          break;
+
+        case LOCAL_LEVEL:
+          current_index = INDEX_3( ( current_y + j ), ( current_x + i ),
+                                     current_z, current_width, current_height );
+          
+          new_game_tile_array->data[k++] = current_index;
+          break;
+
+        default:
+          break;
+      }
     }
   }
 
