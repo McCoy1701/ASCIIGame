@@ -68,7 +68,7 @@ void we_DrawWorldCell( int index, World_t* map, WorldPosition_t pos )
                       255, 255, 0, 255 );
 
     a_BlitTextureRect( game_glyphs->texture, game_glyphs->rects[current_glyph],
-                      x, y, 2 );
+                      x, y, 2, master_colors[APOLLO_PALETE][current_fg] );
   } 
 
   else
@@ -80,7 +80,8 @@ void we_DrawWorldCell( int index, World_t* map, WorldPosition_t pos )
                       master_colors[APOLLO_PALETE][current_bg].b, 255 );
     
     a_BlitTextureRect( game_glyphs->texture, game_glyphs->rects[current_glyph],
-                      x, y, 2 );
+                      x, y, 2, master_colors[APOLLO_PALETE][current_fg] );
+
   }
 
 }
@@ -169,10 +170,20 @@ void e_MapMouseCheck( WorldPosition_t* pos )
 void e_GlyphMouseCheck( int* index, uint8_t* grid_x, uint8_t* grid_y )
 {
 
-  e_GetCellAtMouse( 28, 11, 900, 200, GLYPH_WIDTH, GLYPH_HEIGHT,
+  e_GetCellAtMouse( 28, 11, 900, 245, GLYPH_WIDTH, GLYPH_HEIGHT,
                     grid_x, grid_y, 0 );
 
   *index = INDEX_2( *grid_x, *grid_y, 28 );
+
+}
+
+void e_ColorMouseCheck( int* index, uint8_t* grid_x, uint8_t* grid_y )
+{
+
+  e_GetCellAtMouse( 7, 9, 927, 100, GLYPH_WIDTH, GLYPH_HEIGHT,
+                    grid_x, grid_y, 0 );
+
+  *index = INDEX_2( *grid_x, *grid_y, 6 );
 
 }
 

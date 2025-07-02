@@ -33,6 +33,8 @@
 #define CELL_WIDTH  18
 #define CELL_HEIGHT 32
 
+#define GLYPH_WIDTH 9
+#define GLYPH_HEIGHT 16
 #define MAX_COLOR_GROUPS        16
 #define MAX_COLOR_PALETTE       48
 #define GAME_GLYPH_TEXTURE_SIZE 256

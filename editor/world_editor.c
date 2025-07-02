@@ -2,16 +2,17 @@
 #include <stdlib.h>
 
 #include "Archimedes.h"
+#include "color_editor.h"
 #include "Daedalus.h"
 #include "defs.h"
-#include "structs.h"
 #include "editor.h"
-#include "world_editor.h"
+#include "entity_editor.h"
 #include "init_editor.h"
 #include "item_editor.h"
-#include "entity_editor.h"
-#include "color_editor.h"
+#include "save_editor.h"
+#include "structs.h"
 #include "ui_editor.h"
+#include "world_editor.h"
 
 static void e_WorldEditorDoLoop( float );
 static void e_WorldEditorRenderLoop( float );
@@ -103,12 +104,18 @@ void e_InitWorldEditor( void )
 
 void we_save( void )
 {
-
+  if ( map != NULL )
+  {
+    SaveWorld( map, "resources/world/map.dat" );
+  }
 }
 
 void we_load( void )
 {
-
+  if ( map == NULL ) 
+  {
+    map = LoadWorld( "resources/world/map.dat" );
+  }
 }
 
 static void e_WorldEditorDoLoop( float dt )

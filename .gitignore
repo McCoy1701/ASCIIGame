@@ -10,6 +10,6 @@ obj/
 index/
 bin/
 core
-./resources/world/world_test.dat
+resources/world/*
 compile_commands.json
 

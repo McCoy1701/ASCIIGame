@@ -3,6 +3,7 @@
 
 #include "Archimedes.h"
 #include "editor.h"
+#include "structs.h"
 #include "world_editor.h"
 
 static void we_EditLogic( float dt );
@@ -10,14 +11,16 @@ static void we_EditDraw( float dt );
 
 WorldPosition_t selected_pos;
 int glyph_index = 0;
+int color_index = 0;
 uint8_t selected_glyph_x = 0, selected_glyph_y = 0;
+uint8_t selected_color_x = 0, selected_color_y = 0;
 
 void we_edit( void )
 {
   app.delegate.logic = we_EditLogic;
   app.delegate.draw  = we_EditDraw;
 
-  app.active_widget = a_GetWidget( "edit_menu" );
+  /*app.active_widget = a_GetWidget( "edit_menu" );
   aContainerWidget_t* container = a_GetContainerFromWidget( "edit_menu" );
   app.active_widget->hidden = 0;
 
@@ -26,7 +29,7 @@ void we_edit( void )
     aWidget_t* current = &container->components[i];
     current->hidden = 0;
 
-  }
+  }*/
 
 }
 
@@ -43,7 +46,7 @@ static void we_EditLogic( float dt )
     }
 
     e_GlyphMouseCheck( &glyph_index, &selected_glyph_x, &selected_glyph_y );
-    
+    e_ColorMouseCheck( &color_index, &selected_color_x, &selected_color_y );
 
   }
   
@@ -65,6 +68,54 @@ static void we_EditLogic( float dt )
         case LOCAL_LEVEL:
           map[selected_pos.world_index].regions[selected_pos.region_index].
             tiles[selected_pos.local_index].glyph = glyph_index;
+          break;
+      }
+    }
+  }
+  
+  if ( app.keyboard[SDL_SCANCODE_F] == 1 )
+  {
+    app.keyboard[SDL_SCANCODE_F] = 0;
+
+    if ( map != NULL )
+    {
+      switch ( selected_pos.level ) {
+        case WORLD_LEVEL:
+          map[selected_pos.world_index].tile.fg = color_index;
+          break;
+
+        case REGION_LEVEL:
+          map[selected_pos.world_index].regions[selected_pos.region_index].
+            tile.fg = color_index;
+          break;
+
+        case LOCAL_LEVEL:
+          map[selected_pos.world_index].regions[selected_pos.region_index].
+            tiles[selected_pos.local_index].fg = color_index;
+          break;
+      }
+    }
+  }
+  
+  if ( app.keyboard[SDL_SCANCODE_B] == 1 )
+  {
+    app.keyboard[SDL_SCANCODE_B] = 0;
+
+    if ( map != NULL )
+    {
+      switch ( selected_pos.level ) {
+        case WORLD_LEVEL:
+          map[selected_pos.world_index].tile.bg = color_index;
+          break;
+
+        case REGION_LEVEL:
+          map[selected_pos.world_index].regions[selected_pos.region_index].
+            tile.bg = color_index;
+          break;
+
+        case LOCAL_LEVEL:
+          map[selected_pos.world_index].regions[selected_pos.region_index].
+            tiles[selected_pos.local_index].bg = color_index;
           break;
       }
     }
@@ -109,23 +160,55 @@ static void we_EditDraw( float dt )
 
   }
   
-  a_DrawFilledRect( 895, 195, 262, 180, 0, 0, 255, 255 );
+  //a_DrawFilledRect( 895, 95, 90, 180, 0, 0, 255, 255 ); //Color grid background
+  
+  int x = 0, y = 0;
+  for ( int i = 0; i < MAX_COLOR_PALETTE; i++ )
+  {
+
+    if ( x + GLYPH_WIDTH > ( 6 * GLYPH_WIDTH ) )
+    {
+      x = 0;
+      y += GLYPH_HEIGHT + 1;
+      if ( y > ( 6 * GLYPH_HEIGHT ) )
+      {
+//        printf( "color grid is too large!\n" );
+//        return;
+      }
+
+    }
+    a_DrawFilledRect( x + 927, y + 100, GLYPH_WIDTH, GLYPH_HEIGHT,
+                      master_colors[APOLLO_PALETE][i].r,
+                      master_colors[APOLLO_PALETE][i].g,
+                      master_colors[APOLLO_PALETE][i].b,
+                      master_colors[APOLLO_PALETE][i].a );
+
+    if ( i == color_index )
+    {
+      a_DrawRect( x + 927, y + 100,
+                  GLYPH_WIDTH, GLYPH_HEIGHT, 255, 0, 255, 255 );
+    }
+    x += 9;
+  }
+  
+  a_DrawFilledRect( 895, 240, 262, 178, 0, 0, 255, 255 ); //Glyph grid background
   
   for ( int i = 0; i < game_glyphs->count; i++ )
   {
     a_DrawFilledRect( game_glyphs->rects[i].x + 900,
-                      game_glyphs->rects[i].y + 200,
+                      game_glyphs->rects[i].y + 245,
                       game_glyphs->rects[i].w,
                       game_glyphs->rects[i].h, 0, 0, 0, 255 );
 
     a_BlitTextureRect( game_glyphs->texture, game_glyphs->rects[i],
                        game_glyphs->rects[i].x + 900,
-                       game_glyphs->rects[i].y + 200, 1 );
+                       game_glyphs->rects[i].y + 245, 1, (aColor_t){.r = 255,
+                      .g = 255, . b = 255, .a = 255 } );
     
     if ( i == glyph_index )
     {
       a_DrawRect( game_glyphs->rects[i].x + 900,
-                  game_glyphs->rects[i].y + 200,
+                  game_glyphs->rects[i].y + 245,
                   game_glyphs->rects[i].w,
                   game_glyphs->rects[i].h, 255, 0, 255, 255 );
     }
@@ -136,7 +219,8 @@ static void we_EditDraw( float dt )
                     game_glyphs->rects[glyph_index].h * 2, 255, 0, 0, 255 );
 
   a_BlitTextureRect( game_glyphs->texture, game_glyphs->rects[glyph_index],
-                     900, 100, 2 );
+                     900, 100, 2, (aColor_t){.r = 255, .g = 255, .b = 255,
+                                             .a = 255 } );
 
   a_DrawWidgets();
 

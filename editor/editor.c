@@ -91,7 +91,10 @@ static void eDraw( float dt )
   a_DrawFilledRect( app.mouse.x, app.mouse.y,
                    game_glyphs->rects[0].w * 4, game_glyphs->rects[0].h * 4,
                    255, 0, 0, 0 );
-  a_BlitTextureRect( game_glyphs->texture, game_glyphs->rects[0], app.mouse.x, app.mouse.y, 4 );
+  
+  a_BlitTextureRect( game_glyphs->texture, game_glyphs->rects[0], app.mouse.x,
+                     app.mouse.y, 4, (aColor_t){.r = 255, .g = 255, .b = 255,
+                                               .a = 255 } );
 
   a_DrawWidgets();
 }

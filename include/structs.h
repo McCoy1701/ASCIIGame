@@ -84,15 +84,11 @@ typedef struct
 typedef struct
 {
   char magic[8];
-  uint32_t version;
-  uint16_t world_index;
-  uint16_t region_index;
-  uint32_t local_index;
-  int32_t  local_x, local_y, local_z;
-  uint16_t world_size;
-  uint16_t region_size;
-  uint32_t local_size;
-  uint16_t z_height;
+  uint16_t version;
+  uint8_t world_width, world_height;
+  uint8_t region_width, region_height;
+  uint8_t local_width, local_height;
+  uint8_t z_height;
 
 } FileHeader_t;
 
