@@ -7,13 +7,13 @@
 #include "color_editor.h"
 #include "ui_editor.h"
 
-static void e_ItemEditorDoLoop( float );
-static void e_ItemEditorRenderLoop( float );
+static void e_ItemEditorLogic( float );
+static void e_ItemEditorDraw( float );
 
 void e_InitItemEditor( void )
 {
-  app.delegate.logic = e_ItemEditorDoLoop;
-  app.delegate.draw  = e_ItemEditorRenderLoop;
+  app.delegate.logic = e_ItemEditorLogic;
+  app.delegate.draw  = e_ItemEditorDraw;
   
   a_InitWidgets( "resources/widgets/editor/items.json" );
   
@@ -54,7 +54,7 @@ void e_InitItemEditor( void )
   
 }
 
-static void e_ItemEditorDoLoop( float dt )
+static void e_ItemEditorLogic( float dt )
 {
   a_DoInput();
   
@@ -67,7 +67,7 @@ static void e_ItemEditorDoLoop( float dt )
   a_DoWidget();
 }
 
-static void e_ItemEditorRenderLoop( float dt )
+static void e_ItemEditorDraw( float dt )
 {
   a_DrawFilledRect( 100, 100, 32, 32, 0, 0, 255, 255 );
   a_DrawFilledRect( 300, 300, 32, 32, 0, 255, 0, 255 );

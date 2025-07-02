@@ -14,8 +14,8 @@
 #include "ui_editor.h"
 #include "world_editor.h"
 
-static void e_WorldEditorDoLoop( float );
-static void e_WorldEditorRenderLoop( float );
+static void e_WorldEditorLogic( float );
+static void e_WorldEditorDraw( float );
 
 World_t* map = NULL;
 
@@ -25,8 +25,8 @@ char* pos_text;
 void e_InitWorldEditor( void )
 {
   aWidget_t* w;
-  app.delegate.logic = e_WorldEditorDoLoop;
-  app.delegate.draw  = e_WorldEditorRenderLoop;
+  app.delegate.logic = e_WorldEditorLogic;
+  app.delegate.draw  = e_WorldEditorDraw;
 
   pos_text = malloc( sizeof(char) * 50 );
 
@@ -118,7 +118,7 @@ void we_load( void )
   }
 }
 
-static void e_WorldEditorDoLoop( float dt )
+static void e_WorldEditorLogic( float dt )
 {
   a_DoInput();
   if ( map!= NULL )
@@ -172,7 +172,7 @@ static void e_WorldEditorDoLoop( float dt )
   a_DoWidget();
 }
 
-static void e_WorldEditorRenderLoop( float dt )
+static void e_WorldEditorDraw( float dt )
 {
   if ( map != NULL )
   {

@@ -7,13 +7,13 @@
 #include "color_editor.h"
 #include "ui_editor.h"
 
-static void e_EntityEditorDoLoop( float );
-static void e_EntityEditorRenderLoop( float );
+static void e_EntityEditorLogic( float );
+static void e_EntityEditorDraw( float );
 
 void e_InitEntityEditor( void )
 {
-  app.delegate.logic = e_EntityEditorDoLoop;
-  app.delegate.draw  = e_EntityEditorRenderLoop;
+  app.delegate.logic = e_EntityEditorLogic;
+  app.delegate.draw  = e_EntityEditorDraw;
   
   a_InitWidgets( "resources/widgets/editor/entity.json" );
   
@@ -54,7 +54,7 @@ void e_InitEntityEditor( void )
   
 }
 
-static void e_EntityEditorDoLoop( float dt )
+static void e_EntityEditorLogic( float dt )
 {
   a_DoInput();
   
@@ -73,7 +73,7 @@ static void e_EntityEditorDoLoop( float dt )
   a_DoWidget();
 }
 
-static void e_EntityEditorRenderLoop( float dt )
+static void e_EntityEditorDraw( float dt )
 {
   a_DrawFilledRect( 100, 100, 32, 32, 128, 128, 128, 255 );
   a_DrawFilledRect( 300, 300, 32, 32, 255, 255, 0, 255 );

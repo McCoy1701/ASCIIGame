@@ -3,8 +3,8 @@
 #include "structs.h"
 #include "world_editor.h"
 
-static void we_CreationDoLoop( float );
-static void we_CreationRenderLoop( float );
+static void we_CreationLogic( float );
+static void we_CreationDraw( float );
 
 int world_size_index    = 0;
 int region_size_index   = 0;
@@ -13,8 +13,8 @@ int z_height_size_index = 0;
 
 void we_creation( void )
 {
-  app.delegate.logic = we_CreationDoLoop;
-  app.delegate.draw  = we_CreationRenderLoop;
+  app.delegate.logic = we_CreationLogic;
+  app.delegate.draw  = we_CreationDraw;
 
 
   app.active_widget = a_GetWidget( "generation_menu" );
@@ -36,7 +36,7 @@ void we_creation( void )
 
 }
 
-static void we_CreationDoLoop( float dt )
+static void we_CreationLogic( float dt )
 {
   a_DoInput();
 
@@ -51,7 +51,7 @@ static void we_CreationDoLoop( float dt )
 
 }
 
-static void we_CreationRenderLoop( float dt )
+static void we_CreationDraw( float dt )
 {
   a_DrawWidgets();
 

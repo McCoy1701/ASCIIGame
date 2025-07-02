@@ -14,22 +14,23 @@ int glyph_index = 0;
 int color_index = 0;
 uint8_t selected_glyph_x = 0, selected_glyph_y = 0;
 uint8_t selected_color_x = 0, selected_color_y = 0;
+uint8_t highlighted_glyph_x = 0, highlighted_glyph_y = 0;
 
 void we_edit( void )
 {
   app.delegate.logic = we_EditLogic;
   app.delegate.draw  = we_EditDraw;
 
-  /*app.active_widget = a_GetWidget( "edit_menu" );
-  aContainerWidget_t* container = a_GetContainerFromWidget( "edit_menu" );
-  app.active_widget->hidden = 0;
+  app.active_widget = a_GetWidget( "generation_menu" );
+  aContainerWidget_t* container = a_GetContainerFromWidget( "generation_menu" );
+  app.active_widget->hidden = 1;
 
   for ( int i = 0; i < container->num_components; i++ )
   {
     aWidget_t* current = &container->components[i];
-    current->hidden = 0;
+    current->hidden = 1;
 
-  }*/
+  }
 
 }
 

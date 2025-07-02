@@ -7,8 +7,8 @@
 #include "entity_editor.h"
 #include "color_editor.h"
 
-static void e_UIEditorDoLoop( float );
-static void e_UIEditorRenderLoop( float );
+static void e_UIEditorLogic( float );
+static void e_UIEditorDraw( float );
 
 static void uie_NewButton( void );
 static void uie_NewSelect( void );
@@ -20,8 +20,8 @@ static void uie_NewContainer( void );
 void e_InitUIEditor( void )
 {
   aWidget_t* w;
-  app.delegate.logic = e_UIEditorDoLoop;
-  app.delegate.draw  = e_UIEditorRenderLoop;
+  app.delegate.logic = e_UIEditorLogic;
+  app.delegate.draw  = e_UIEditorDraw;
   
   a_InitWidgets( "resources/widgets/editor/ui.json" );
   
@@ -99,7 +99,7 @@ void e_InitUIEditor( void )
   
 }
 
-static void e_UIEditorDoLoop( float dt )
+static void e_UIEditorLogic( float dt )
 {
   a_DoInput();
   
@@ -112,7 +112,7 @@ static void e_UIEditorDoLoop( float dt )
   a_DoWidget();
 }
 
-static void e_UIEditorRenderLoop( float dt )
+static void e_UIEditorDraw( float dt )
 {
   a_DrawFilledRect( 100, 100, 32, 32, 0, 255, 0, 255 );
   a_DrawFilledRect( 300, 300, 32, 32, 255, 255, 0, 255 );
