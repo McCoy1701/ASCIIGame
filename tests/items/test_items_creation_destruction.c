@@ -58,7 +58,7 @@ int test_create_weapon(void)
     Material_t material = create_test_material();
 
     // Test normal weapon creation
-    Item_t* weapon = create_weapon("Iron Sword", "iron_sword", material, 10, 15, 0, 's');
+    Item_t* weapon = create_weapon("Iron Sword", "iron_sword", material, 10, 15, 0, 's', 0, 0, "common");
 
     TEST_ASSERT(weapon != NULL, "Weapon should be created successfully");
     TEST_ASSERT(weapon->type == ITEM_TYPE_WEAPON, "Item type should be WEAPON");
@@ -89,10 +89,10 @@ int test_create_weapon(void)
     destroy_item(weapon);
 
     // Test weapon creation with NULL parameters
-    Item_t* null_weapon = create_weapon(NULL, "test", material, 5, 10, 1, 'w');
+    Item_t* null_weapon = create_weapon(NULL, "test", material, 5, 10, 1, 'w', 0, 0, "common");
     TEST_ASSERT(null_weapon == NULL, "Creating weapon with NULL name should fail");
 
-    null_weapon = create_weapon("Test", NULL, material, 5, 10, 1, 'w');
+    null_weapon = create_weapon("Test", NULL, material, 5, 10, 1, 'w', 0, 0, "common");
     TEST_ASSERT(null_weapon == NULL, "Creating weapon with NULL id should fail");
 
     return 1;
@@ -103,7 +103,7 @@ int test_create_armor(void)
     Material_t material = create_test_material();
 
     // Test normal armor creation
-    Item_t* armor = create_armor("Iron Chestplate", "iron_chest", material, 20, 5, 'A', 10, 5);
+    Item_t* armor = create_armor("Iron Chestplate", "iron_chest", material, 20, 5, 'A', 10, 5, "common");
 
     TEST_ASSERT(armor != NULL, "Armor should be created successfully");
     TEST_ASSERT(armor->type == ITEM_TYPE_ARMOR, "Item type should be ARMOR");
@@ -121,7 +121,7 @@ int test_create_armor(void)
     destroy_item(armor);
 
     // Test armor creation with NULL parameters
-    Item_t* null_armor = create_armor(NULL, "test", material, 10, 5, 'a', 10, 20);
+    Item_t* null_armor = create_armor(NULL, "test", material, 10, 5, 'a', 10, 20, "common");
     TEST_ASSERT(null_armor == NULL, "Creating armor with NULL name should fail");
 
     return 1;
@@ -132,7 +132,7 @@ int test_create_key(void)
     Lock_t lock = create_test_lock();
 
     // Test normal key creation
-    Item_t* key = create_key("Iron Key", "iron_key", lock, 'k');
+    Item_t* key = create_key("Iron Key", "iron_key", lock, 'k', 0, "common");
 
     TEST_ASSERT(key != NULL, "Key should be created successfully");
     TEST_ASSERT(key->type == ITEM_TYPE_KEY, "Item type should be KEY");
@@ -155,7 +155,7 @@ int test_create_key(void)
     destroy_item(key);
 
     // Test key creation with NULL parameters
-    Item_t* null_key = create_key(NULL, "test", lock, 'k');
+    Item_t* null_key = create_key(NULL, "test", lock, 'k', 0, "common");
     TEST_ASSERT(null_key == NULL, "Creating key with NULL name should fail");
 
     return 1;
@@ -164,7 +164,7 @@ int test_create_key(void)
 int test_create_consumable(void)
 {
     // Test normal consumable creation
-    Item_t* potion = create_consumable("Health Potion", "health_pot", 25, test_heal_effect, 'h');
+    Item_t* potion = create_consumable("Health Potion", "health_pot", 25, test_heal_effect, 'h', 0, "common");
 
     TEST_ASSERT(potion != NULL, "Consumable should be created successfully");
     TEST_ASSERT(potion->type == ITEM_TYPE_CONSUMABLE, "Item type should be CONSUMABLE");
@@ -181,7 +181,7 @@ int test_create_consumable(void)
     destroy_item(potion);
 
     // Test consumable with NULL callback
-    Item_t* null_consumable = create_consumable("Test", "test", 10, NULL, 'p');
+    Item_t* null_consumable = create_consumable("Test", "test", 10, NULL, 'p', 0, "common");
     TEST_ASSERT(null_consumable == NULL, "Creating consumable with NULL callback should fail");
 
     return 1;
@@ -192,7 +192,7 @@ int test_create_ammunition(void)
     Material_t material = create_test_material();
 
     // Test normal ammunition creation
-    Item_t* arrow = create_ammunition("Iron Arrow", "iron_arrow", material, 3, 7, 'i');
+    Item_t* arrow = create_ammunition("Iron Arrow", "iron_arrow", material, 3, 7, 'i', 0, "common");
 
     TEST_ASSERT(arrow != NULL, "Ammunition should be created successfully");
     TEST_ASSERT(arrow->type == ITEM_TYPE_AMMUNITION, "Item type should be AMMUNITION");
@@ -215,7 +215,7 @@ int test_destroy_item(void)
     Material_t material = create_test_material();
 
     // Test destroying a valid item
-    Item_t* weapon = create_weapon("Test Sword", "test_sword", material, 5, 10, 0, 's');
+    Item_t* weapon = create_weapon("Test Sword", "test_sword", material, 5, 10, 0, 's', 0, 0, "common");
     TEST_ASSERT(weapon != NULL, "Weapon should be created for destruction test");
 
     // This should not crash

@@ -46,7 +46,7 @@ int test_complete_item_lifecycle(void)
 
     // Phase 1: Item Creation and Material Application
     d_LogDebug("Phase 1: Creating items and applying materials.");
-    Item_t* sword = create_weapon("Iron Sword", "iron_sword", steel_material, 15, 25, 0, 'I');
+    Item_t* sword = create_weapon("Iron Sword", "iron_sword", steel_material, 15, 25, 0, 'I', 0, 0, "common");
     TEST_ASSERT(sword != NULL, "Item should be created successfully");
     if(!sword) return 0;
 
@@ -114,13 +114,13 @@ int test_combat_simulation_integration(void)
     Material_t masterwork = create_material("masterwork", (MaterialProperties_t){.durability_fact=2.0f, .armor_value_fact=1.5f});
 
     // Create and equip gear for warrior
-    Item_t* warrior_armor = create_armor("Plate Armor", "plate_armor", masterwork, 50, 8, 'P', 25, 25);
+    Item_t* warrior_armor = create_armor("Plate Armor", "plate_armor", masterwork, 50, 8, 'P', 25, 25, "common");
     apply_material_to_armor(warrior_armor);
     add_item_to_inventory(warrior_inv, warrior_armor, 1);
     equip_item(warrior_inv, "plate_armor");
 
     // Create and equip gear for archer
-    Item_t* archer_bow = create_weapon("War Bow", "war_bow", battle_worn, 12, 18, 3, 'W');
+    Item_t* archer_bow = create_weapon("War Bow", "war_bow", battle_worn, 12, 18, 3, 'W', 0, 0, "common");
     apply_material_to_weapon(archer_bow);
     add_item_to_inventory(archer_inv, archer_bow, 1);
     equip_item(archer_inv, "war_bow");
@@ -162,7 +162,7 @@ int test_mass_operations_stress_integration(void)
     TEST_ASSERT(warehouse != NULL, "Warehouse inventory should be created");
 
     Material_t mass_material = create_material("mass_produced", create_default_material_properties());
-    Item_t* template_ammo = create_ammunition("Mass Ammo", "mass_ammo", mass_material, 3, 5, 'B');
+    Item_t* template_ammo = create_ammunition("Mass Ammo", "mass_ammo", mass_material, 3, 5, 'B', 0, "common");
 
     // Phase 1: Mass item addition
     d_LogDebug("Phase 1: Mass item addition stress test.");
@@ -214,7 +214,7 @@ int test_material_system_cross_integration(void)
     chaos_props.max_damage_fact = 0.5f; // Intentionally inverted
     chaos_props.weight_fact = -0.1f;    // Negative weight
     Material_t chaos_material = create_material("chaos", chaos_props);
-    Item_t* chaos_weapon = create_weapon("Chaos Blade", "chaos_blade", chaos_material, 30, 50, 1, 'C');
+    Item_t* chaos_weapon = create_weapon("Chaos Blade", "chaos_blade", chaos_material, 30, 50, 1, 'C', 0, 0, "common");
 
     apply_material_to_weapon(chaos_weapon);
 
@@ -230,7 +230,7 @@ int test_inventory_corruption_recovery_integration(void)
     d_LogWarning("BUG HUNT: Testing recovery from simulated inventory state corruption.");
     Inventory_t* p_inv = create_inventory(10);
     Material_t mat = create_material("standard", create_default_material_properties());
-    Item_t* weapon = create_weapon("Critical Weapon", "crit_wep", mat, 25, 40, 0, 'C');
+    Item_t* weapon = create_weapon("Critical Weapon", "crit_wep", mat, 25, 40, 0, 'C', 0, 0, "common");
 
     add_item_to_inventory(p_inv, weapon, 1);
     equip_item(p_inv, "crit_wep");
@@ -255,7 +255,7 @@ int test_extreme_durability_stress(void)
     MaterialProperties_t ultra_props = create_default_material_properties();
     ultra_props.durability_fact = 10.0f; // Very high durability factor
     Material_t ultra_durable = create_material("ultra_durable", ultra_props);
-    Item_t* legendary_weapon = create_weapon("Legendary Blade", "leg_blade", ultra_durable, 25, 35, 0, 'L');
+    Item_t* legendary_weapon = create_weapon("Legendary Blade", "leg_blade", ultra_durable, 25, 35, 0, 'L', 0, 0, "common");
 
     int hits_resisted = 0;
     int total_hits = 100;

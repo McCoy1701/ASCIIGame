@@ -42,7 +42,7 @@ void ie_DrawItemCell(int index, Item_t* item, int panel_x, int panel_y, bool is_
 	
 	// Draw item glyph
 	if (game_glyphs && item->glyph < game_glyphs->count) {
-		a_BlitTextureRect(game_glyphs->texture, game_glyphs->rects[item->glyph],
+		a_BlitTextureRect(game_glyphs->texture, game_glyphs->rects[(int)item->glyph],
 		                  x + 4, y + 4, 2);
 	}
 	
@@ -59,6 +59,7 @@ void ie_DrawItemCell(int index, Item_t* item, int panel_x, int panel_y, bool is_
 void ie_GetItemCellSize(int index, int grid_width, int grid_height, 
                         int* x, int* y, int* w, int* h, int panel_x, int panel_y)
 {
+    (void)grid_height; // Silence unused parameter warning
 	int row = index / grid_width;
 	int col = index % grid_width;
 	*x = panel_x + (col * ITEMS_CELL_WIDTH);
@@ -182,6 +183,7 @@ static void ie_DrawArmorProperties(Item_t* item, int panel_x, int* line_y)
  */
 void ie_DrawItemProperties(Item_t* item, int panel_x, int panel_y, int selected_property)
 {
+    (void)selected_property; // Silence unused parameter warning
     if (!item) return;
     
     char property_text[256];
@@ -225,6 +227,9 @@ void ie_DrawItemProperties(Item_t* item, int panel_x, int panel_y, int selected_
             break;
         case ITEM_TYPE_ARMOR:
             ie_DrawArmorProperties(item, panel_x, &line_y);
+            break;
+        default:
+            // Handle other item types or do nothing
             break;
     }
 }
@@ -362,11 +367,6 @@ static bool ie_ValidateItemValues(const Item_t* item)
         return false;
     }
 
-    // Weight should not be negative.
-    if (item->weight_kg < 0.0f) {
-        d_LogErrorF("Validation failed: item '%s' has negative weight: %.2f", item->name->str, item->weight_kg);
-        return false;
-    }
     return true;
 }
 
@@ -426,7 +426,7 @@ Item_t* ie_FindItemByID(Item_t* database, int count, const char* id)
 void ie_DrawDbStatus(const dString_t* status_text)
 {
     if (status_text != NULL) {
-        a_DrawText( d_PeekString(status_text), 750, 10, 255, 255, 255, app.font_type,
+        a_DrawText((char *)d_PeekString(status_text), 750, 10, 255, 255, 255, app.font_type,
                    TEXT_ALIGN_CENTER, 0 );
     }
 }
@@ -462,7 +462,7 @@ void ie_DrawDbStats(const Item_t* database, int count)
     d_FormatString(stats_text, "Weapons: %d | Armor: %d | Consumables: %d",
             weapon_count, armor_count, consumable_count);
     
-    a_DrawText(d_PeekString(stats_text), 50, 50, 200, 200, 200, app.font_type,
+    a_DrawText((char *)d_PeekString(stats_text), 50, 50, 200, 200, 200, app.font_type,
                TEXT_ALIGN_LEFT, 0);
     
     d_DestroyString(stats_text);

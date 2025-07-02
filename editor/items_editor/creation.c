@@ -34,6 +34,15 @@ static aSelectWidget_t* enchantment_select_widget = NULL;
 // Chaos Flag for testing failure cases
 static bool g_force_creation_failure = false;
 
+// Rarity names for display and item creation
+static const char* rarity_names[] = {
+    "Common",
+    "Uncommon",
+    "Rare",
+    "Epic",
+    "Legendary"
+};
+
 /**
  * @brief Default callback for consumables created in the editor.
  */
@@ -206,26 +215,26 @@ Item_t* ie_CreateItemWithParameters(ItemType_t type, int mat_id, int rare, int e
     Material_t* selected_material = &materials_db[mat_id];
 
     Item_t* new_item = NULL;
-    (void)rare; (void)ench; // Silence unused warnings for now
+    const char* current_rarity_name = rarity_names[rare];
 
     switch (type) {
         case ITEM_TYPE_WEAPON:
-            new_item = create_weapon("Crafted Sword", "crafted_weapon", *selected_material, 5, 10, 1, '/');
+            new_item = create_weapon("Crafted Sword", "crafted_weapon", *selected_material, 5, 10, 1, '/', 0, ench, current_rarity_name);
             break;
         case ITEM_TYPE_ARMOR:
-            new_item = create_armor("Crafted Mail", "crafted_armor", *selected_material, 15, 2, '[', 0, 0);
+            new_item = create_armor("Crafted Mail", "crafted_armor", *selected_material, 15, 2, '[', 0, ench, current_rarity_name);
             break;
         case ITEM_TYPE_KEY: {
             Lock_t lock = create_lock("Generic Door", "A generic lock.", 50, 10);
-            new_item = create_key("Crafted Key", "crafted_key", lock, '~');
+            new_item = create_key("Crafted Key", "crafted_key", lock, '~', ench, current_rarity_name);
             destroy_lock(&lock);
             break;
         }
         case ITEM_TYPE_CONSUMABLE:
-            new_item = create_consumable("Crafted Potion", "crafted_consumable", 50, _default_on_consume, '!');
+            new_item = create_consumable("Crafted Potion", "crafted_consumable", 50, _default_on_consume, '!', ench, current_rarity_name);
             break;
         case ITEM_TYPE_AMMUNITION:
-            new_item = create_ammunition("Crafted Arrow", "crafted_ammo", *selected_material, 3, 6, '|');
+            new_item = create_ammunition("Crafted Arrow", "crafted_ammo", *selected_material, 3, 6, '|', ench, current_rarity_name);
             break;
         default:
             d_LogErrorF("Attempted to create item with unknown type: %d", type);

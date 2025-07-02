@@ -84,9 +84,9 @@ int test_use_consumable(void) {
     dLogContext_t* ctx = d_PushLogContext("UseConsumable");
     reset_effect_tracking();
 
-    Item_t* health_potion = create_consumable("Health Potion", "health_potion", 50, mock_heal_effect, 'H');
+    Item_t* health_potion = create_consumable("Health Potion", "health_potion", 50, mock_heal_effect, 'H', 0, "common");
     // A consumable with a NULL callback should still be a valid item, it just shouldn't be usable.
-    Item_t* null_consumable = create_consumable("Broken Potion", "broken_potion", 25, NULL, 'B');
+    Item_t* null_consumable = create_consumable("Broken Potion", "broken_potion", 25, NULL, 'B', 0, "common");
 
     TEST_ASSERT(health_potion != NULL, "Health potion should be created");
     TEST_ASSERT(null_consumable == NULL, "Consumable with NULL callback should still be created");
@@ -101,7 +101,7 @@ int test_use_consumable(void) {
     TEST_ASSERT(!broken_used, "Consumable with NULL callback should fail to be used");
 
     d_LogDebug("Testing using a non-consumable item...");
-    Item_t* sword = create_weapon("Test Sword", "test_sword", create_test_material(), 15, 25, 0, 'S');
+    Item_t* sword = create_weapon("Test Sword", "test_sword", create_test_material(), 15, 25, 0, 'S', 0, 0, "common");
     bool sword_used = use_consumable(sword);
     TEST_ASSERT(!sword_used, "Sword should not be usable as consumable");
 
@@ -125,7 +125,7 @@ int test_consumable_duration_effects(void) {
     dLogContext_t* ctx = d_PushLogContext("DurationEffects");
     reset_effect_tracking();
 
-    Item_t* poison = create_consumable("Poison Vial", "poison_vial", 5, mock_no_effect, 'P');
+    Item_t* poison = create_consumable("Poison Vial", "poison_vial", 5, mock_no_effect, 'P', 0, "common");
     TEST_ASSERT(poison != NULL, "Poison should be created");
 
     d_LogDebug("Manually setting up duration effects for poison vial...");
@@ -171,8 +171,8 @@ int test_key_lock_interaction(void) {
     Lock_t chest_lock = create_lock("chest_lock", "A sturdy chest lock", 100, 0);
     Lock_t door_lock = create_lock("door_lock", "A simple door lock", 50, 0);
 
-    Item_t* chest_key = create_key("Chest Key", "chest_key", chest_lock, 'k');
-    Item_t* door_key = create_key("Door Key", "door_key", door_lock, 'd');
+    Item_t* chest_key = create_key("Chest Key", "chest_key", chest_lock, 'k', 0, "common");
+    Item_t* door_key = create_key("Door Key", "door_key", door_lock, 'd', 0, "common");
 
     d_LogDebugF("Testing correct key/lock pairs: chest_key->%s, door_key->%s", chest_lock.name, door_lock.name);
     TEST_ASSERT(can_key_open_lock(chest_key, &chest_lock), "Chest key should open chest lock");
@@ -186,7 +186,7 @@ int test_key_lock_interaction(void) {
     Lock_t jammed_lock = create_lock("jammed_lock", "A jammed lock", 200, 5);
     TEST_ASSERT(!can_key_open_lock(chest_key, &jammed_lock), "No key should open a jammed lock");
 
-    Item_t* sword = create_weapon("Sword", "sword", create_test_material(), 10, 15, 0, 'S');
+    Item_t* sword = create_weapon("Sword", "sword", create_test_material(), 10, 15, 0, 'S', 0, 0, "common");
     TEST_ASSERT(!can_key_open_lock(sword, &chest_lock), "Non-key item should not open any lock");
 
     d_LogDebug("Verifying NULL safety for key/lock system...");
@@ -210,7 +210,7 @@ int test_consumable_extreme_values(void) {
     reset_effect_tracking();
 
     d_LogDebug("Testing zero value consumable...");
-    Item_t* zero_potion = create_consumable("Zero Potion", "zero_potion", 0, mock_heal_effect, 'Z');
+    Item_t* zero_potion = create_consumable("Zero Potion", "zero_potion", 0, mock_heal_effect, 'Z', 0, "common");
     TEST_ASSERT(zero_potion != NULL, "Zero value consumable should be created");
     if(zero_potion) {
         use_consumable(zero_potion);
@@ -219,7 +219,7 @@ int test_consumable_extreme_values(void) {
     }
 
     d_LogDebug("Testing maximum uint8_t value consumable...");
-    Item_t* max_potion = create_consumable("Max Potion", "max_potion", 255, mock_heal_effect, 'M');
+    Item_t* max_potion = create_consumable("Max Potion", "max_potion", 255, mock_heal_effect, 'M', 0, "common");
     TEST_ASSERT(max_potion != NULL, "Max value consumable should be created");
     if(max_potion) {
         use_consumable(max_potion);
@@ -228,7 +228,7 @@ int test_consumable_extreme_values(void) {
     }
 
     d_LogDebug("Testing potential overflow that should be clamped...");
-    Item_t* overflow_potion = create_consumable("Overflow Potion", "overflow_potion", 300, mock_heal_effect, 'O');
+    Item_t* overflow_potion = create_consumable("Overflow Potion", "overflow_potion", 300, mock_heal_effect, 'O', 0, "common");
     TEST_ASSERT(overflow_potion != NULL, "Consumable with value > 255 should be created");
     if(overflow_potion){
         d_LogDebugF("Value provided: 300, Actual value after creation: %d", overflow_potion->data.consumable.value);
@@ -253,7 +253,7 @@ int test_usage_memory_safety(void) {
         
         dString_t* name = d_InitString();
         d_FormatString(name, "Rapid Potion %d", i);
-        Item_t* potion = create_consumable(d_PeekString(name), "rapid_potion", (uint8_t)i, mock_heal_effect, 'R');
+        Item_t* potion = create_consumable(d_PeekString(name), "rapid_potion", (uint8_t)i, mock_heal_effect, 'R', 0, "common");
 
         TEST_ASSERT(potion != NULL, "Rapid potion should be created");
         if(potion) {
@@ -267,7 +267,7 @@ int test_usage_memory_safety(void) {
     d_LogDebug("Simulating 10 simultaneous duration effects...");
     Item_t* duration_items[10];
     for (int i = 0; i < 10; i++) {
-        duration_items[i] = create_consumable("Duration Item", "duration_item", (uint8_t)i, mock_no_effect, 'D');
+        duration_items[i] = create_consumable("Duration Item", "duration_item", (uint8_t)i, mock_no_effect, 'D', 0, "common");
         duration_items[i]->data.consumable.on_duration_tick = mock_poison_tick;
         duration_items[i]->data.consumable.duration_seconds = 2;
     }
@@ -300,7 +300,7 @@ int test_consumable_stacking_behavior_during_usage(void) {
     
     // Create inventory and multiple identical consumables
     Inventory_t* inventory = create_inventory(10);
-    Item_t* health_potion = create_consumable("Health Potion", "health_potion", 30, mock_heal_effect, 'H');
+    Item_t* health_potion = create_consumable("Health Potion", "health_potion", 30, mock_heal_effect, 'H', 0, "common");
     
     TEST_ASSERT(inventory != NULL, "Inventory should be created");
     TEST_ASSERT(health_potion != NULL, "Health potion should be created");
@@ -340,8 +340,8 @@ int test_key_lock_concurrent_access_simulation(void) {
     Lock_t decoy_lock1 = create_lock("decoy_lock_1", "First decoy lock", 75, 0);
     Lock_t decoy_lock2 = create_lock("decoy_lock_2", "Second decoy lock", 125, 0);
     
-    Item_t* master_key = create_key("Master Key", "master_key", master_lock, 'M');
-    Item_t* wrong_key = create_key("Wrong Key", "wrong_key", decoy_lock1, 'W');
+    Item_t* master_key = create_key("Master Key", "master_key", master_lock, 'M', 0, "common");
+    Item_t* wrong_key = create_key("Wrong Key", "wrong_key", decoy_lock1, 'W', 0, "common");
     
     d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_DEBUG, 
                       1, 5.0, "Performing %d rapid key/lock verification cycles...", 1000);
@@ -403,7 +403,7 @@ int test_consumable_callback_exception_handling(void) {
     reset_effect_tracking();
     
     // Create a consumable with a callback that modifies global state
-    Item_t* chaos_potion = create_consumable("Chaos Potion", "chaos_potion", 100, mock_heal_effect, 'C');
+    Item_t* chaos_potion = create_consumable("Chaos Potion", "chaos_potion", 100, mock_heal_effect, 'C', 0, "common");
     TEST_ASSERT(chaos_potion != NULL, "Chaos potion should be created");
     
     d_LogDebug("Testing normal callback behavior...");
@@ -457,7 +457,7 @@ int test_duration_extreme_cases(void) {
     reset_effect_tracking();
     
     d_LogDebug("Testing consumable with zero duration...");
-    Item_t* instant_potion = create_consumable("Instant Potion", "instant_potion", 75, mock_heal_effect, 'I');
+    Item_t* instant_potion = create_consumable("Instant Potion", "instant_potion", 75, mock_heal_effect, 'I', 0, "common");
     TEST_ASSERT(instant_potion != NULL, "Instant potion should be created");
     
     instant_potion->data.consumable.on_duration_tick = mock_poison_tick;
@@ -470,7 +470,7 @@ int test_duration_extreme_cases(void) {
     TEST_ASSERT(strength_end_called == 0, "Expired effect should not trigger end");
     
     d_LogDebug("Testing consumable with maximum duration...");
-    Item_t* eternal_potion = create_consumable("Eternal Potion", "eternal_potion", 200, mock_no_effect, 'E');
+    Item_t* eternal_potion = create_consumable("Eternal Potion", "eternal_potion", 200, mock_no_effect, 'E', 0, "common");
     eternal_potion->data.consumable.on_duration_tick = mock_poison_tick;
     eternal_potion->data.consumable.duration_seconds = 65535; // Maximum uint16_t
     
@@ -504,7 +504,7 @@ int test_consumable_callback_edge_cases(void) {
     reset_effect_tracking();
     
     d_LogDebug("Testing consumable with all callback types set...");
-    Item_t* complex_potion = create_consumable("Complex Potion", "complex_potion", 42, mock_heal_effect, 'X');
+    Item_t* complex_potion = create_consumable("Complex Potion", "complex_potion", 42, mock_heal_effect, 'X', 0, "common");
     TEST_ASSERT(complex_potion != NULL, "Complex potion should be created");
     
     // Set all possible callbacks
@@ -532,7 +532,7 @@ int test_consumable_callback_edge_cases(void) {
     TEST_ASSERT(last_effect_value == 42, "All callbacks should receive same value");
     
     d_LogDebug("Testing consumable with only end callback (no tick callback)...");
-    Item_t* end_only_potion = create_consumable("End Only", "end_only", 99, mock_no_effect, 'N');
+    Item_t* end_only_potion = create_consumable("End Only", "end_only", 99, mock_no_effect, 'N', 0, "common");
     end_only_potion->data.consumable.on_duration_end = mock_strength_end;
     end_only_potion->data.consumable.duration_seconds = 1;
     
@@ -555,8 +555,8 @@ int test_key_lock_extreme_cases(void) {
     Lock_t impossible_lock = create_lock("impossible_lock", "An impossibly difficult lock", 255, 0);
     Lock_t trivial_lock = create_lock("trivial_lock", "A trivial lock", 0, 0);
     
-    Item_t* master_key = create_key("Master Key", "master_key", impossible_lock, 'M');
-    Item_t* simple_key = create_key("Simple Key", "simple_key", trivial_lock, 'S');
+    Item_t* master_key = create_key("Master Key", "master_key", impossible_lock, 'M', 0, "common");
+    Item_t* simple_key = create_key("Simple Key", "simple_key", trivial_lock, 'S', 0, "common");
     
     TEST_ASSERT(can_key_open_lock(master_key, &impossible_lock), "Master key should open impossible lock");
     TEST_ASSERT(can_key_open_lock(simple_key, &trivial_lock), "Simple key should open trivial lock");
@@ -577,13 +577,13 @@ int test_key_lock_extreme_cases(void) {
     }
     
     Lock_t long_named_lock = create_lock(d_PeekString(long_name), "A lock with a very long name", 50, 0);
-    Item_t* long_named_key = create_key("Long Named Key", "long_key", long_named_lock, 'L');
+    Item_t* long_named_key = create_key("Long Named Key", "long_key", long_named_lock, 'L', 0, "common");
     
     TEST_ASSERT(can_key_open_lock(long_named_key, &long_named_lock), "Long-named key should work with its lock");
     
     d_LogDebug("Testing rapid jam/unjam cycles...");
     Lock_t cycling_lock = create_lock("cycling_lock", "A lock that jams and unjams", 75, 0);
-    Item_t* cycling_key = create_key("Cycling Key", "cycling_key", cycling_lock, 'C');
+    Item_t* cycling_key = create_key("Cycling Key", "cycling_key", cycling_lock, 'C', 0, "common");
     
     int successful_opens = 0;
     int failed_opens = 0;
@@ -628,11 +628,11 @@ int test_usage_system_integration(void) {
     Inventory_t* player_inventory = create_inventory(20);
     
     // Create various item types
-    Item_t* health_potion = create_consumable("Health Potion", "health_potion", 50, mock_heal_effect, 'H');
-    Item_t* mana_potion = create_consumable("Mana Potion", "mana_potion", 75, mock_poison_tick, 'M');
+    Item_t* health_potion = create_consumable("Health Potion", "health_potion", 50, mock_heal_effect, 'H', 0, "common");
+    Item_t* mana_potion = create_consumable("Mana Potion", "mana_potion", 75, mock_poison_tick, 'M', 0, "common");
     
     Lock_t chest_lock = create_lock("treasure_chest", "A treasure chest lock", 100, 0);
-    Item_t* chest_key = create_key("Treasure Key", "treasure_key", chest_lock, 'K');
+    Item_t* chest_key = create_key("Treasure Key", "treasure_key", chest_lock, 'K', 0, "common");
     
     d_LogDebug("Adding items to inventory...");
     TEST_ASSERT(add_item_to_inventory(player_inventory, health_potion, 3), "Should add health potions");
@@ -682,7 +682,7 @@ int test_usage_corrupted_data(void) {
     reset_effect_tracking();
     
     d_LogDebug("Testing consumable with corrupted callback pointer...");
-    Item_t* corrupt_potion = create_consumable("Corrupt Potion", "corrupt_potion", 25, mock_heal_effect, 'R');
+    Item_t* corrupt_potion = create_consumable("Corrupt Potion", "corrupt_potion", 25, mock_heal_effect, 'R', 0, "common");
     TEST_ASSERT(corrupt_potion != NULL, "Corrupt potion should be created initially");
     
     // Simulate data corruption
@@ -694,7 +694,7 @@ int test_usage_corrupted_data(void) {
     
     d_LogDebug("Testing key with corrupted lock data...");
     Lock_t valid_lock = create_lock("valid_lock", "A valid lock", 50, 0);
-    Item_t* corrupt_key = create_key("Corrupt Key", "corrupt_key", valid_lock, 'C');
+    Item_t* corrupt_key = create_key("Corrupt Key", "corrupt_key", valid_lock, 'C', 0, "common");
     
     // Simulate lock name corruption
     if (corrupt_key && corrupt_key->data.key.lock.name) {
@@ -705,7 +705,7 @@ int test_usage_corrupted_data(void) {
     TEST_ASSERT(!corrupt_opens, "Key with corrupted lock data should fail safely");
     
     d_LogDebug("Testing consumable with invalid duration values...");
-    Item_t* duration_potion = create_consumable("Duration Potion", "duration_potion", 100, mock_no_effect, 'D');
+    Item_t* duration_potion = create_consumable("Duration Potion", "duration_potion", 100, mock_no_effect, 'D', 0, "common");
     
     // Set up duration effects then corrupt the duration
     duration_potion->data.consumable.on_duration_tick = mock_poison_tick;
@@ -746,8 +746,8 @@ int test_key_lock_comparison_edge_cases(void) {
     Lock_t lock_a = create_lock("shared_name", "First lock with shared name", 50, 0);
     Lock_t lock_b = create_lock("shared_name", "Second lock with shared name", 75, 0);
     
-    Item_t* key_a = create_key("Key A", "key_a", lock_a, 'A');
-    Item_t* key_b = create_key("Key B", "key_b", lock_b, 'B');
+    Item_t* key_a = create_key("Key A", "key_a", lock_a, 'A', 0, "common");
+    Item_t* key_b = create_key("Key B", "key_b", lock_b, 'B', 0, "common");
     
     // Both keys should work with both locks since names match
     TEST_ASSERT(can_key_open_lock(key_a, &lock_a), "Key A should open Lock A");
@@ -759,7 +759,7 @@ int test_key_lock_comparison_edge_cases(void) {
     Lock_t lower_lock = create_lock("lowercase", "A lowercase lock name", 25, 0);
     Lock_t upper_lock = create_lock("LOWERCASE", "An uppercase lock name", 25, 0);
     
-    Item_t* lower_key = create_key("Lower Key", "lower_key", lower_lock, 'l');
+    Item_t* lower_key = create_key("Lower Key", "lower_key", lower_lock, 'l', 0, "common");
     
     // Current implementation should be case-sensitive
     TEST_ASSERT(can_key_open_lock(lower_key, &lower_lock), "Key should open matching case lock");
@@ -770,8 +770,8 @@ int test_key_lock_comparison_edge_cases(void) {
     Lock_t space_lock = create_lock(" ", "Lock with space name", 30, 0);
     Lock_t whitespace_lock = create_lock("   ", "Lock with whitespace name", 30, 0);
     
-    Item_t* empty_key = create_key("Empty Key", "empty_key", empty_lock, 'e');
-    Item_t* space_key = create_key("Space Key", "space_key", space_lock, 's');
+    Item_t* empty_key = create_key("Empty Key", "empty_key", empty_lock, 'e', 0, "common");
+    Item_t* space_key = create_key("Space Key", "space_key", space_lock, 's', 0, "common");
     
     TEST_ASSERT(can_key_open_lock(empty_key, &empty_lock), "Empty key should open empty lock");
     TEST_ASSERT(!can_key_open_lock(empty_key, &space_lock), "Empty key should NOT open space lock");
@@ -779,7 +779,7 @@ int test_key_lock_comparison_edge_cases(void) {
     
     d_LogDebug("Testing locks with special characters in names...");
     Lock_t special_lock = create_lock("lock@#$%^&*()", "Lock with special characters", 40, 0);
-    Item_t* special_key = create_key("Special Key", "special_key", special_lock, '@');
+    Item_t* special_key = create_key("Special Key", "special_key", special_lock, '@', 0, "common");
     
     TEST_ASSERT(can_key_open_lock(special_key, &special_lock), "Special character key should work");
     
@@ -792,8 +792,8 @@ int test_key_lock_comparison_edge_cases(void) {
     Lock_t long_lock = create_lock(d_PeekString(very_long_name), "Very long lock name", 60, 0);
     Lock_t short_lock = create_lock("x", "Very short lock name", 60, 0);
     
-    Item_t* long_key = create_key("Long Key", "long_key", long_lock, 'L');
-    Item_t* short_key = create_key("Short Key", "short_key", short_lock, 'x');
+    Item_t* long_key = create_key("Long Key", "long_key", long_lock, 'L', 0, "common");
+    Item_t* short_key = create_key("Short Key", "short_key", short_lock, 'x', 0, "common");
     
     TEST_ASSERT(can_key_open_lock(long_key, &long_lock), "Very long key should work");
     TEST_ASSERT(can_key_open_lock(short_key, &short_lock), "Very short key should work");
@@ -833,7 +833,7 @@ int test_duration_end_trigger(void) {
     reset_effect_tracking();
     
     d_LogDebug("Testing standard duration end trigger sequence...");
-    Item_t* timed_potion = create_consumable("Timed Potion", "timed_potion", 88, mock_no_effect, 'T');
+    Item_t* timed_potion = create_consumable("Timed Potion", "timed_potion", 88, mock_no_effect, 'T', 0, "common");
     TEST_ASSERT(timed_potion != NULL, "Timed potion should be created");
     
     // Set up duration callbacks
@@ -869,7 +869,7 @@ int test_duration_end_trigger(void) {
     TEST_ASSERT(strength_end_called == 1, "No additional end triggers");
     
     d_LogDebug("Testing direct end trigger without duration ticks...");
-    Item_t* instant_end_potion = create_consumable("Instant End", "instant_end", 123, mock_heal_effect, 'E');
+    Item_t* instant_end_potion = create_consumable("Instant End", "instant_end", 123, mock_heal_effect, 'E',    0, "common");
     instant_end_potion->data.consumable.on_duration_end = mock_strength_end;
     instant_end_potion->data.consumable.duration_seconds = 0; // Already at end
     
@@ -880,7 +880,7 @@ int test_duration_end_trigger(void) {
     TEST_ASSERT(instant_end_potion->data.consumable.duration_seconds == 0, "Duration should remain 0");
     
     d_LogDebug("Testing end trigger with NULL callback safety...");
-    Item_t* no_end_potion = create_consumable("No End Effect", "no_end", 45, mock_heal_effect, 'N');
+    Item_t* no_end_potion = create_consumable("No End Effect", "no_end", 45, mock_heal_effect, 'N', 0, "common");
     no_end_potion->data.consumable.on_duration_end = NULL; // No end callback
     no_end_potion->data.consumable.duration_seconds = 1;
     
@@ -892,7 +892,7 @@ int test_duration_end_trigger(void) {
     d_LogDebug("Testing rapid end trigger scenarios...");
     Item_t* rapid_potions[5];
     for (int i = 0; i < 5; i++) {
-        rapid_potions[i] = create_consumable("Rapid Potion", "rapid", 10 + i, mock_no_effect, 'R');
+        rapid_potions[i] = create_consumable("Rapid Potion", "rapid", 10 + i, mock_no_effect, 'R', 0, "common");
         rapid_potions[i]->data.consumable.on_duration_end = mock_strength_end;
         rapid_potions[i]->data.consumable.duration_seconds = 1; // All end after 1 tick
     }
@@ -911,7 +911,7 @@ int test_duration_end_trigger(void) {
     }
     
     d_LogDebug("Testing end trigger value propagation consistency...");
-    Item_t* value_test_potion = create_consumable("Value Test", "value_test", 255, mock_no_effect, 'V');
+    Item_t* value_test_potion = create_consumable("Value Test", "value_test", 255, mock_no_effect, 'V', 0, "common");
     value_test_potion->data.consumable.on_duration_end = mock_strength_end;
     
     reset_effect_tracking();

@@ -350,6 +350,18 @@ void d_SubdivideQuadtree( dQuadTree_t *tree );
 void d_CreateKinmaticBody( dKinematicBody_t *output, const dVec2_t position, const dVec2_t velocity, const dVec2_t acceleration, const float mass );
 
 /* Strings */
+
+/**
+ * @brief Checks if a dString_t is NULL, contains a NULL buffer, or is empty.
+ *
+ * @param s The dString_t pointer to validate.
+ * @return true if the string is considered invalid or empty, otherwise false.
+ */
+static inline bool d_IsStringInvalid(const dString_t* s)
+{
+    return (s == NULL || s->str == NULL || s->len == 0);
+}
+
 char* d_CreateStringFromFile(const char *filename);
 /*
  * Create a new string builder
@@ -683,6 +695,43 @@ void d_JoinStrings(dString_t* sb, const char** strings, int count, const char* s
   * -- Example: d_SliceString(sb, "Hello", 0, -1) produces "Hello"
   */
 void d_SliceString(dString_t* sb, const char* text, int start, int end);
+
+/*
+ * Compare two dString_t objects lexicographically
+ *
+ * `str1` - The first Daedalus string object
+ * `str2` - The second Daedalus string object
+ *
+ * `int` - An integer less than, equal to, or greater than zero if str1 is found,
+ * respectively, to be less than, to match, or be greater than str2
+ *
+ * -- If both are the same kind of invalid, consider them equal
+ * -- If one is invalid and the other is not, they are not equal
+ * -- Invalid str1 is considered "less than" valid str2
+ * -- Valid str1 is considered "greater than" invalid str2
+ * -- Uses strcmp() for lexicographical comparison of valid strings
+ */
+int d_CompareStrings(const dString_t* str1, const dString_t* str2);
+
+/*
+ * Compare a dString_t with a standard C-string
+ *
+ * `d_str` - The Daedalus string object to compare
+ * `c_str` - The standard null-terminated C-string to compare against
+ *
+ * `int` - An integer less than, equal to, or greater than zero if d_str is found,
+ * respectively, to be less than, to match, or be greater than c_str
+ *
+ * -- An invalid dString and a NULL/empty C-string are considered "equal"
+ * -- Invalid d_str is considered "less than" a valid c_str
+ * -- Valid d_str is considered "greater than" a NULL c_str
+ * -- Uses strcmp() for lexicographical comparison when both are valid
+ * -- Avoids need to create temporary dString_t for comparison
+ * -- Critical for performance when interfacing with external C-strings
+ */
+int d_CompareStringToCString(const dString_t* d_str, const char* c_str);
+
+
 /* Dynamic Arrays */
 /*
  * Create a new dynamic array with specified capacity and element size

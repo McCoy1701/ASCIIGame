@@ -75,8 +75,8 @@ int test_add_item_to_inventory(void)
     MaterialProperties_t basic_props = create_default_material_properties();
     Material_t basic_material = create_material("basic", basic_props);
 
-    Item_t* sword = create_weapon("Iron Sword", "iron_sword", basic_material, 20, 30, 0, 'S');
-    Item_t* arrows = create_ammunition("Steel Arrows", "steel_arrows", basic_material, 5, 8, 'a');
+    Item_t* sword = create_weapon("Iron Sword", "iron_sword", basic_material, 20, 30, 0, 'S', 0, 0, "common");
+    Item_t* arrows = create_ammunition("Steel Arrows", "steel_arrows", basic_material, 5, 8, 'a', 0, "common");
 
     TEST_ASSERT(sword != NULL, "Sword should be created");
     TEST_ASSERT(arrows != NULL, "Arrows should be created");
@@ -122,7 +122,7 @@ int test_remove_item_from_inventory(void)
     MaterialProperties_t basic_props = create_default_material_properties();
     Material_t basic_material = create_material("basic", basic_props);
 
-    Item_t* potion = create_consumable("Health Potion", "health_potion", 50, dummy_consume_callback, 'H');
+    Item_t* potion = create_consumable("Health Potion", "health_potion", 50, dummy_consume_callback, 'H', 0, "common");
 
     TEST_ASSERT(inventory != NULL, "Inventory should be created");
     TEST_ASSERT(potion != NULL, "Potion should be created");
@@ -174,10 +174,10 @@ int test_item_stacking(void)
     MaterialProperties_t basic_props = create_default_material_properties();
     Material_t basic_material = create_material("basic", basic_props);
 
-    Item_t* arrow1 = create_ammunition("Arrow", "arrow", basic_material, 3, 5, 'a');
-    Item_t* arrow2 = create_ammunition("Arrow", "arrow", basic_material, 3, 5, 'a');
-    Item_t* bolt = create_ammunition("Bolt", "bolt", basic_material, 4, 6, 'b');
-    Item_t* sword = create_weapon("Sword", "sword", basic_material, 15, 25, 0, 'S');
+    Item_t* arrow1 = create_ammunition("Arrow", "arrow", basic_material, 3, 5, 'a', 0, "common");
+    Item_t* arrow2 = create_ammunition("Arrow", "arrow", basic_material, 3, 5, 'a', 0, "common");
+    Item_t* bolt = create_ammunition("Bolt", "bolt", basic_material, 4, 6, 'b', 0, "common");
+    Item_t* sword = create_weapon("Sword", "sword", basic_material, 15, 25, 0, 'S', 0, 0, "common");
 
     TEST_ASSERT(arrow1 != NULL && arrow2 != NULL && bolt != NULL && sword != NULL, "All items should be created");
 
@@ -215,9 +215,9 @@ int test_equipment_management(void)
     MaterialProperties_t basic_props = create_default_material_properties();
     Material_t basic_material = create_material("basic", basic_props);
 
-    Item_t* sword = create_weapon("Battle Sword", "battle_sword", basic_material, 25, 35, 0, 'S');
-    Item_t* armor = create_armor("Chain Mail", "chain_mail", basic_material, 30, 10, 'A', 15, 15);
-    Item_t* potion = create_consumable("Health Potion", "health_potion", 50, dummy_consume_callback, 'H');
+    Item_t* sword = create_weapon("Battle Sword", "battle_sword", basic_material, 25, 35, 0, 'S', 0, 0, "common");
+    Item_t* armor = create_armor("Chain Mail", "chain_mail", basic_material, 30, 10, 'A', 15, 15, "common");
+    Item_t* potion = create_consumable("Health Potion", "health_potion", 50, dummy_consume_callback, 'H', 0, "common");
 
     TEST_ASSERT(inventory != NULL && sword != NULL && armor != NULL && potion != NULL, "All items should be created");
 
@@ -280,7 +280,7 @@ int test_inventory_queries(void)
     heavy_props.weight_fact = 3.0f; // Heavy items
     Material_t heavy_material = create_material("heavy", heavy_props);
 
-    Item_t* heavy_armor = create_armor("Heavy Armor", "heavy_armor", heavy_material, 50, 5, 'H', 15, 15);
+    Item_t* heavy_armor = create_armor("Heavy Armor", "heavy_armor", heavy_material, 50, 5, 'H', 15, 15, "common");
     apply_material_to_armor(heavy_armor); // Apply material effects
 
     TEST_ASSERT(inventory != NULL && heavy_armor != NULL, "Inventory and armor should be created");
@@ -308,7 +308,7 @@ int test_inventory_queries(void)
     // Fill inventory completely
     MaterialProperties_t basic_props = create_default_material_properties();
     Material_t basic_material = create_material("basic", basic_props);
-    Item_t* filler = create_weapon("Filler", "filler", basic_material, 1, 1, 0, 'f');
+    Item_t* filler = create_weapon("Filler", "filler", basic_material, 1, 1, 0, 'f', 0, 0, "common");
 
     for (int i = 0; i < 3; i++) {
         add_item_to_inventory(inventory, filler, 1);
@@ -341,7 +341,7 @@ int test_inventory_stack_boundaries(void)
     MaterialProperties_t basic_props = create_default_material_properties();
     Material_t basic_material = create_material("basic", basic_props);
 
-    Item_t* arrows = create_ammunition("Test Arrows", "test_arrows", basic_material, 5, 8, 'a');
+    Item_t* arrows = create_ammunition("Test Arrows", "test_arrows", basic_material, 5, 8, 'a', 0, "common");
     TEST_ASSERT(inventory != NULL && arrows != NULL, "Inventory and arrows should be created");
 
     // Test maximum stack size (assuming 255 is max for uint8_t)
@@ -383,9 +383,9 @@ int test_inventory_capacity_edge_cases(void)
     MaterialProperties_t basic_props = create_default_material_properties();
     Material_t basic_material = create_material("basic", basic_props);
 
-    Item_t* sword = create_weapon("Test Sword", "test_sword", basic_material, 10, 15, 0, 'S');
-    Item_t* armor = create_armor("Test Armor", "test_armor", basic_material, 20, 10, 'A', 15, 15);
-    Item_t* potion = create_consumable("Test Potion", "test_potion", 50, dummy_consume_callback, 'P');
+    Item_t* sword = create_weapon("Test Sword", "test_sword", basic_material, 10, 15, 0, 'S', 0, 0, "common");
+    Item_t* armor = create_armor("Test Armor", "test_armor", basic_material, 20, 10, 'A', 15, 15, "common");
+    Item_t* potion = create_consumable("Test Potion", "test_potion", 50, dummy_consume_callback, 'P', 0, "common");
 
     TEST_ASSERT(small_inventory != NULL && sword != NULL && armor != NULL && potion != NULL,
                 "All items should be created");
@@ -443,9 +443,9 @@ int test_inventory_weight_calculations(void)
     light_props.weight_fact = 0.1f; // Very light
     Material_t light_material = create_material("light", light_props);
 
-    Item_t* heavy_armor = create_armor("Heavy Armor", "heavy_armor", heavy_material, 50, 5, 'H', 15, 15);
-    Item_t* light_sword = create_weapon("Light Sword", "light_sword", light_material, 20, 30, 0, 'L');
-    Item_t* normal_arrows = create_ammunition("Arrows", "arrows", heavy_material, 3, 5, 'a');
+    Item_t* heavy_armor = create_armor("Heavy Armor", "heavy_armor", heavy_material, 50, 5, 'H', 15, 15, "common");
+    Item_t* light_sword = create_weapon("Light Sword", "light_sword", light_material, 20, 30, 0, 'L', 0, 0, "common");
+    Item_t* normal_arrows = create_ammunition("Arrows", "arrows", heavy_material, 3, 5, 'a', 0, "common");
 
     apply_material_to_armor(heavy_armor);
     apply_material_to_weapon(light_sword);
@@ -503,9 +503,9 @@ int test_equipment_state_corruption(void)
     MaterialProperties_t basic_props = create_default_material_properties();
     Material_t basic_material = create_material("basic", basic_props);
 
-    Item_t* sword1 = create_weapon("Sword One", "sword_one", basic_material, 20, 30, 0, 'S');
-    Item_t* sword2 = create_weapon("Sword Two", "sword_two", basic_material, 25, 35, 0, 'T');
-    Item_t* armor = create_armor("Test Armor", "test_armor", basic_material, 30, 10, 'A', 15, 15);
+    Item_t* sword1 = create_weapon("Sword One", "sword_one", basic_material, 20, 30, 0, 'S', 0, 0, "common");
+    Item_t* sword2 = create_weapon("Sword Two", "sword_two", basic_material, 25, 35, 0, 'T', 0, 0, "common");
+    Item_t* armor = create_armor("Test Armor", "test_armor", basic_material, 30, 10, 'A', 15, 15, "common");
 
     TEST_ASSERT(inventory != NULL && sword1 != NULL && sword2 != NULL && armor != NULL,
                 "All items should be created");
@@ -539,7 +539,7 @@ int test_equipment_state_corruption(void)
     TEST_ASSERT(equipped_armor != NULL, "Armor should be equipped");
 
     // Add more items and verify equipment state remains consistent
-    Item_t* new_item = create_weapon("New Weapon", "new_weapon", basic_material, 15, 20, 0, 'N');
+    Item_t* new_item = create_weapon("New Weapon", "new_weapon", basic_material, 15, 20, 0, 'N', 0, 0, "common");
     add_item_to_inventory(inventory, new_item, 1);
 
     equipped_armor = get_equipped_armor(inventory);
@@ -567,8 +567,8 @@ int test_inventory_rapid_operations(void)
     MaterialProperties_t basic_props = create_default_material_properties();
     Material_t basic_material = create_material("basic", basic_props);
 
-    Item_t* test_item = create_consumable("Test Item", "test_item", 25, dummy_consume_callback, 'T');
-    Item_t* equippable = create_weapon("Rapid Weapon", "rapid_weapon", basic_material, 10, 15, 0, 'R');
+    Item_t* test_item = create_consumable("Test Item", "test_item", 25, dummy_consume_callback, 'T', 0, "common");
+    Item_t* equippable = create_weapon("Rapid Weapon", "rapid_weapon", basic_material, 10, 15, 0, 'R', 0, 0, "common");
 
     TEST_ASSERT(inventory != NULL && test_item != NULL && equippable != NULL,
                 "All items should be created");
@@ -636,8 +636,8 @@ int test_item_identity_corruption(void)
     Material_t basic_material = create_material("basic", basic_props);
 
     // Create items with same ID but different properties (potential corruption scenario)
-    Item_t* arrow1 = create_ammunition("Arrow Type A", "arrow", basic_material, 3, 5, 'a');
-    Item_t* arrow2 = create_ammunition("Arrow Type B", "arrow", basic_material, 5, 8, 'b');
+    Item_t* arrow1 = create_ammunition("Arrow Type A", "arrow", basic_material, 3, 5, 'a', 0, "common");
+    Item_t* arrow2 = create_ammunition("Arrow Type B", "arrow", basic_material, 5, 8, 'b', 0, "common");
 
     TEST_ASSERT(inventory != NULL && arrow1 != NULL && arrow2 != NULL,
                 "All items should be created");
@@ -655,7 +655,7 @@ int test_item_identity_corruption(void)
 
     // Test stack integrity when items change
     LOG("Testing stack integrity during modifications");
-    Item_t* stackable = create_ammunition("Stack Test", "stackable", basic_material, 2, 4, 's');
+    Item_t* stackable = create_ammunition("Stack Test", "stackable", basic_material, 2, 4, 's', 0, "common");
 
     add_item_to_inventory(inventory, stackable, 50);
     Inventory_slot_t* stack_slot = find_item_in_inventory(inventory, "stackable");
@@ -699,7 +699,7 @@ int test_inventory_pathological_inputs(void)
     extreme_props.value_coins_fact = 1000.0f; // Extreme value
     Material_t extreme_material = create_material("extreme", extreme_props);
 
-    Item_t* zero_weight_item = create_weapon("Zero Weight", "zero_weight", extreme_material, 1, 1, 0, 'Z');
+    Item_t* zero_weight_item = create_weapon("Zero Weight", "zero_weight", extreme_material, 1, 1, 0, 'Z', 0, 0, "common");
     apply_material_to_weapon(zero_weight_item);
 
     TEST_ASSERT(zero_weight_item != NULL, "Zero weight item should be created");
@@ -718,7 +718,7 @@ int test_inventory_pathological_inputs(void)
 
     // Test adding many items to large inventory
     LOG("Testing large inventory stress");
-    Item_t* filler = create_consumable("Filler", "filler", 1, dummy_consume_callback, 'F');
+    Item_t* filler = create_consumable("Filler", "filler", 1, dummy_consume_callback, 'F', 0, "common");
 
     int successful_adds = 0;
     for (int i = 0; i < 254; i++) {

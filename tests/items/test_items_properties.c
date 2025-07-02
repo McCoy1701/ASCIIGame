@@ -47,7 +47,7 @@ int test_weapon_stats(void)
     
     // Create a weapon for testing
     Material_t iron = create_test_material("iron");
-    Item_t* sword = create_weapon("Test Sword", "test_sword", iron, 15, 25, 1, 'S');
+    Item_t* sword = create_weapon("Test Sword", "test_sword", iron, 15, 25, 1, 'S', 0, 0, "common");
     TEST_ASSERT(sword != NULL, "Sword should be created");
     if (!sword) {
         d_LogError("Critical failure: sword creation failed, aborting test");
@@ -71,7 +71,7 @@ int test_weapon_stats(void)
     TEST_ASSERT(get_weapon_range(NULL) == 0, "NULL weapon should have 0 range");
 
     d_LogDebug("Testing weapon functions on non-weapon items...");
-    Item_t* armor = create_armor("Test Armor", "test_armor", iron, 20, 10, 'A', 15, 15);
+    Item_t* armor = create_armor("Test Armor", "test_armor", iron, 20, 10, 'A', 15, 15, "common");
     if (armor) {
         TEST_ASSERT(get_weapon_min_damage(armor) == 0, "Armor should have 0 weapon damage");
         TEST_ASSERT(get_weapon_max_damage(armor) == 0, "Armor should have 0 weapon damage");
@@ -93,9 +93,9 @@ int test_weapon_ammo(void)
     Material_t wood = create_test_material("wood");
 
     d_LogDebug("Creating test weapons with different ranges...");
-    Item_t* sword = create_weapon("Sword", "sword", wood, 10, 15, 0, 'S');
-    Item_t* bow = create_weapon("Bow", "bow", wood, 5, 10, 5, 'B');
-    Item_t* arrow = create_ammunition("Arrow", "arrow", wood, 3, 5, 'a');
+    Item_t* sword = create_weapon("Sword", "sword", wood, 10, 15, 0, 'S', 0, 0, "common");
+    Item_t* bow = create_weapon("Bow", "bow", wood, 5, 10, 5, 'B', 0, 0, "common");
+    Item_t* arrow = create_ammunition("Arrow", "arrow", wood, 3, 5, 'a', 0, "common");
 
     TEST_ASSERT(sword != NULL, "Sword should be created");
     TEST_ASSERT(bow != NULL, "Bow should be created");
@@ -150,7 +150,7 @@ int test_armor_stats(void)
     dLogContext_t* ctx = d_PushLogContext("ArmorStats");
     
     Material_t leather = create_test_material("leather");
-    Item_t* armor = create_armor("Test Armor", "test_armor", leather, 30, 15, 'A', 10, 5);
+    Item_t* armor = create_armor("Test Armor", "test_armor", leather, 30, 15, 'A', 10, 5, "common");
     TEST_ASSERT(armor != NULL, "Armor should be created");
     
     if (!armor) {
@@ -172,7 +172,7 @@ int test_armor_stats(void)
     TEST_ASSERT(get_evasion_value(NULL) == 0, "NULL armor should have 0 evasion value");
 
     d_LogDebug("Testing armor functions on non-armor items...");
-    Item_t* sword = create_weapon("Test Sword", "test_sword", leather, 10, 15, 0, 'S');
+    Item_t* sword = create_weapon("Test Sword", "test_sword", leather, 10, 15, 0, 'S', 0, 0, "common");
     if (sword) {
         TEST_ASSERT(get_armor_value(sword) == 0, "Weapon should have 0 armor value");
         TEST_ASSERT(get_evasion_value(sword) == 0, "Weapon should have 0 evasion value");
@@ -199,7 +199,7 @@ int test_item_weight(void)
     heavy_props.weight_fact = 2.0f;
     Material_t heavy_material = create_material("heavy", heavy_props);
 
-    Item_t* heavy_sword = create_weapon("Heavy Sword", "heavy_sword", heavy_material, 20, 30, 0, 'H');
+    Item_t* heavy_sword = create_weapon("Heavy Sword", "heavy_sword", heavy_material, 20, 30, 0, 'H', 0, 0, "common");
     TEST_ASSERT(heavy_sword != NULL, "Heavy sword should be created");
     
     if (!heavy_sword) {
@@ -237,7 +237,7 @@ int test_item_value(void)
     valuable_props.value_coins_fact = 3.0f;
     Material_t valuable_material = create_material("gold", valuable_props);
 
-    Item_t* gold_ring = create_armor("Gold Ring", "gold_ring", valuable_material, 1, 0, 'o', 15, 15);
+    Item_t* gold_ring = create_armor("Gold Ring", "gold_ring", valuable_material, 1, 0, 'o', 15, 15, "common");
     TEST_ASSERT(gold_ring != NULL, "Gold ring should be created");
     
     if (!gold_ring) {
@@ -275,12 +275,12 @@ int test_stealth_value(void)
     stealth_props.stealth_value_fact = 2.0f;
     Material_t stealth_material = create_material("shadow", stealth_props);
 
-    Item_t* stealth_armor = create_armor("Shadow Cloak", "shadow_cloak", stealth_material, 10, 20, 'C', 15, 15);
-    Item_t* stealth_weapon = create_weapon("Shadow Blade", "shadow_blade", stealth_material, 15, 20, 0, 'b');
+    Item_t* stealth_armor = create_armor("Shadow Cloak", "shadow_cloak", stealth_material, 10, 20, 'C', 15, 15, "common");
+    Item_t* stealth_weapon = create_weapon("Shadow Blade", "shadow_blade", stealth_material, 15, 20, 0, 'b', 0, 0, "common");
     
     // Create items that shouldn't have stealth
     Lock_t lock = create_lock("test_lock", "A test lock", 50, 0);
-    Item_t* key = create_key("Test Key", "test_key", lock, 'k');
+    Item_t* key = create_key("Test Key", "test_key", lock, 'k', 0, "common");
 
     TEST_ASSERT(stealth_armor != NULL, "Stealth armor should be created");
     TEST_ASSERT(stealth_weapon != NULL, "Stealth weapon should be created");
@@ -334,8 +334,8 @@ int test_durability(void)
     durable_props.durability_fact = 1.5f;
     Material_t durable_material = create_material("adamantine", durable_props);
 
-    Item_t* durable_sword = create_weapon("Adamantine Sword", "adamantine_sword", durable_material, 25, 35, 0, 'A');
-    Item_t* consumable = create_consumable("Health Potion", "health_potion", 50, dummy_consume_callback, 'H');
+    Item_t* durable_sword = create_weapon("Adamantine Sword", "adamantine_sword", durable_material, 25, 35, 0, 'A', 0, 0, "common");
+    Item_t* consumable = create_consumable("Health Potion", "health_potion", 50, dummy_consume_callback, 'H', 0, "common");
 
     TEST_ASSERT(durable_sword != NULL, "Durable sword should be created");
     TEST_ASSERT(consumable != NULL, "Consumable should be created");
@@ -375,8 +375,8 @@ int test_stackable(void)
     
     Material_t basic_material = create_test_material("basic");
 
-    Item_t* sword = create_weapon("Sword", "sword", basic_material, 10, 15, 0, 'S');
-    Item_t* arrows = create_ammunition("Arrows", "arrows", basic_material, 5, 8, 'a');
+    Item_t* sword = create_weapon("Sword", "sword", basic_material, 10, 15, 0, 'S', 0, 0, "common");
+    Item_t* arrows = create_ammunition("Arrows", "arrows", basic_material, 5, 8, 'a', 0, "common");
 
     TEST_ASSERT(sword != NULL, "Sword should be created");
     TEST_ASSERT(arrows != NULL, "Arrows should be created");
@@ -430,7 +430,7 @@ int test_weapon_stats_extreme_cases(void)
     Material_t basic_material = create_test_material("basic");
 
     d_LogDebug("Testing weapon with zero damage values...");
-    Item_t* zero_weapon = create_weapon("Zero Damage", "zero_damage", basic_material, 0, 0, 0, 'Z');
+    Item_t* zero_weapon = create_weapon("Zero Damage", "zero_damage", basic_material, 0, 0, 0, 'Z', 0, 0, "common");
     TEST_ASSERT(zero_weapon != NULL, "Zero damage weapon should be created");
     
     if (zero_weapon) {
@@ -446,7 +446,8 @@ int test_weapon_stats_extreme_cases(void)
     }
 
     d_LogDebug("Testing weapon with inverted damage values (min > max)...");
-    Item_t* inverted_weapon = create_weapon("Inverted Damage", "inverted_damage", basic_material, 50, 20, 0, 'I');
+    Item_t* inverted_weapon = create_weapon("Inverted Damage", "inverted_damage", 
+        basic_material, 50, 20, 0, 'I', 0, 0, "common");
     TEST_ASSERT(inverted_weapon != NULL, "Inverted damage weapon should be created");
     
     if (inverted_weapon) {
@@ -458,7 +459,8 @@ int test_weapon_stats_extreme_cases(void)
     }
 
     d_LogDebug("Testing weapon with maximum uint8_t values...");
-    Item_t* max_weapon = create_weapon("Max Weapon", "max_weapon", basic_material, 255, 255, 255, 'M');
+    Item_t* max_weapon = create_weapon("Max Weapon", "max_weapon", 
+        basic_material, 255, 255, 255, 'M', 0, 0, "common");
     TEST_ASSERT(max_weapon != NULL, "Max weapon should be created");
     
     if (max_weapon) {
@@ -472,7 +474,8 @@ int test_weapon_stats_extreme_cases(void)
     }
 
     d_LogDebug("Testing extreme range weapon ammo logic...");
-    Item_t* sniper = create_weapon("Sniper Rifle", "sniper", basic_material, 30, 50, 200, 'S');
+    Item_t* sniper = create_weapon("Sniper Rifle", "sniper", 
+        basic_material, 30, 50, 200, 'S', 0, 0, "common");
     TEST_ASSERT(sniper != NULL, "Sniper should be created");
     
     if (sniper) {
@@ -498,14 +501,15 @@ int test_weapon_ammo_extreme_cases(void)
     Material_t basic_material = create_test_material("basic");
 
     d_LogDebug("Creating weapons with various range values for ammo testing...");
-    Item_t* melee = create_weapon("Melee", "melee", basic_material, 10, 15, 0, 'M');
-    Item_t* short_range = create_weapon("Short Range", "short_range", basic_material, 8, 12, 1, 'S');
-    Item_t* long_range = create_weapon("Long Range", "long_range", basic_material, 15, 25, 50, 'L');
-    Item_t* extreme_range = create_weapon("Extreme Range", "extreme_range", basic_material, 20, 30, 255, 'E');
+    Item_t* melee = create_weapon("Melee", "melee", basic_material, 10, 15, 0, 'M', 0, 0, "common");
+    Item_t* short_range = create_weapon("Short Range", "short_range", basic_material, 8, 12, 1, 'S', 0, 0, "common");
+    Item_t* long_range = create_weapon("Long Range", "long_range", basic_material, 15, 25, 50, 'L', 0, 0,"common");
+    Item_t* extreme_range = create_weapon("Extreme Range", "extreme_range", 
+        basic_material, 20, 30, 255, 'E', 0, "common", 0);
 
-    Item_t* light_ammo = create_ammunition("Light Ammo", "light_ammo", basic_material, 2, 4, 'l');
-    Item_t* heavy_ammo = create_ammunition("Heavy Ammo", "heavy_ammo", basic_material, 8, 15, 'h');
-    Item_t* extreme_ammo = create_ammunition("Extreme Ammo", "extreme_ammo", basic_material, 255, 255, 'x');
+    Item_t* light_ammo = create_ammunition("Light Ammo", "light_ammo", basic_material, 2, 4, 'l', 0, "common");
+    Item_t* heavy_ammo = create_ammunition("Heavy Ammo", "heavy_ammo", basic_material, 8, 15, 'h', 0, "common");
+    Item_t* extreme_ammo = create_ammunition("Extreme Ammo", "extreme_ammo", basic_material, 255, 255, 'x', 0, "common");
 
     if (!melee || !short_range || !long_range || !extreme_range ||
         !light_ammo || !heavy_ammo || !extreme_ammo) {
@@ -541,7 +545,7 @@ int test_weapon_ammo_extreme_cases(void)
     TEST_ASSERT(!melee_light, "Melee weapon should not use ammo");
 
     d_LogDebug("Testing ammo system with corrupted weapon data...");
-    Item_t* corrupt_weapon = create_weapon("Corrupt", "corrupt", basic_material, 10, 15, 5, 'C');
+    Item_t* corrupt_weapon = create_weapon("Corrupt", "corrupt", basic_material, 10, 15, 5, 'C', 0, 0, "common");
     if (corrupt_weapon) {
         ItemType_t original_type = corrupt_weapon->type;
         corrupt_weapon->type = ITEM_TYPE_ARMOR; // Wrong type
@@ -577,7 +581,7 @@ int test_armor_stats_extreme_cases(void)
     Material_t basic_material = create_test_material("basic");
 
     d_LogDebug("Testing armor with zero stat values...");
-    Item_t* zero_armor = create_armor("Zero Armor", "zero_armor", basic_material, 0, 0, 'Z', 0, 0);
+    Item_t* zero_armor = create_armor("Zero Armor", "zero_armor", basic_material, 0, 0, 'Z', 0, 0, "common");
     TEST_ASSERT(zero_armor != NULL, "Zero armor should be created");
     
     if (zero_armor) {
@@ -591,7 +595,7 @@ int test_armor_stats_extreme_cases(void)
     }
 
     d_LogDebug("Testing armor with maximum uint8_t values...");
-    Item_t* max_armor = create_armor("Max Armor", "max_armor", basic_material, 255, 255, 'M', 255, 255);
+    Item_t* max_armor = create_armor("Max Armor", "max_armor", basic_material, 255, 255, 'M', 255, 255, "common");
     TEST_ASSERT(max_armor != NULL, "Max armor should be created");
     
     if (max_armor) {
@@ -605,7 +609,7 @@ int test_armor_stats_extreme_cases(void)
     }
 
     d_LogDebug("Testing armor with extreme stat combinations...");
-    Item_t* glass_armor = create_armor("Glass Armor", "glass_armor", basic_material, 1, 254, 'G', 255, 1);
+    Item_t* glass_armor = create_armor("Glass Armor", "glass_armor", basic_material, 1, 254, 'G', 255, 1, "common");
     TEST_ASSERT(glass_armor != NULL, "Glass armor should be created");
     
     if (glass_armor) {
@@ -617,7 +621,7 @@ int test_armor_stats_extreme_cases(void)
     }
 
     d_LogDebug("Testing armor stats with corrupted item data...");
-    Item_t* corrupt_armor = create_armor("Corrupt Armor", "corrupt_armor", basic_material, 50, 30, 'C', 20, 20);
+    Item_t* corrupt_armor = create_armor("Corrupt Armor", "corrupt_armor", basic_material, 50, 30, 'C', 20, 20, "common");
     if (corrupt_armor) {
         corrupt_armor->type = ITEM_TYPE_WEAPON; // Corrupt the type
 
@@ -658,7 +662,8 @@ int test_weight_value_extreme_cases(void)
     Material_t negative_material = create_material("negative", negative_props);
 
     d_LogDebug("Testing feather-light material effects...");
-    Item_t* feather_sword = create_weapon("Feather Sword", "feather_sword", feather_material, 10, 15, 0, 'F');
+    Item_t* feather_sword = create_weapon("Feather Sword", "feather_sword", 
+        feather_material, 10, 15, 0, 'F', 0, 0, "common");
     if (feather_sword) {
         apply_material_to_weapon(feather_sword);
         float feather_weight = get_item_weight(feather_sword);
@@ -669,7 +674,7 @@ int test_weight_value_extreme_cases(void)
     }
 
     d_LogDebug("Testing lead-heavy material effects...");
-    Item_t* lead_sword = create_weapon("Lead Sword", "lead_sword", lead_material, 10, 15, 0, 'L');
+    Item_t* lead_sword = create_weapon("Lead Sword", "lead_sword", lead_material, 10, 15, 0, 'L', 0, 0, "common");
     if (lead_sword && feather_sword) {
         apply_material_to_weapon(lead_sword);
         float lead_weight = get_item_weight(lead_sword);
@@ -680,7 +685,7 @@ int test_weight_value_extreme_cases(void)
     }
 
     d_LogDebug("Testing negative property material effects...");
-    Item_t* negative_sword = create_weapon("Negative Sword", "negative_sword", negative_material, 10, 15, 0, 'N');
+    Item_t* negative_sword = create_weapon("Negative Sword", "negative_sword", negative_material, 10, 15, 0, 'N', 0, 0, "common");
     if (negative_sword) {
         apply_material_to_weapon(negative_sword);
         float negative_weight = get_item_weight(negative_sword);
@@ -721,9 +726,12 @@ int test_stealth_extreme_cases(void)
     Material_t anti_stealth_material = create_material("anti_stealth", anti_stealth_props);
 
     d_LogDebug("Testing extreme stealth value calculations...");
-    Item_t* invisible_armor = create_armor("Invisible Armor", "invisible_armor", invisible_material, 20, 10, 'I', 100, 10);
-    Item_t* glowing_armor = create_armor("Glowing Armor", "glowing_armor", glowing_material, 25, 15, 'G', 0, 15);
-    Item_t* anti_stealth_armor = create_armor("Anti-Stealth Armor", "anti_stealth_armor", anti_stealth_material, 30, 5, 'A', 50, 20);
+    Item_t* invisible_armor = create_armor("Invisible Armor", "invisible_armor", 
+        invisible_material, 20, 10, 'I', 100, 10, "common");
+    Item_t* glowing_armor = create_armor("Glowing Armor", "glowing_armor", 
+        glowing_material, 25, 15, 'G', 0, 15, "common");
+    Item_t* anti_stealth_armor = create_armor("Anti-Stealth Armor", "anti_stealth_armor", 
+        anti_stealth_material, 30, 5, 'A', 50, 20, "common");
 
     if (invisible_armor && glowing_armor && anti_stealth_armor) {
         // Set base stealth values and apply materials
@@ -749,8 +757,8 @@ int test_stealth_extreme_cases(void)
 
     d_LogDebug("Testing stealth values on inappropriate item types...");
     Lock_t test_lock = create_lock("Test Lock", "test_lock", 50, 0);
-    Item_t* key = create_key("Test Key", "test_key", test_lock, 'K');
-    Item_t* consumable = create_consumable("Test Potion", "test_potion", 25, dummy_consume_callback, 'P');
+    Item_t* key = create_key("Test Key", "test_key", test_lock, 'K', 0, "common");
+    Item_t* consumable = create_consumable("Test Potion", "test_potion", 25, dummy_consume_callback, 'P', 0, "common");
 
     if (key && consumable) {
         uint8_t key_stealth = get_stealth_value(key);
@@ -783,7 +791,7 @@ int test_stackable_extreme_cases(void)
     Material_t basic_material = create_test_material("basic");
 
     d_LogDebug("Testing stackable ammunition at max stack boundaries...");
-    Item_t* arrows = create_ammunition("Test Arrows", "test_arrows", basic_material, 5, 8, 'A');
+    Item_t* arrows = create_ammunition("Test Arrows", "test_arrows", basic_material, 5, 8, 'A', 0, "common");
     if (arrows) {
         bool arrows_stackable = is_item_stackable(arrows);
         uint8_t arrows_max_stack = get_max_stack_size(arrows);
@@ -797,7 +805,7 @@ int test_stackable_extreme_cases(void)
     }
 
     d_LogDebug("Testing stackable properties with corrupted data...");
-    Item_t* corrupt_ammo = create_ammunition("Corrupt Ammo", "corrupt_ammo", basic_material, 3, 6, 'C');
+    Item_t* corrupt_ammo = create_ammunition("Corrupt Ammo", "corrupt_ammo", basic_material, 3, 6, 'C', 0, "common");
     if (corrupt_ammo) {
         // Manually corrupt the stackable value to test bounds checking
         corrupt_ammo->stackable = 0; // Make non-stackable
@@ -821,8 +829,8 @@ int test_stackable_extreme_cases(void)
     }
 
     d_LogDebug("Testing non-stackable items to ensure they stay non-stackable...");
-    Item_t* weapon = create_weapon("Test Weapon", "test_weapon", basic_material, 10, 15, 0, 'W');
-    Item_t* armor = create_armor("Test Armor", "test_armor", basic_material, 20, 10, 'A', 15, 15);
+    Item_t* weapon = create_weapon("Test Weapon", "test_weapon", basic_material, 10, 15, 0, 'W', 0, 0, "common");
+    Item_t* armor = create_armor("Test Armor", "test_armor", basic_material, 20, 10, 'A', 15, 15, "common");
 
     if (weapon && armor) {
         bool weapon_stackable = is_item_stackable(weapon);
@@ -877,7 +885,7 @@ int test_durability_properties_extreme_cases(void)
     Material_t corrupt_material = create_material("corrupt", corrupt_props);
 
     d_LogDebug("Testing brittle material durability effects...");
-    Item_t* brittle_sword = create_weapon("Brittle Sword", "brittle_sword", brittle_material, 15, 25, 0, 'B');
+    Item_t* brittle_sword = create_weapon("Brittle Sword", "brittle_sword", brittle_material, 15, 25, 0, 'B', 0, 0, "common");
     if (brittle_sword) {
         apply_material_to_weapon(brittle_sword);
         uint8_t brittle_durability = get_durability(brittle_sword);
@@ -888,7 +896,7 @@ int test_durability_properties_extreme_cases(void)
     }
 
     d_LogDebug("Testing eternal material durability effects...");
-    Item_t* eternal_sword = create_weapon("Eternal Sword", "eternal_sword", eternal_material, 15, 25, 0, 'E');
+    Item_t* eternal_sword = create_weapon("Eternal Sword", "eternal_sword", eternal_material, 15, 25, 0, 'E', 0, 0, "common");
     if (eternal_sword) {
         apply_material_to_weapon(eternal_sword);
         uint8_t eternal_durability = get_durability(eternal_sword);
@@ -899,7 +907,7 @@ int test_durability_properties_extreme_cases(void)
     }
 
     d_LogDebug("Testing corrupt material durability effects...");
-    Item_t* corrupt_sword = create_weapon("Corrupt Sword", "corrupt_sword", corrupt_material, 15, 25, 0, 'C');
+    Item_t* corrupt_sword = create_weapon("Corrupt Sword", "corrupt_sword", corrupt_material, 15, 25, 0, 'C', 0, 0, "common");
     if (corrupt_sword) {
         apply_material_to_weapon(corrupt_sword);
         uint8_t corrupt_durability = get_durability(corrupt_sword);
@@ -909,9 +917,9 @@ int test_durability_properties_extreme_cases(void)
     }
 
     d_LogDebug("Testing durability on non-durable items...");
-    Item_t* consumable = create_consumable("Test Potion", "test_potion", 25, dummy_consume_callback, 'P');
+    Item_t* consumable = create_consumable("Test Potion", "test_potion", 25, dummy_consume_callback, 'P', 0, "common");
     Lock_t test_lock = create_lock("Test Lock", "test_lock", 50, 0);
-    Item_t* key = create_key("Test Key", "test_key", test_lock, 'K');
+    Item_t* key = create_key("Test Key", "test_key", test_lock, 'K', 0, "common");
 
     if (consumable && key) {
         uint8_t consumable_durability = get_durability(consumable);
@@ -965,7 +973,7 @@ int test_property_interactions_extreme_cases(void)
     chaos_material_created = true;
 
     d_LogDebug("Testing chaos material application on weapon with memory tracking...");
-    chaos_weapon = create_weapon("Chaos Weapon", "chaos_weapon", chaos_material, 10, 20, 5, 'C');
+    chaos_weapon = create_weapon("Chaos Weapon", "chaos_weapon", chaos_material, 10, 20, 5, 'C', 0, 0, "common");
     
     if (!chaos_weapon) {
         d_LogError("Critical failure: chaos weapon creation failed");
@@ -1005,7 +1013,7 @@ int test_property_interactions_extreme_cases(void)
     TEST_ASSERT(stealth <= 255, "Stealth should not overflow");
 
     d_LogDebug("Testing chaos material on armor...");
-    chaos_armor = create_armor("Chaos Armor", "chaos_armor", chaos_material, 15, 10, 'C', 20, 5);
+    chaos_armor = create_armor("Chaos Armor", "chaos_armor", chaos_material, 15, 10, 'C', 20, 5, "common");
     
     if (chaos_armor) {
         apply_material_to_armor(chaos_armor);

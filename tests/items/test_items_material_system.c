@@ -70,7 +70,7 @@ int test_apply_material_to_weapon(void)
     d_LogInfo("Verifying application of material properties to a weapon.");
     MaterialProperties_t iron_props = create_default_material_properties();
     Material_t base_material = create_material("iron", iron_props);
-    Item_t* sword = create_weapon("Base Sword", "base_sword", base_material, 10, 15, 0, 's');
+    Item_t* sword = create_weapon("Base Sword", "base_sword", base_material, 10, 15, 0, 's', 0, 0, "common");
     TEST_ASSERT(sword != NULL, "Base weapon should be created");
 
     uint8_t original_min_dmg = sword->data.weapon.min_damage;
@@ -90,7 +90,7 @@ int test_apply_material_to_weapon(void)
     apply_material_to_weapon(NULL);
     TEST_ASSERT(1, "apply_material_to_weapon should handle NULL gracefully");
 
-    Item_t* armor = create_armor("Test Armor", "test_armor", base_material, 20, 5, 'A', 15, 15);
+    Item_t* armor = create_armor("Test Armor", "test_armor", base_material, 20, 5, 'A', 15, 15, "common");
     apply_material_to_weapon(armor);
     TEST_ASSERT(1, "apply_material_to_weapon should handle wrong type gracefully");
     destroy_item(armor);
@@ -102,7 +102,7 @@ int test_apply_material_to_armor(void)
 {
     d_LogInfo("Verifying application of material properties to armor.");
     Material_t base_material = create_material("leather", create_default_material_properties());
-    Item_t* armor = create_armor("Base Armor", "base_armor", base_material, 15, 10, 'A', 15, 15);
+    Item_t* armor = create_armor("Base Armor", "base_armor", base_material, 15, 10, 'A', 15, 15, "common");
     TEST_ASSERT(armor != NULL, "Base armor should be created");
 
     uint8_t original_armor = armor->data.armor.armor_value;
@@ -123,7 +123,7 @@ int test_apply_material_to_armor(void)
     apply_material_to_armor(NULL);
     TEST_ASSERT(1, "apply_material_to_armor should handle NULL gracefully");
 
-    Item_t* weapon = create_weapon("Test Sword", "test_sword", base_material, 10, 15, 0, 's');
+    Item_t* weapon = create_weapon("Test Sword", "test_sword", base_material, 10, 15, 0, 's', 0, 0, "common");
     apply_material_to_armor(weapon);
     TEST_ASSERT(1, "apply_material_to_armor should handle wrong type gracefully");
     destroy_item(weapon);
@@ -140,7 +140,7 @@ int test_calculate_final_weight(void)
     d_LogInfo("Verifying final weight calculation.");
     MaterialProperties_t lead_props = { .weight_fact = 3.0f };
     Material_t heavy_material = create_material("lead", lead_props);
-    Item_t* mace = create_weapon("Lead Mace", "lead_mace", heavy_material, 8, 12, 0, 'm');
+    Item_t* mace = create_weapon("Lead Mace", "lead_mace", heavy_material, 8, 12, 0, 'm', 0, 0, "common");
     TEST_ASSERT(mace != NULL, "Lead mace should be created");
 
     apply_material_to_weapon(mace);
@@ -162,7 +162,7 @@ int test_calculate_final_value(void)
     d_LogInfo("Verifying final value calculation.");
     MaterialProperties_t gold_props = { .value_coins_fact = 2.0f };
     Material_t gold = create_material("gold", gold_props);
-    Item_t* crown = create_armor("Golden Crown", "gold_crown", gold, 5, 15, 'C', 15, 15);
+    Item_t* crown = create_armor("Golden Crown", "gold_crown", gold, 5, 15, 'C', 15, 15, "common");
     TEST_ASSERT(crown != NULL, "Golden crown should be created");
 
     apply_material_to_armor(crown);
@@ -188,7 +188,7 @@ int test_material_system_integration(void)
     d_LogInfo("Verifying complete material system workflow.");
     MaterialProperties_t mythril_props = { .weight_fact = 0.2f, .value_coins_fact = 2.5f, .min_damage_fact = 2.0f };
     Material_t mythril = create_material("mythril", mythril_props);
-    Item_t* mythril_sword = create_weapon("Mythril Blade", "mythril_blade", mythril, 12, 18, 1, 'M');
+    Item_t* mythril_sword = create_weapon("Mythril Blade", "mythril_blade", mythril, 12, 18, 1, 'M', 0, 0, "common");
     TEST_ASSERT(mythril_sword != NULL, "Mythril sword should be created");
 
     uint8_t pre_min_dmg = mythril_sword->data.weapon.min_damage;

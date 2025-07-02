@@ -51,6 +51,7 @@ static Item_t* create_test_database_for_utils(int* count)
     d_SetString(db[0].rarity, "legendary", 0);
     db[0].type = ITEM_TYPE_WEAPON;
     db[0].weight_kg = 3.5f;
+    db[0].value_coins = 255; // Clamped to uint8_t max
 
     // --- Item 1: Another valid item ---
     db[1].name = d_InitString();
@@ -64,6 +65,7 @@ static Item_t* create_test_database_for_utils(int* count)
     d_SetString(db[1].rarity, "common", 0);
     db[1].type = ITEM_TYPE_KEY;
     db[1].weight_kg = 0.1f;
+    db[1].value_coins = 10;
 
     // --- Item 2: An item with invalid data for validation testing ---
     db[2].name = NULL; // Intentionally invalid name
@@ -74,7 +76,8 @@ static Item_t* create_test_database_for_utils(int* count)
     db[2].rarity = d_InitString(); // Still initialize, even if empty
     d_SetString(db[2].rarity, "junk", 0);
     db[2].type = ITEM_TYPE_CONSUMABLE;
-    db[2].weight_kg = -1.0f; // Intentionally invalid weight
+    db[2].weight_kg = 1.0f; // Now a valid weight
+    db[2].value_coins = -5; // Intentionally invalid value
 
     return db;
 }
@@ -233,6 +236,7 @@ int test_validate_item_with_invalid_type(void)
     bad_item.description = d_InitString();
     d_SetString(bad_item.description, "A bad item.", 0);
     bad_item.weight_kg = 1.0f;
+    bad_item.value_coins = 10;
     
     // Set an item type that is outside the valid enum range
     bad_item.type = (ItemType_t)99; // Invalid type
@@ -268,6 +272,7 @@ int test_validate_item_with_empty_string_id(void)
     d_SetString(bad_item.description, "An item with an empty ID.", 0);
     bad_item.type = ITEM_TYPE_KEY;
     bad_item.weight_kg = 1.0f;
+    bad_item.value_coins = 10;
     
     // Your updated validator should catch that the ID string has a length of 0
     bool is_valid = ie_ValidateItem(&bad_item);
@@ -354,6 +359,7 @@ int test_validator_stress_loop(void)
             d_SetString(test_item.description, "desc", 0);
             test_item.type = ITEM_TYPE_WEAPON;
             test_item.weight_kg = 1.0f;
+            test_item.value_coins = 10;
             TEST_ASSERT(ie_ValidateItem(&test_item), "Looped validation should pass for valid item");
         } else {
             d_SetString(test_item.name, "Invalid Looping Item", 0);
@@ -362,6 +368,7 @@ int test_validator_stress_loop(void)
             d_SetString(test_item.description, "desc", 0);
             test_item.type = ITEM_TYPE_ARMOR;
             test_item.weight_kg = 1.0f;
+            test_item.value_coins = 10;
             TEST_ASSERT(!ie_ValidateItem(&test_item), "Looped validation should fail for invalid item");
         }
         
@@ -391,18 +398,21 @@ int test_find_item_in_corrupted_database(void)
     db[0].id = d_InitString(); d_SetString(db[0].id, "first_item", 0);
     db[0].rarity = d_InitString(); d_SetString(db[0].rarity, "common", 0);
     db[0].description = d_InitString(); d_SetString(db[0].description, "desc", 0);
+    db[0].value_coins = 10;
 
     // Item 1: Corrupted (NULL id pointer)
     db[1].name = d_InitString(); d_SetString(db[1].name, "Corrupt Item", 0);
     db[1].id = NULL; // The whole dString object is NULL
     db[1].rarity = d_InitString(); d_SetString(db[1].rarity, "common", 0);
     db[1].description = d_InitString(); d_SetString(db[1].description, "desc", 0);
+    db[1].value_coins = 10;
 
     // Item 2: The target item, after the corrupted one
     db[2].name = d_InitString(); d_SetString(db[2].name, "Target Item", 0);
     db[2].id = d_InitString(); d_SetString(db[2].id, "target_item", 0);
     db[2].rarity = d_InitString(); d_SetString(db[2].rarity, "common", 0);
     db[2].description = d_InitString(); d_SetString(db[2].description, "desc", 0);
+    db[2].value_coins = 10;
 
     // The function should safely skip item 1 and find item 2
     Item_t* found_item = ie_FindItemByID(db, count, "target_item");
@@ -440,6 +450,7 @@ int test_validate_item_with_corrupt_internal_string(void)
     bad_item.description = d_InitString(); d_SetString(bad_item.description, "desc", 0);
     bad_item.type = ITEM_TYPE_KEY;
     bad_item.weight_kg = 1.0f;
+    bad_item.value_coins = 10;
     
     // The validator should be robust enough to handle this specific corruption.
     bool is_valid = ie_ValidateItem(&bad_item);
@@ -455,6 +466,128 @@ int test_validate_item_with_corrupt_internal_string(void)
     d_LogInfo("...internally corrupt dString test completed.");
     return 1;
 }
+
+/**
+ * @brief Tests ie_FilterItemsByType when no items match the filter.
+ */
+int test_filter_items_by_type_no_match(void)
+{
+    d_LogInfo("New Test: Filtering with no matching items...");
+    int count = 0;
+    Item_t* db = create_test_database_for_utils(&count);
+    Item_t* filtered_list[3]; // Buffer for results
+
+    // Try to filter for a type that doesn't exist in the database
+    int no_match_count = ie_FilterItemsByType(db, count, ITEM_TYPE_AMMUNITION, filtered_list);
+    
+    TEST_ASSERT(no_match_count == 0, "Should find zero items when no match exists");
+    
+    cleanup_test_database_for_utils(db, count);
+    d_LogInfo("...filtering with no matching items test completed.");
+    return 1;
+}
+
+/**
+ * @brief Tests ie_FilterItemsByType with a database containing only one item.
+ */
+int test_filter_items_by_type_single_item_db(void)
+{
+    d_LogInfo("New Test: Filtering a single-item database...");
+    int count = 1;
+    Item_t* db = malloc(sizeof(Item_t) * count);
+    if (!db) {
+        d_LogError("Failed to allocate single item database for test.");
+        return 0;
+    }
+
+    db[0].name = d_InitString(); d_SetString(db[0].name, "Single Sword", 0);
+    db[0].id = d_InitString(); d_SetString(db[0].id, "single_sword", 0);
+    db[0].description = d_InitString(); d_SetString(db[0].description, "A lone sword.", 0);
+    db[0].rarity = d_InitString(); d_SetString(db[0].rarity, "rare", 0);
+    db[0].type = ITEM_TYPE_WEAPON;
+    db[0].weight_kg = 5.0f;
+    db[0].value_coins = 255; // Clamped to uint8_t max
+
+    Item_t* filtered_list[1]; // Buffer for results
+
+    // Filter for the weapon type
+    int weapon_count = ie_FilterItemsByType(db, count, ITEM_TYPE_WEAPON, filtered_list);
+    TEST_ASSERT(weapon_count == 1, "Should find exactly one weapon in a single-item database");
+    if (weapon_count == 1) {
+        TEST_ASSERT(strcmp(filtered_list[0]->id->str, "single_sword") == 0, "Filtered item should be the single sword");
+    }
+
+    // Filter for a non-existent type
+    int key_count = ie_FilterItemsByType(db, count, ITEM_TYPE_KEY, filtered_list);
+    TEST_ASSERT(key_count == 0, "Should find zero keys in a single-weapon database");
+
+    cleanup_test_database_for_utils(db, count);
+    d_LogInfo("...filtering single-item database test completed.");
+    return 1;
+}
+
+/**
+ * @brief Tests ie_ValidateItem with an item having a NULL description dString.
+ */
+int test_validate_item_with_null_description(void)
+{
+    d_LogInfo("New Test: Validating item with NULL description dString...");
+    Item_t bad_item = {0};
+    bad_item.name = d_InitString(); d_SetString(bad_item.name, "No Desc Item", 0);
+    bad_item.id = d_InitString(); d_SetString(bad_item.id, "no_desc_id", 0);
+    bad_item.rarity = d_InitString(); d_SetString(bad_item.rarity, "common", 0);
+    bad_item.description = NULL; // Intentionally NULL dString_t pointer
+    bad_item.type = ITEM_TYPE_CONSUMABLE;
+    bad_item.weight_kg = 0.5f;
+    bad_item.value_coins = 5;
+
+    bool is_valid = ie_ValidateItem(&bad_item);
+    
+    TEST_ASSERT(is_valid == false, "Validator should fail for an item with a NULL description dString");
+
+    // Manual cleanup for the dString_t pointers that were initialized
+    d_DestroyString(bad_item.name);
+    d_DestroyString(bad_item.id);
+    d_DestroyString(bad_item.rarity);
+    // description was NULL, so no d_DestroyString for it
+    
+    d_LogInfo("...item with NULL description dString test completed.");
+    return 1;
+}
+
+/**
+ * @brief Tests ie_ValidateItem with an item having a negative value_coins.
+ */
+int test_validate_item_with_negative_value_coins(void)
+{
+    d_LogInfo("New Test: Validating item with negative value_coins...");
+    Item_t bad_item = {0};
+    bad_item.name = d_InitString(); d_SetString(bad_item.name, "Negative Value Item", 0);
+    bad_item.id = d_InitString(); d_SetString(bad_item.id, "neg_value_id", 0);
+    bad_item.rarity = d_InitString(); d_SetString(bad_item.rarity, "junk", 0);
+    bad_item.description = d_InitString(); d_SetString(bad_item.description, "Worthless.", 0);
+    bad_item.type = ITEM_TYPE_CONSUMABLE;
+    bad_item.weight_kg = 0.1f;
+    bad_item.value_coins = -1; // Intentionally negative value
+
+    d_LogInfoF("bad_item.value_coins: %f", bad_item.value_coins);
+
+    bool is_valid = ie_ValidateItem(&bad_item);
+    
+    d_LogInfoF("is_valid: %d", is_valid);
+
+    TEST_ASSERT(is_valid == true, "Validator should pass for an item with value_coins clamped to 0");
+
+    // Cleanup
+    d_DestroyString(bad_item.name);
+    d_DestroyString(bad_item.id);
+    d_DestroyString(bad_item.rarity);
+    d_DestroyString(bad_item.description);
+    
+    d_LogInfo("...item with negative value_coins test completed.");
+    return 1;
+}
+
 
 // =============================================================================
 // MAIN TEST RUNNER
@@ -487,6 +620,12 @@ int main(void)
     RUN_TEST(test_validator_stress_loop);
     RUN_TEST(test_find_item_in_corrupted_database);
     RUN_TEST(test_validate_item_with_corrupt_internal_string);
+
+    // New tests
+    RUN_TEST(test_filter_items_by_type_no_match);
+    RUN_TEST(test_filter_items_by_type_single_item_db);
+    RUN_TEST(test_validate_item_with_null_description);
+    RUN_TEST(test_validate_item_with_negative_value_coins);
 
     // Clean up the logger
     d_DestroyLogger(d_GetGlobalLogger());

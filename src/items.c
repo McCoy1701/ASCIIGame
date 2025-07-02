@@ -60,7 +60,8 @@ static bool _is_material_valid(const Material_t* material) {
  * Creates a weapon with specified damage range and material properties
  */
 Item_t* create_weapon(const char* name, const char* id, Material_t material,
-                     uint8_t min_dmg, uint8_t max_dmg, uint8_t range, char glyph)
+                     uint8_t min_dmg, uint8_t max_dmg, uint8_t range, char glyph, 
+                     uint8_t stealth_val, uint8_t enchantment_val, const char* rarity_str)
 {   
     // Validate material before using it
     if (!_is_material_valid(&material)) {
@@ -133,7 +134,7 @@ Item_t* create_weapon(const char* name, const char* id, Material_t material,
     item->data.weapon.max_damage = max_dmg;
     item->data.weapon.range_tiles = range;
     item->data.weapon.stealth_value = 0;
-    item->data.weapon.enchant_value = 0;
+    item->data.weapon.enchant_value = enchantment_val;
     item->data.weapon.durability = 255; // 100% durability
 
     // Initialize empty ammo (no ammo required by default)
@@ -141,7 +142,7 @@ Item_t* create_weapon(const char* name, const char* id, Material_t material,
 
     // Set default values (will be modified by material factors)
     item->weight_kg = 1.0f; // Base weight
-    item->value_coins = min_dmg + max_dmg; // Base value
+    item->value_coins = (min_dmg + max_dmg < 0) ? 0 : (uint8_t)(min_dmg + max_dmg); // Base value, clamped to 0 if negative
     item->stackable = 0; // Weapons don't stack
 
     // Populate description using helper
@@ -153,7 +154,7 @@ Item_t* create_weapon(const char* name, const char* id, Material_t material,
 
     // Populate rarity using helper
     item->rarity = d_InitString();
-    if (item->rarity == NULL || !_populate_rarity(item->rarity, "common")) {
+    if (item->rarity == NULL || !_populate_rarity(item->rarity, rarity_str ? rarity_str : "common")) {
         d_LogErrorF("Failed to populate rarity for weapon '%s'", name);
         goto cleanup_and_fail;
     }
@@ -194,7 +195,7 @@ cleanup_and_fail:
  */
 Item_t* create_armor(const char* name, const char* id, Material_t material,
                     uint8_t armor_val, uint8_t evasion_val, char glyph,
-                    uint8_t stealth_val, uint8_t enchant_val)
+                    uint8_t stealth_val, uint8_t enchant_val, const char* rarity_str)
 {
     // Validate material before using it
     if (!_is_material_valid(&material)) {
@@ -270,7 +271,7 @@ Item_t* create_armor(const char* name, const char* id, Material_t material,
 
     // Set default values (will be modified by material factors)
     item->weight_kg = 1.0f; // Base weight
-    item->value_coins = armor_val + evasion_val; // Base value
+    item->value_coins = (armor_val + evasion_val < 0) ? 0 : (uint8_t)(armor_val + evasion_val); // Base value, clamped to 0 if negative
     item->stackable = 0; // Armor doesn't stack
 
     // Populate description using helper
@@ -282,7 +283,7 @@ Item_t* create_armor(const char* name, const char* id, Material_t material,
 
     // Populate rarity using helper
     item->rarity = d_InitString();
-    if (item->rarity == NULL || !_populate_rarity(item->rarity, "common")) {
+    if (item->rarity == NULL || !_populate_rarity(item->rarity, rarity_str ? rarity_str : "common")) {
         d_LogErrorF("Failed to populate rarity for armor '%s'", name);
         goto cleanup_and_fail;
     }
@@ -320,7 +321,8 @@ cleanup_and_fail:
 /*
  * Creates a key that can open a specific lock
  */
-Item_t* create_key(const char* name, const char* id, Lock_t lock, char glyph)
+Item_t* create_key(const char* name, const char* id, Lock_t lock, char glyph, 
+                   uint8_t enchantment_val, const char* rarity_str)
 {
     d_LogIf(name == NULL || id == NULL, D_LOG_LEVEL_ERROR,
             "Invalid key parameters - name or ID is NULL");
@@ -424,7 +426,7 @@ Item_t* create_key(const char* name, const char* id, Lock_t lock, char glyph)
 
     // Set default values
     item->weight_kg = 0.1f; // Keys are light but not weightless
-    item->value_coins = 5; // Base value
+    item->value_coins = 5; // Base value, always positive
     item->stackable = 1; // Keys can stack
 
     // Populate description using helper
@@ -436,7 +438,7 @@ Item_t* create_key(const char* name, const char* id, Lock_t lock, char glyph)
 
     // Populate rarity using helper
     item->rarity = d_InitString();
-    if (item->rarity == NULL || !_populate_rarity(item->rarity, "common")) {
+    if (item->rarity == NULL || !_populate_rarity(item->rarity, rarity_str ? rarity_str : "common")) {
         d_LogErrorF("Failed to populate rarity for key '%s'", name);
         goto cleanup_and_fail;
     }
@@ -588,7 +590,8 @@ void destroy_lock(Lock_t* lock)
  * Creates a consumable item with effect callback and duration
  */
 Item_t* create_consumable(const char* name, const char* id, int value,
-                         void (*on_consume)(uint8_t), char glyph)
+                         void (*on_consume)(uint8_t), char glyph, 
+                         uint8_t enchantment_val, const char* rarity_str)
 {
     d_LogIf(name == NULL || id == NULL || on_consume == NULL, D_LOG_LEVEL_ERROR,
             "Invalid consumable parameters - name, ID, or callback is NULL");
@@ -673,7 +676,7 @@ Item_t* create_consumable(const char* name, const char* id, int value,
 
     // Set default values - use clamped_value for consistency
     item->weight_kg = 0.1f; // Consumables are light but not weightless
-    item->value_coins = clamped_value; // Use clamped value for item value too
+    item->value_coins = (clamped_value < 0) ? 0 : (uint8_t)clamped_value; // Use clamped value for item value too, clamped to 0 if negative
     item->stackable = 16; // Can stack up to 16
 
     // Populate description using helper - use clamped_value
@@ -685,7 +688,7 @@ Item_t* create_consumable(const char* name, const char* id, int value,
 
     // Populate rarity using helper
     item->rarity = d_InitString();
-    if (item->rarity == NULL || !_populate_rarity(item->rarity, "common")) {
+    if (item->rarity == NULL || !_populate_rarity(item->rarity, rarity_str ? rarity_str : "common")) {
         d_LogErrorF("Failed to populate rarity for consumable '%s'", name);
         goto cleanup_and_fail;
     }
@@ -723,7 +726,8 @@ cleanup_and_fail:
  * Creates ammunition with specified damage range and material
  */
 Item_t* create_ammunition(const char* name, const char* id, Material_t material,
-                         uint8_t min_dmg, uint8_t max_dmg, char glyph)
+                         uint8_t min_dmg, uint8_t max_dmg, char glyph, 
+                         uint8_t enchantment_val, const char* rarity_str)
 {
     // Validate material before using it
     if (!_is_material_valid(&material)) {
@@ -793,10 +797,11 @@ Item_t* create_ammunition(const char* name, const char* id, Material_t material,
     // Initialize ammunition-specific data
     item->data.ammo.min_damage = min_dmg;
     item->data.ammo.max_damage = max_dmg;
+    item->data.ammo.enchant_value = enchantment_val;
 
     // Set default values (will be modified by material factors)
     item->weight_kg = 0.05f; // Ammo is very light but not weightless
-    item->value_coins = (min_dmg + max_dmg) / 2; // Base value
+    item->value_coins = ((min_dmg + max_dmg) / 2 < 0) ? 0 : (uint8_t)((min_dmg + max_dmg) / 2); // Base value, clamped to 0 if negative
     item->stackable = 255; // Ammo stacks very well
 
     // Populate description using helper
@@ -808,7 +813,7 @@ Item_t* create_ammunition(const char* name, const char* id, Material_t material,
 
     // Populate rarity using helper
     item->rarity = d_InitString();
-    if (item->rarity == NULL || !_populate_rarity(item->rarity, "common")) {
+    if (item->rarity == NULL || !_populate_rarity(item->rarity, rarity_str ? rarity_str : "common")) {
         d_LogErrorF("Failed to populate rarity for ammunition '%s'", name);
         goto cleanup_and_fail;
     }

@@ -40,9 +40,9 @@ int test_damage_item_durability(void)
     Material_t basic_material = create_material("basic", basic_props);
     Lock_t lock = create_lock("Test Lock", "test_lock", 10, 10);
 
-    Item_t* sword = create_weapon("Test Sword", "test_sword", basic_material, 20, 30, 0, 'S');
-    Item_t* armor = create_armor("Test Armor", "test_armor", basic_material, 25, 15, 'A', 10, 10);
-    Item_t* key = create_key("Test Key", "test_key", lock, 'k');
+    Item_t* sword = create_weapon("Test Sword", "test_sword", basic_material, 20, 30, 0, 'S', 0, 0, "common");
+    Item_t* armor = create_armor("Test Armor", "test_armor", basic_material, 25, 15, 'A', 10, 10, "common");
+    Item_t* key = create_key("Test Key", "test_key", lock, 'k', 0, "common");
 
     TEST_ASSERT(sword != NULL, "Sword should be created");
     TEST_ASSERT(armor != NULL, "Armor should be created");
@@ -95,9 +95,9 @@ int test_repair_item(void)
     MaterialProperties_t basic_props = create_default_material_properties();
     Material_t basic_material = create_material("basic", basic_props);
 
-    Item_t* sword = create_weapon("Damaged Sword", "damaged_sword", basic_material, 15, 25, 0, 'S');
-    Item_t* armor = create_armor("Damaged Armor", "damaged_armor", basic_material, 20, 10, 'A', 10, 10);
-    Item_t* consumable = create_consumable("Potion", "potion", 50, dummy_consume_callback, 'p');
+    Item_t* sword = create_weapon("Damaged Sword", "damaged_sword", basic_material, 15, 25, 0, 'S', 0, 0, "common");
+    Item_t* armor = create_armor("Damaged Armor", "damaged_armor", basic_material, 20, 10, 'A', 10, 10, "common");
+    Item_t* consumable = create_consumable("Potion", "potion", 50, dummy_consume_callback, 'p', 0, "common");
 
     TEST_ASSERT(sword && armor && consumable, "All test items should be created");
     if (!sword || !armor || !consumable) { return 0; }
@@ -148,7 +148,7 @@ int test_is_item_broken(void)
     MaterialProperties_t basic_props = create_default_material_properties();
     Material_t basic_material = create_material("basic", basic_props);
 
-    Item_t* sword = create_weapon("Breakable Sword", "breakable_sword", basic_material, 18, 28, 0, 'S');
+    Item_t* sword = create_weapon("Breakable Sword", "breakable_sword", basic_material, 18, 28, 0, 'S', 0, 0, "common");
     TEST_ASSERT(sword != NULL, "Sword should be created");
 
     // Test initial state
@@ -178,7 +178,7 @@ int test_is_item_broken(void)
 int test_get_durability_percentage(void)
 {
     Material_t mat = create_material("basic", create_default_material_properties());
-    Item_t* sword = create_weapon("Percentage Sword", "p_sword", mat, 16, 24, 0, 'S');
+    Item_t* sword = create_weapon("Percentage Sword", "p_sword", mat, 16, 24, 0, 'S', 0, 0, "common");
     TEST_ASSERT(sword != NULL, "Sword should be created");
 
     // Test full durability
@@ -214,7 +214,7 @@ int test_durability_system_integration(void)
     MaterialProperties_t fragile_props = create_default_material_properties();
     fragile_props.durability_fact = 0.8f; // Takes more damage from hits
     Material_t fragile_material = create_material("brittle", fragile_props);
-    Item_t* brittle_sword = create_weapon("Brittle Sword", "brittle_sword", fragile_material, 30, 40, 0, 'B');
+    Item_t* brittle_sword = create_weapon("Brittle Sword", "brittle_sword", fragile_material, 30, 40, 0, 'B', 0, 0, "common");
     TEST_ASSERT(brittle_sword != NULL, "Brittle sword should be created");
 
     uint8_t initial_durability = get_durability(brittle_sword);
@@ -250,7 +250,7 @@ int test_durability_system_integration(void)
 int test_durability_overflow_underflow(void)
 {
     Material_t mat = create_material("basic", create_default_material_properties());
-    Item_t* sword = create_weapon("Overflow Sword", "overflow_sword", mat, 20, 30, 0, 'S');
+    Item_t* sword = create_weapon("Overflow Sword", "overflow_sword", mat, 20, 30, 0, 'S', 0, 0, "common");
     TEST_ASSERT(sword != NULL, "Overflow test sword should be created");
 
     d_LogWarning("Testing extreme damage values for underflow...");
@@ -271,7 +271,7 @@ int test_durability_overflow_underflow(void)
 int test_durability_rapid_operations(void)
 {
     Material_t mat = create_material("basic", create_default_material_properties());
-    Item_t* sword = create_weapon("Stress Sword", "stress_sword", mat, 20, 30, 0, 'S');
+    Item_t* sword = create_weapon("Stress Sword", "stress_sword", mat, 20, 30, 0, 'S', 0, 0, "common");
     TEST_ASSERT(sword != NULL, "Stress sword should be created");
 
     LOOP_TEST_START();
@@ -289,7 +289,7 @@ int test_durability_rapid_operations(void)
 int test_durability_percentage_edge_cases(void)
 {
     Material_t mat = create_material("basic", create_default_material_properties());
-    Item_t* sword = create_weapon("Percentage Edge Sword", "p_edge_sword", mat, 20, 30, 0, 'S');
+    Item_t* sword = create_weapon("Percentage Edge Sword", "p_edge_sword", mat, 20, 30, 0, 'S', 0, 0, "common");
     TEST_ASSERT(sword != NULL, "Percentage edge case sword should be created");
 
     uint8_t test_durabilities[] = {255, 254, 128, 127, 1, 0};
@@ -312,7 +312,7 @@ int test_durability_percentage_edge_cases(void)
 int test_durability_concurrent_simulation(void)
 {
     Material_t mat = create_material("basic", create_default_material_properties());
-    Item_t* sword = create_weapon("Concurrent Sword", "conc_sword", mat, 20, 30, 0, 'S');
+    Item_t* sword = create_weapon("Concurrent Sword", "conc_sword", mat, 20, 30, 0, 'S', 0, 0, "common");
     TEST_ASSERT(sword != NULL, "Concurrent test sword should be created");
 
     typedef struct { uint8_t damage; uint8_t repair; } Op_t;

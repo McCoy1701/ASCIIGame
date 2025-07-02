@@ -184,7 +184,7 @@ int test_create_item_with_invalid_type(void)
     reset_mock_flags();
     
     // Call the creator with an out-of-bounds type
-    Item_t* bad_item = ie_CreateItemWithParameters((ItemType_t)99, 0, 0, 0, 0);
+    Item_t* bad_item = ie_CreateItemWithParameters((ItemType_t)99, 0, 0, 0);
     
     TEST_ASSERT(bad_item == NULL, "ie_CreateItemWithParameters should return NULL for an invalid type");
     
@@ -250,7 +250,7 @@ int test_creation_memory_leak_stress_test(void)
     LOOP_TEST_START();
     for (int i = 0; i < 500; i++) {
         // Create an item using the high-level function
-        Item_t* item = ie_CreateItemWithParameters(ITEM_TYPE_WEAPON, 0, 0, 0, 0);
+        Item_t* item = ie_CreateItemWithParameters(ITEM_TYPE_WEAPON, 0, 0, 0);
         TEST_ASSERT(item != NULL, "Item should be created successfully in loop");
         
         // Immediately destroy it to check for leaks over many cycles
@@ -346,7 +346,7 @@ int test_all_item_types_are_creatable(void)
     LOOP_TEST_START();
     for (int type_idx = 0; type_idx < 5; type_idx++) {
         ItemType_t current_type = (ItemType_t)type_idx;
-        Item_t* item = ie_CreateItemWithParameters(current_type, 0, 0, 0, 0);
+        Item_t* item = ie_CreateItemWithParameters(current_type, 0, 0, 0);
         
         TEST_ASSERT(item != NULL, "Should successfully create an item of each type");
         if (item) {

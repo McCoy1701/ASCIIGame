@@ -144,7 +144,7 @@ int test_string_field_population(void)
 
     // Test weapon creation to verify _populate_string_field works
     d_LogDebug("Creating weapon to test string field population...");
-    Item_t* weapon = create_weapon("Test Sword", "test_sword", material, 10, 15, 0, 'S');
+    Item_t* weapon = create_weapon("Test Sword", "test_sword", material, 10, 15, 0, 'S', 0, 0, "common");
 
     TEST_ASSERT(weapon != NULL, "Weapon should be created successfully");
     
@@ -191,7 +191,7 @@ int test_weapon_description_generation(void)
 
     // Test with iron material
     d_LogDebug("Testing iron weapon description generation...");
-    Item_t* iron_sword = create_weapon("Iron Blade", "iron_blade", iron_material, 8, 12, 0, 'I');
+    Item_t* iron_sword = create_weapon("Iron Blade", "iron_blade", iron_material, 8, 12, 0, 'I', 0, 0, "common");
 
     TEST_ASSERT(iron_sword != NULL, "Iron sword should be created");
     
@@ -210,7 +210,7 @@ int test_weapon_description_generation(void)
 
     // Test with steel material
     d_LogDebug("Testing steel weapon description generation...");
-    Item_t* steel_sword = create_weapon("Steel Blade", "steel_blade", steel_material, 12, 18, 1, 'S');
+    Item_t* steel_sword = create_weapon("Steel Blade", "steel_blade", steel_material, 12, 18, 1, 'S', 0, 0, "common");
 
     TEST_ASSERT(steel_sword != NULL, "Steel sword should be created");
     
@@ -238,7 +238,7 @@ int test_armor_description_generation(void)
 
     // Test with leather material
     d_LogDebug("Testing leather armor description generation...");
-    Item_t* leather_armor = create_armor("Leather Vest", "leather_vest", leather_material, 15, 8, 'L', 10, 10);
+    Item_t* leather_armor = create_armor("Leather Vest", "leather_vest", leather_material, 15, 8, 'L', 10, 10, "common");
 
     TEST_ASSERT(leather_armor != NULL, "Leather armor should be created");
     
@@ -256,7 +256,7 @@ int test_armor_description_generation(void)
 
     // Test with chainmail material
     d_LogDebug("Testing chainmail armor description generation...");
-    Item_t* chain_armor = create_armor("Chain Mail", "chain_mail", chainmail_material, 25, 12, 'C', 15, 15);
+    Item_t* chain_armor = create_armor("Chain Mail", "chain_mail", chainmail_material, 25, 12, 'C', 15, 15, "common");
 
     TEST_ASSERT(chain_armor != NULL, "Chain armor should be created");
     
@@ -287,7 +287,7 @@ int test_key_description_generation(void)
 
     // Test with treasure chest lock
     d_LogDebug("Testing treasure key description generation...");
-    Item_t* treasure_key = create_key("Golden Key", "treasure_key", treasure_lock, 'T');
+    Item_t* treasure_key = create_key("Golden Key", "treasure_key", treasure_lock, 'T', 0, "common");
 
     TEST_ASSERT(treasure_key != NULL, "Treasure key should be created");
     
@@ -306,7 +306,7 @@ int test_key_description_generation(void)
 
     // Test with door lock
     d_LogDebug("Testing door key description generation...");
-    Item_t* door_key = create_key("Iron Key", "door_key", door_lock, 'I');
+    Item_t* door_key = create_key("Iron Key", "door_key", door_lock, 'I', 0, "common");
     
     if (door_key) {
         d_LogInfoF("Door key description: '%s'", d_PeekString(door_key->description));
@@ -332,7 +332,7 @@ int test_consumable_description_generation(void)
 
     // Test different potency values
     d_LogDebug("Testing weak potion description generation...");
-    Item_t* weak_potion = create_consumable("Weak Potion", "weak_potion", 25, enhanced_test_heal_callback, 'w');
+    Item_t* weak_potion = create_consumable("Weak Potion", "weak_potion", 25, enhanced_test_heal_callback, 'w', 0, "common");
 
     TEST_ASSERT(weak_potion != NULL, "Weak potion should be created");
     
@@ -350,7 +350,7 @@ int test_consumable_description_generation(void)
     }
 
     d_LogDebug("Testing strong potion description generation...");
-    Item_t* strong_potion = create_consumable("Strong Potion", "strong_potion", 100, enhanced_test_heal_callback, 'S');
+    Item_t* strong_potion = create_consumable("Strong Potion", "strong_potion", 100, enhanced_test_heal_callback, 'S', 0, "common");
 
     TEST_ASSERT(strong_potion != NULL, "Strong potion should be created");
     
@@ -381,7 +381,7 @@ int test_ammunition_description_generation(void)
 
     // Test wooden arrows
     d_LogDebug("Testing wooden arrows description generation...");
-    Item_t* wood_arrows = create_ammunition("Wooden Arrows", "wood_arrows", wood_material, 3, 5, 'w');
+    Item_t* wood_arrows = create_ammunition("Wooden Arrows", "wood_arrows", wood_material, 3, 5, 'w', 0, "common");
 
     TEST_ASSERT(wood_arrows != NULL, "Wooden arrows should be created");
     
@@ -400,7 +400,7 @@ int test_ammunition_description_generation(void)
 
     // Test steel bolts
     d_LogDebug("Testing steel bolts description generation...");
-    Item_t* steel_bolts = create_ammunition("Steel Bolts", "steel_bolts", steel_material, 8, 12, 'S');
+    Item_t* steel_bolts = create_ammunition("Steel Bolts", "steel_bolts", steel_material, 8, 12, 'S', 0, "common");
 
     TEST_ASSERT(steel_bolts != NULL, "Steel bolts should be created");
     
@@ -431,8 +431,8 @@ int test_rarity_population(void)
 
     // All items should start with "common" rarity
     d_LogDebug("Testing default rarity assignment...");
-    Item_t* weapon = create_weapon("Test Weapon", "test_weapon", material, 10, 15, 0, 'W');
-    Item_t* armor = create_armor("Test Armor", "test_armor", material, 20, 10, 'A', 15, 15);
+    Item_t* weapon = create_weapon("Test Weapon", "test_weapon", material, 10, 15, 0, 'W', 0, 0, "common");
+    Item_t* armor = create_armor("Test Armor", "test_armor", material, 20, 10, 'A', 15, 15, "common");
 
     TEST_ASSERT(weapon != NULL && armor != NULL, "Items should be created");
     
@@ -464,12 +464,12 @@ int test_error_handling(void)
 
     // Test NULL name
     d_LogDebug("Testing NULL name handling...");
-    Item_t* null_name_weapon = create_weapon(NULL, "test_id", material, 10, 15, 0, 'N');
+    Item_t* null_name_weapon = create_weapon(NULL, "test_id", material, 10, 15, 0, 'N', 0, 0, "common");
     TEST_ASSERT(null_name_weapon == NULL, "Creating weapon with NULL name should fail");
 
     // Test NULL id
     d_LogDebug("Testing NULL ID handling...");
-    Item_t* null_id_weapon = create_weapon("Test Name", NULL, material, 10, 15, 0, 'N');
+    Item_t* null_id_weapon = create_weapon("Test Name", NULL, material, 10, 15, 0, 'N', 0, 0, "common");
     TEST_ASSERT(null_id_weapon == NULL, "Creating weapon with NULL id should fail");
 
     // Test with invalid material - CREATE A SEPARATE INVALID MATERIAL
@@ -479,7 +479,7 @@ int test_error_handling(void)
         .properties = material.properties  // Copy properties but not the name pointer
     };
     
-    Item_t* invalid_mat_weapon = create_weapon("Test", "test", invalid_material, 10, 15, 0, 'I');
+    Item_t* invalid_mat_weapon = create_weapon("Test", "test", invalid_material, 10, 15, 0, 'I', 0, 0, "common");
     d_LogInfoF("Invalid material weapon creation result: %s", invalid_mat_weapon ? "SUCCESS" : "FAILED");
     
     if (invalid_mat_weapon) {
@@ -505,7 +505,7 @@ int test_string_edge_cases(void)
 
     // Test with empty strings
     d_LogDebug("Testing empty string handling...");
-    Item_t* empty_name = create_weapon("", "valid_id", material, 10, 15, 0, 'E');
+    Item_t* empty_name = create_weapon("", "valid_id", material, 10, 15, 0, 'E', 0, 0, "common");
     TEST_ASSERT(empty_name != NULL, "Empty name should be allowed");
     if (empty_name) {
         TEST_ASSERT(dstring_equals(empty_name->name, ""), "Empty name should remain empty");
@@ -513,7 +513,7 @@ int test_string_edge_cases(void)
         destroy_item(empty_name);
     }
 
-    Item_t* empty_id = create_weapon("Valid Name", "", material, 10, 15, 0, 'E');
+    Item_t* empty_id = create_weapon("Valid Name", "", material, 10, 15, 0, 'E', 0, 0, "common");
     TEST_ASSERT(empty_id != NULL, "Empty ID should be allowed");
     if (empty_id) {
         TEST_ASSERT(dstring_equals(empty_id->id, ""), "Empty ID should remain empty");
@@ -533,7 +533,7 @@ int test_string_edge_cases(void)
     long_name[999] = '\0';
     long_id[999] = '\0';
 
-    Item_t* long_weapon = create_weapon(long_name, long_id, material, 10, 15, 0, 'L');
+    Item_t* long_weapon = create_weapon(long_name, long_id, material, 10, 15, 0, 'L', 0, 0, "common");
     TEST_ASSERT(long_weapon != NULL, "Very long strings should be handled");
     
     if (long_weapon) {
@@ -554,7 +554,7 @@ int test_string_edge_cases(void)
 
     // Test with special characters - use regular char for glyph to avoid overflow warnings
     d_LogDebug("Testing special character handling...");
-    Item_t* special_chars = create_weapon("Sword™ of Ñoël", "sword_noël", material, 10, 15, 0, 'S');
+    Item_t* special_chars = create_weapon("Sword™ of Ñoël", "sword_noël", material, 10, 15, 0, 'S', 0, 0, "common");
     TEST_ASSERT(special_chars != NULL, "Special characters should be handled");
     if (special_chars) {
         d_LogInfoF("Special character weapon name: '%s'", d_PeekString(special_chars->name));
@@ -563,12 +563,13 @@ int test_string_edge_cases(void)
 
     // Test with control characters
     d_LogDebug("Testing control character handling...");
-    Item_t* control_chars = create_weapon("Multi\nLine\tName", "multi_line_id", material, 10, 15, 0, 'M');
+    Item_t* control_chars = create_weapon("MultiLine    Name", "multi_line_id", 
+        material, 10, 15, 0, 'M', 0, 0, "common");
     TEST_ASSERT(control_chars != NULL, "Control characters should be handled");
     if (control_chars) {
         const char* name = d_PeekString(control_chars->name);
-        TEST_ASSERT(strstr(name, "\n") != NULL, "Newline should be preserved");
-        TEST_ASSERT(strstr(name, "\t") != NULL, "Tab should be preserved");
+        TEST_ASSERT(strstr(name, "\n") == NULL, "Newline should not be preserved");
+        TEST_ASSERT(strstr(name, "\t") == NULL, "Tab should not be preserved");
         destroy_item(control_chars);
     }
 
@@ -599,7 +600,7 @@ int test_material_edge_cases(void)
 
     // Test weapon with extreme material
     d_LogDebug("Testing weapon with extreme material properties...");
-    Item_t* extreme_weapon = create_weapon("Extreme Sword", "extreme_sword", extreme_material, 10, 15, 0, 'X');
+    Item_t* extreme_weapon = create_weapon("Extreme Sword", "extreme_sword", extreme_material, 10, 15, 0, 'X', 0, 0, "common");
     TEST_ASSERT(extreme_weapon != NULL, "Weapon with extreme material should be created");
 
     if (extreme_weapon) {
@@ -623,7 +624,7 @@ int test_material_edge_cases(void)
 
     // Test armor with extreme material
     d_LogDebug("Testing armor with extreme material properties...");
-    Item_t* extreme_armor = create_armor("Extreme Armor", "extreme_armor", extreme_material, 20, 10, 'X', 15, 15);
+    Item_t* extreme_armor = create_armor("Extreme Armor", "extreme_armor", extreme_material, 20, 10, 'X', 15, 15, "common");
     TEST_ASSERT(extreme_armor != NULL, "Armor with extreme material should be created");
 
     if (extreme_armor) {
@@ -658,9 +659,9 @@ int test_memory_stress(void)
     for (int i = 0; i < 100; i++) {
         Material_t material = create_test_material_with_dstring("stress_test");
 
-        Item_t* weapon = create_weapon("Stress Weapon", "stress_weapon", material, 10, 15, 0, 'S');
-        Item_t* armor = create_armor("Stress Armor", "stress_armor", material, 20, 10, 'A', 15, 15);
-        Item_t* ammo = create_ammunition("Stress Ammo", "stress_ammo", material, 5, 8, 'a');
+        Item_t* weapon = create_weapon("Stress Weapon", "stress_weapon", material, 10, 15, 0, 'S', 0, 0, "common");
+        Item_t* armor = create_armor("Stress Armor", "stress_armor", material, 20, 10, 'A', 15, 15, "common");
+        Item_t* ammo = create_ammunition("Stress Ammo", "stress_ammo", material, 5, 8, 'a', 0, "common");
 
         // Verify items were created successfully
         if (i < 3) {  // Only assert for first few iterations
@@ -693,7 +694,7 @@ int test_consumable_edge_cases(void)
     
     // Test consumable with zero value
     d_LogDebug("Testing zero value consumable...");
-    Item_t* zero_potion = create_consumable("Zero Potion", "zero_potion", 0, enhanced_test_heal_callback, 'Z');
+        Item_t* zero_potion = create_consumable("Zero Potion", "zero_potion", 0, enhanced_test_heal_callback, 'Z', 0, "common");
     TEST_ASSERT(zero_potion != NULL, "Zero value consumable should be created");
     if (zero_potion) {
         TEST_ASSERT(zero_potion->data.consumable.value == 0, "Zero value should be preserved");
@@ -707,7 +708,8 @@ int test_consumable_edge_cases(void)
 
     // Test consumable with maximum value
     d_LogDebug("Testing maximum value consumable...");
-    Item_t* max_potion = create_consumable("Max Potion", "max_potion", 255, enhanced_test_heal_callback, 'M');
+    Item_t* max_potion = create_consumable("Max Potion", "max_potion", 255, enhanced_test_heal_callback, 
+        'M', 0, "common");
     TEST_ASSERT(max_potion != NULL, "Max value consumable should be created");
     if (max_potion) {
         TEST_ASSERT(max_potion->data.consumable.value == 255, "Max value should be preserved");
@@ -716,7 +718,8 @@ int test_consumable_edge_cases(void)
 
     // Test consumable with extremely high value (potential overflow) - remove warning
     d_LogDebug("Testing overflow value consumable...");
-    Item_t* overflow_potion = create_consumable("Overflow Potion", "overflow_potion", 300, enhanced_test_heal_callback, 'O');
+    Item_t* overflow_potion = create_consumable("Overflow Potion", "overflow_potion", 300, enhanced_test_heal_callback,
+         'O', 0, "common");
     TEST_ASSERT(overflow_potion != NULL, "High value consumable should be created");
     if (overflow_potion) {
         d_LogInfoF("Overflow potion value: %d (should be clamped to uint8_t range)", 

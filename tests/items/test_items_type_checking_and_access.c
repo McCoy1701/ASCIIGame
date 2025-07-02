@@ -46,7 +46,7 @@ int test_is_weapon(void)
 {
     d_LogInfo("Verifying is_weapon() identifies weapons and rejects other types.");
     Material_t material = create_test_material();
-    Item_t* weapon = create_weapon("Test Sword", "test_sword", material, 10, 15, 0, 's');
+    Item_t* weapon = create_weapon("Test Sword", "test_sword", material, 10, 15, 0, 's', 0, 0, "Common");
     TEST_ASSERT(weapon != NULL, "Weapon should be created for testing");
 
     // Test positive case
@@ -68,7 +68,7 @@ int test_is_armor(void)
 {
     d_LogInfo("Verifying is_armor() identifies armor and rejects other types.");
     Material_t material = create_test_material();
-    Item_t* armor = create_armor("Test Armor", "test_armor", material, 20, 5, 'A', 15, 15);
+    Item_t* armor = create_armor("Test Armor", "test_armor", material, 20, 5, 'A', 15, 15, "Common");
     TEST_ASSERT(armor != NULL, "Armor should be created for testing");
 
     // Test positive case
@@ -90,7 +90,7 @@ int test_is_key(void)
 {
     d_LogInfo("Verifying is_key() identifies keys and rejects other types.");
     Lock_t lock = create_test_lock();
-    Item_t* key = create_key("Test Key", "test_key", lock, 'k');
+    Item_t* key = create_key("Test Key", "test_key", lock, 'k', 0, "Common");
     TEST_ASSERT(key != NULL, "Key should be created for testing");
 
     // Test positive case
@@ -111,7 +111,7 @@ int test_is_key(void)
 int test_is_consumable(void)
 {
     d_LogInfo("Verifying is_consumable() identifies consumables and rejects other types.");
-    Item_t* potion = create_consumable("Test Potion", "test_potion", 25, test_heal_effect, 'h');
+    Item_t* potion = create_consumable("Test Potion", "test_potion", 25, test_heal_effect, 'h', 0, "Common");
     TEST_ASSERT(potion != NULL, "Consumable should be created for testing");
 
     // Test positive case
@@ -132,7 +132,7 @@ int test_is_ammunition(void)
 {
     d_LogInfo("Verifying is_ammunition() identifies ammo and rejects other types.");
     Material_t material = create_test_material();
-    Item_t* arrow = create_ammunition("Test Arrow", "test_arrow", material, 3, 7, 'i');
+    Item_t* arrow = create_ammunition("Test Arrow", "test_arrow", material, 3, 7, 'i', 0, "Common");
     TEST_ASSERT(arrow != NULL, "Ammunition should be created for testing");
 
     // Test positive case
@@ -157,7 +157,7 @@ int test_get_weapon_data(void)
 {
     d_LogInfo("Verifying get_weapon_data() returns correct data for weapons and NULL for others.");
     Material_t material = create_test_material();
-    Item_t* weapon = create_weapon("Test Sword", "test_sword", material, 10, 15, 2, 's');
+    Item_t* weapon = create_weapon("Test Sword", "test_sword", material, 10, 15, 2, 's', 0, 0, "Common");
     TEST_ASSERT(weapon != NULL, "Weapon should be created for testing");
 
     // Test getting weapon data
@@ -171,7 +171,7 @@ int test_get_weapon_data(void)
 
     // Test with wrong type
     d_LogDebug("Verifying get_weapon_data returns NULL for a non-weapon item.");
-    Item_t* armor = create_armor("Test Armor", "test_armor", material, 20, 5, 'A', 15, 15);
+    Item_t* armor = create_armor("Test Armor", "test_armor", material, 20, 5, 'A', 15, 15, "Common");
     TEST_ASSERT(get_weapon_data(armor) == NULL, "get_weapon_data should return NULL for non-weapon");
 
     // Test with NULL
@@ -187,7 +187,7 @@ int test_get_armor_data(void)
 {
     d_LogInfo("Verifying get_armor_data() returns correct data for armor and NULL for others.");
     Material_t material = create_test_material();
-    Item_t* armor = create_armor("Test Armor", "test_armor", material, 20, 5, 'A', 15, 15);
+    Item_t* armor = create_armor("Test Armor", "test_armor", material, 20, 5, 'A', 15, 15, "Common");
     TEST_ASSERT(armor != NULL, "Armor should be created for testing");
 
     // Test getting armor data
@@ -200,7 +200,7 @@ int test_get_armor_data(void)
 
     // Test with wrong type
     d_LogDebug("Verifying get_armor_data returns NULL for a non-armor item.");
-    Item_t* weapon = create_weapon("Test Sword", "test_sword", material, 10, 15, 0, 's');
+    Item_t* weapon = create_weapon("Test Sword", "test_sword", material, 10, 15, 0, 's', 0, 0, "Common");
     TEST_ASSERT(get_armor_data(weapon) == NULL, "get_armor_data should return NULL for non-armor");
 
     // Test with NULL
@@ -215,7 +215,7 @@ int test_get_armor_data(void)
 int test_get_consumable_data(void)
 {
     d_LogInfo("Verifying get_consumable_data() returns correct data for consumables and NULL for others.");
-    Item_t* potion = create_consumable("Test Potion", "test_potion", 25, test_heal_effect, 'h');
+    Item_t* potion = create_consumable("Test Potion", "test_potion", 25, test_heal_effect, 'h', 0, "Common");
     TEST_ASSERT(potion != NULL, "Consumable should be created for testing");
 
     // Test getting consumable data
@@ -229,7 +229,7 @@ int test_get_consumable_data(void)
     // Test with wrong type
     d_LogDebug("Verifying get_consumable_data returns NULL for a non-consumable item.");
     Material_t material = create_test_material();
-    Item_t* weapon = create_weapon("Test Sword", "test_sword", material, 10, 15, 0, 's');
+    Item_t* weapon = create_weapon("Test Sword", "test_sword", material, 10, 15, 0, 's', 0, 0, "Common");
     TEST_ASSERT(get_consumable_data(weapon) == NULL, "get_consumable_data should return NULL for non-consumable");
 
     // Test with NULL

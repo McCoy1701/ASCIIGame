@@ -165,6 +165,7 @@ typedef struct // Ammunition__Item_t
 {
     uint8_t min_damage; // will be added to bows/ranged weapons
     uint8_t max_damage;
+    uint8_t enchant_value;
 
 } Ammunition__Item_t;
 
@@ -185,8 +186,8 @@ typedef struct // Armor__Item_t
 {
     uint8_t armor_value;
     uint8_t evasion_value;
-    uint8_t stealth_value; // TODO: add a stealth system (armor check on move)
-    uint8_t enchant_value; // TODO: add a enchant system
+    uint8_t stealth_value;
+    uint8_t enchant_value;
     uint8_t durability; // 255 is 100%
 
 } Armor__Item_t;

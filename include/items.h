@@ -21,6 +21,9 @@
  * `max_dmg` - Maximum damage value (0-255, must be >= min_dmg)
  * `range` - Attack range in tiles (0 = melee, >0 = ranged weapon)
  * `glyph` - ASCII character representing the weapon
+ * `stealth_val` - Stealth bonus provided by this weapon (0-255)
+ * `enchantment_val` - Magical enhancement value (0-255)
+ * `rarity_str` - Rarity name for display
  *
  * `Item_t*` - Pointer to new weapon item, or NULL on allocation failure
  *
@@ -31,7 +34,8 @@
  * -- Returns NULL if name or id is NULL or memory allocation fails
  */
 Item_t* create_weapon(const char* name, const char* id, Material_t material,
-                     uint8_t min_dmg, uint8_t max_dmg, uint8_t range, char glyph);
+                     uint8_t min_dmg, uint8_t max_dmg, uint8_t range, char glyph, 
+                     uint8_t stealth_val, uint8_t enchantment_val, const char* rarity_str);
 
 /*
  * Create a new armor item with specified defensive properties
@@ -44,6 +48,7 @@ Item_t* create_weapon(const char* name, const char* id, Material_t material,
  * `glyph` - ASCII character representing the armor
  * `stealth_val` - Stealth bonus provided by this armor (0-255)
  * `enchant_val` - Magical enhancement value (0-255)
+ * `rarity_str` - Rarity name for display
  *
  * `Item_t*` - Pointer to new armor item, or NULL on allocation failure
  *
@@ -55,7 +60,7 @@ Item_t* create_weapon(const char* name, const char* id, Material_t material,
  */
 Item_t* create_armor(const char* name, const char* id, Material_t material,
                     uint8_t armor_val, uint8_t evasion_val, char glyph,
-                    uint8_t stealth_val, uint8_t enchant_val);
+                    uint8_t stealth_val, uint8_t enchant_val, const char* rarity_str);
 
 /*
  * Create a new key item that can open a specific lock
@@ -64,6 +69,8 @@ Item_t* create_armor(const char* name, const char* id, Material_t material,
  * `id` - Unique identifier for the key (must be null-terminated)
  * `lock` - Lock definition that this key can open (deep copied)
  * `glyph` - ASCII character representing the key
+ * `enchantment_val` - Magical enhancement value (0-255)
+ * `rarity_str` - Rarity name for display
  *
  * `Item_t*` - Pointer to new key item, or NULL on allocation failure
  *
@@ -74,7 +81,8 @@ Item_t* create_armor(const char* name, const char* id, Material_t material,
  * -- Keys do not degrade with use (infinite durability)
  * -- Returns NULL if name, id is NULL or memory allocation fails
  */
-Item_t* create_key(const char* name, const char* id, Lock_t lock, char glyph);
+Item_t* create_key(const char* name, const char* id, Lock_t lock, char glyph, 
+                   uint8_t enchantment_val, const char* rarity_str);
 
 /*
  * Create a new consumable item with effect callback functions
@@ -84,6 +92,8 @@ Item_t* create_key(const char* name, const char* id, Lock_t lock, char glyph);
  * `value` - Potency/strength of the consumable effect (0-255)
  * `on_consume` - Function called when item is consumed (must not be NULL)
  * `glyph` - ASCII character representing the consumable
+ * `enchantment_val` - Magical enhancement value (0-255)
+ * `rarity_str` - Rarity name for display
  *
  * `Item_t*` - Pointer to new consumable item, or NULL on allocation failure
  *
@@ -95,7 +105,8 @@ Item_t* create_key(const char* name, const char* id, Lock_t lock, char glyph);
  * -- Returns NULL if name, id, or on_consume is NULL or allocation fails
  */
 Item_t* create_consumable(const char* name, const char* id, int value,
-                         void (*on_consume)(uint8_t), char glyph);
+                         void (*on_consume)(uint8_t), char glyph, 
+                         uint8_t enchantment_val, const char* rarity_str);
 
 /*
  * Create ammunition for ranged weapons with damage properties
@@ -106,6 +117,8 @@ Item_t* create_consumable(const char* name, const char* id, int value,
  * `min_dmg` - Minimum damage bonus from this ammunition (0-255)
  * `max_dmg` - Maximum damage bonus from this ammunition (0-255)
  * `glyph` - ASCII character representing the ammunition
+ * `enchantment_val` - Magical enhancement value (0-255)
+ * `rarity_str` - Rarity name for display
  *
  * `Item_t*` - Pointer to new ammunition item, or NULL on allocation failure
  *
@@ -117,7 +130,8 @@ Item_t* create_consumable(const char* name, const char* id, int value,
  * -- Returns NULL if name or id is NULL or memory allocation fails
  */
 Item_t* create_ammunition(const char* name, const char* id, Material_t material,
-                         uint8_t min_dmg, uint8_t max_dmg, char glyph);
+                         uint8_t min_dmg, uint8_t max_dmg, char glyph, 
+                         uint8_t enchantment_val, const char* rarity_str);
 
 /*
  * Create a lock definition with specified security properties
