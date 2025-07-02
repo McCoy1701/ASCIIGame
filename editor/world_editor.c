@@ -115,9 +115,6 @@ void we_load( void )
   if ( map == NULL ) 
   {
     map = LoadWorld( "resources/world/map.dat" );
-    printf("%d, %d, %d, %d, %d, %d, %d\n", map->world_width, map->world_height,
-           map->region_width, map->region_height, map->local_width,
-           map->local_height, map->z_height );
   }
 }
 
