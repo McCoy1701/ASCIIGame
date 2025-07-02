@@ -1512,9 +1512,10 @@ run_test "Items properties" "run-test-items-properties"
 run_test "Items properties type checking and access" "run-test-items-type-checking"
 run_test "Items Usage" "run-test-items-usage"
 run_test "Items Editor Basic" "run-test-items-editor-basic"
-run_test "World Editor Utils" "run-test-world-editor-utils"
+run_test "Items Editor Advanced" "run-test-items-editor-advanced"
+run_test "Items Editor Creation" "run-test-items-editor-creation"
+run_test "Items Editor Utils" "run-test-items-editor-utils"
 #run_test "World Editor Basic" "run-test-world-editor-basic"
-#run_test "World Editor Advanced" "run-test-world-editor-advanced"
 
 
 # Calculate overall execution time

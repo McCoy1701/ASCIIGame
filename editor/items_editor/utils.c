@@ -14,10 +14,10 @@
 /*
  * Render a single item in the items grid with icon, name, and basic properties
  */
-void ie_DrawItemCell(int index, Item_t* item, int grid_x, int grid_y, bool is_selected)
+void ie_DrawItemCell(int index, Item_t* item, int panel_x, int panel_y, bool is_selected)
 {
 	int x, y, w, h;
-	ie_GetItemCellSize(index, ITEMS_GRID_WIDTH, ITEMS_GRID_HEIGHT, &x, &y, &w, &h);
+	ie_GetItemCellSize(index, ITEMS_GRID_WIDTH, ITEMS_GRID_HEIGHT, &x, &y, &w, &h, panel_x, panel_y);
 	
 	// Background color based on selection and item type
 	if (is_selected) {
@@ -57,12 +57,12 @@ void ie_DrawItemCell(int index, Item_t* item, int grid_x, int grid_y, bool is_se
  * Calculate screen position and dimensions for an item cell in the grid
  */
 void ie_GetItemCellSize(int index, int grid_width, int grid_height, 
-                        int* x, int* y, int* w, int* h)
+                        int* x, int* y, int* w, int* h, int panel_x, int panel_y)
 {
 	int row = index / grid_width;
 	int col = index % grid_width;
-	*x = ITEMS_GRID_START_X + (col * ITEMS_CELL_WIDTH);
-	*y = ITEMS_GRID_START_Y + (row * ITEMS_CELL_HEIGHT);
+	*x = panel_x + (col * ITEMS_CELL_WIDTH);
+	*y = panel_y + (row * ITEMS_CELL_HEIGHT);
 	*w = ITEMS_CELL_WIDTH;
 	*h = ITEMS_CELL_HEIGHT;
 }
@@ -70,10 +70,10 @@ void ie_GetItemCellSize(int index, int grid_width, int grid_height,
 /*
  * Determine which item cell contains the current mouse cursor position
  */
-void ie_GetItemCellAtMouse(int grid_width, int grid_height, uint8_t* grid_x, uint8_t* grid_y)
+void ie_GetItemCellAtMouse(int grid_width, int grid_height, uint8_t* grid_x, uint8_t* grid_y, int panel_x, int panel_y)
 {
-	int start_x = ITEMS_GRID_START_X;
-	int start_y = ITEMS_GRID_START_Y;
+	int start_x = panel_x;
+	int start_y = panel_y;
 	int total_width = grid_width * ITEMS_CELL_WIDTH;
 	int total_height = grid_height * ITEMS_CELL_HEIGHT;
 	
@@ -89,12 +89,10 @@ void ie_GetItemCellAtMouse(int grid_width, int grid_height, uint8_t* grid_x, uin
 /*
  * Handle mouse interaction with the item properties panel
  */
-void ie_ItemPropertiesMouseCheck(Item_t* selected_item, int* property_index)
+void ie_ItemPropertiesMouseCheck(Item_t* selected_item, int* property_index, int panel_x, int panel_y)
 {
 	if (!selected_item) return;
 	
-	int panel_x = ITEM_PROPERTIES_PANEL_X;
-	int panel_y = ITEM_PROPERTIES_PANEL_Y;
 	int panel_width = ITEM_PROPERTIES_PANEL_WIDTH;
 	int line_height = 20;
 	
@@ -140,75 +138,106 @@ void ie_ItemTypeKeyboardCheck(ItemType_t* current_type, int* property_adjustment
 		*property_adjustment = -1;
 	}
 }
+/**
+ * @brief Draws the specific properties for a WEAPON item.
+ */
+static void ie_DrawWeaponProperties(Item_t* item, int panel_x, int* line_y)
+{
+    char property_text[256];
+    int line_height = 20;
 
-/*
- * Render item properties in a formatted panel display
+    d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_DEBUG,
+                      5, 3.0, "Damage: %d-%d",
+                      item->data.weapon.min_damage, item->data.weapon.max_damage);
+    a_DrawText(property_text, panel_x + 5, *line_y, 255, 100, 100, app.font_type, TEXT_ALIGN_LEFT, 0);
+    *line_y += line_height;
+    
+    d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_DEBUG,
+                      5, 3.0, "Range: %d tiles", item->data.weapon.range_tiles);
+    a_DrawText(property_text, panel_x + 5, *line_y, 150, 150, 255, app.font_type, TEXT_ALIGN_LEFT, 0);
+    *line_y += line_height;
+}
+
+/**
+ * @brief Draws the specific properties for an ARMOR item.
+ */
+static void ie_DrawArmorProperties(Item_t* item, int panel_x, int* line_y)
+{
+    char property_text[256];
+    int line_height = 20;
+
+    d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_DEBUG,
+                      5, 3.0, "Armor: %d", item->data.armor.armor_value);
+    a_DrawText(property_text, panel_x + 5, *line_y, 100, 100, 255, app.font_type, TEXT_ALIGN_LEFT, 0);
+    *line_y += line_height;
+    
+    d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_DEBUG,
+                      5, 3.0, "Evasion: %d", item->data.armor.evasion_value);
+    a_DrawText(property_text, panel_x + 5, *line_y, 100, 255, 100, app.font_type, TEXT_ALIGN_LEFT, 0);
+    *line_y += line_height;
+}
+
+/**
+ * @brief Render item properties in a formatted panel display.
  */
 void ie_DrawItemProperties(Item_t* item, int panel_x, int panel_y, int selected_property)
 {
-	if (!item) return;
-	
-	char property_text[256];
-	int line_y = panel_y;
-	int line_height = 20;
-	
-	// Draw panel background
-	a_DrawFilledRect(panel_x, panel_y, ITEM_PROPERTIES_PANEL_WIDTH, 200, 40, 40, 40, 255);
-	
-	// Item name
-	if (item->name && item->name->str) {
-		d_LogInfoF("Name: %s", item->name->str);
-		a_DrawText(property_text, panel_x + 5, line_y, 255, 255, 255, app.font_type, TEXT_ALIGN_LEFT, 0);
-		line_y += line_height;
-	}
-	
-	// Item type
-	const char* type_names[] = {"WEAPON", "ARMOR", "KEY", "CONSUMABLE", "AMMUNITION"};
-	d_LogInfoF("Type: %s",
-	         (item->type < 5) ? type_names[item->type] : "UNKNOWN");
-	a_DrawText(property_text, panel_x + 5, line_y, 200, 200, 255, app.font_type, TEXT_ALIGN_LEFT, 0);
-	line_y += line_height;
-	
-	// Weight and value
-	d_LogInfoF("Weight: %.2f kg", item->weight_kg); 
-	a_DrawText(property_text, panel_x + 5, line_y, 180, 180, 180, app.font_type, TEXT_ALIGN_LEFT, 0);
-	line_y += line_height;
-	
-	d_LogInfoF("Value: %d coins", item->value_coins);
-	a_DrawText(property_text, panel_x + 5, line_y, 255, 215, 0, app.font_type, TEXT_ALIGN_LEFT, 0);
-	line_y += line_height;
-	
-	// Type-specific properties
-	switch (item->type) {
-		case ITEM_TYPE_WEAPON:
-			d_LogInfoF("Damage: %d-%d",
-			         item->data.weapon.min_damage, item->data.weapon.max_damage);
-			a_DrawText(property_text, panel_x + 5, line_y, 255, 100, 100, app.font_type, TEXT_ALIGN_LEFT, 0);
-			line_y += line_height;
-			
-			d_LogInfoF("Range: %d tiles", item->data.weapon.range_tiles);
-			a_DrawText(property_text, panel_x + 5, line_y, 150, 150, 255, app.font_type, TEXT_ALIGN_LEFT, 0);
-			break;
-			
-		case ITEM_TYPE_ARMOR:
-			d_LogInfoF("Armor: %d", item->data.armor.armor_value);
-			a_DrawText(property_text, panel_x + 5, line_y, 100, 100, 255, app.font_type, TEXT_ALIGN_LEFT, 0);
-			line_y += line_height;
-			
-			d_LogInfoF("Evasion: %d", item->data.armor.evasion_value);
-			a_DrawText(property_text, panel_x + 5, line_y, 100, 255, 100, app.font_type, TEXT_ALIGN_LEFT, 0);
-			break;
-	}
+    if (!item) return;
+    
+    char property_text[256];
+    int line_y = panel_y;
+    int line_height = 20;
+    
+    // Draw panel background
+    a_DrawFilledRect(panel_x, panel_y, ITEM_PROPERTIES_PANEL_WIDTH, 200, 40, 40, 40, 255);
+    
+    // Item name
+    if (!d_IsStringInvalid(item->name)) {
+        d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_DEBUG,
+                          5, 3.0, "Item name: %s", item->name->str);
+        a_DrawText(property_text, panel_x + 5, line_y, 255, 255, 255, app.font_type, TEXT_ALIGN_LEFT, 0);
+        line_y += line_height;
+    }
+    
+    // Item type
+    const char* type_names[] = {"WEAPON", "ARMOR", "KEY", "CONSUMABLE", "AMMUNITION"};
+    d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_DEBUG,
+                      5, 3.0, "Item type: %s",
+                      (item->type < 5) ? type_names[item->type] : "UNKNOWN");
+    a_DrawText(property_text, panel_x + 5, line_y, 200, 200, 255, app.font_type, TEXT_ALIGN_LEFT, 0);
+    line_y += line_height;
+    
+    // Weight and value
+    d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_DEBUG,
+                      5, 3.0, "Weight: %.2f kg", item->weight_kg);
+    a_DrawText(property_text, panel_x + 5, line_y, 180, 180, 180, app.font_type, TEXT_ALIGN_LEFT, 0);
+    line_y += line_height;
+    
+    d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_DEBUG,
+                      5, 3.0, "Value: %d coins", item->value_coins);
+    a_DrawText(property_text, panel_x + 5, line_y, 255, 215, 0, app.font_type, TEXT_ALIGN_LEFT, 0);
+    line_y += line_height;
+    
+    // Type-specific properties (delegated to helper functions)
+    switch (item->type) {
+        case ITEM_TYPE_WEAPON:
+            ie_DrawWeaponProperties(item, panel_x, &line_y);
+            break;
+        case ITEM_TYPE_ARMOR:
+            ie_DrawArmorProperties(item, panel_x, &line_y);
+            break;
+    }
 }
+
 
 /*
  * Render material selection grid with property previews
  */
-void ie_DrawMaterialGrid(Material_t* materials, int material_count, int selected_index)
+void ie_DrawMaterialGrid(Material_t* materials, int material_count, int selected_index, int panel_x, int panel_y)
 {
 	for (int i = 0; i < material_count && i < MATERIALS_GRID_MAX; i++) {
 		int x, y, w, h;
-		ie_GetMaterialCellSize(i, &x, &y, &w, &h);
+		ie_GetMaterialCellSize(i, &x, &y, &w, &h, panel_x, panel_y);
 		
 		// Background color
 		if (i == selected_index) {
@@ -234,12 +263,12 @@ void ie_DrawMaterialGrid(Material_t* materials, int material_count, int selected
 /*
  * Calculate screen position for material selection cells
  */
-void ie_GetMaterialCellSize(int index, int* x, int* y, int* w, int* h)
+void ie_GetMaterialCellSize(int index, int* x, int* y, int* w, int* h, int panel_x, int panel_y)
 {
 	int row = index / MATERIALS_GRID_WIDTH;
 	int col = index % MATERIALS_GRID_WIDTH;
-	*x = MATERIALS_PANEL_X + (col * MATERIALS_CELL_WIDTH);
-	*y = MATERIALS_PANEL_Y + (row * MATERIALS_CELL_HEIGHT);
+	*x = panel_x + (col * MATERIALS_CELL_WIDTH);
+	*y = panel_y + (row * MATERIALS_CELL_HEIGHT);
 	*w = MATERIALS_CELL_WIDTH;
 	*h = MATERIALS_CELL_HEIGHT;
 }
@@ -293,54 +322,71 @@ int ie_FilterItemsByType(Item_t* items, int item_count, ItemType_t filter_type, 
     
     return filtered_count;
 }
+/**
+ * @brief Validates that the core string pointers of an item are valid.
+ */
+static bool ie_ValidateItemStrings(const Item_t* item)
+{
+    if (d_IsStringInvalid(item->name)) {
+        d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_WARNING,
+                          5, 1.0, "Validation failed: item name is NULL or empty.");
+        return false;
+    }
+    if (d_IsStringInvalid(item->id)) {
+        d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_WARNING,
+                          5, 1.0, "Validation failed: item id is NULL or empty.");
+        return false;
+    }
+    if (d_IsStringInvalid(item->description)) {
+        d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_WARNING,
+                          5, 1.0, "Validation failed: item description is NULL or empty.");
+        return false;
+    }
+    if (d_IsStringInvalid(item->rarity)) {
+        d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_WARNING,
+                          5, 1.0, "Validation failed: item rarity is NULL or empty.");
+        return false;
+    }
+    return true;
+}
 
 /**
- * @brief Validates the core data of a single item.
+ * @brief Validates that the numerical and enum values of an item are within range.
  */
-bool ie_ValidateItem(const Item_t* item)
+static bool ie_ValidateItemValues(const Item_t* item)
 {
-    // A NULL item pointer is inherently invalid.
-    if (item == NULL) {
-		d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_ERROR,
-		                  1, 1.0, "Validation failed: item pointer is NULL.");
-        return false;
-    }
-
-    // Essential string fields must not be NULL.
-    if (item->name == NULL || item->name->str == NULL || strlen(item->name->str) == 0) {
-		d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_WARNING,
-						  5, 1.0, "Validation failed: item name is NULL.");
-        return false;
-    }
-
-    if (item->id == NULL || item->id->str == NULL || strlen(item->id->str) == 0) {
-		d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_WARNING,
-						  5, 1.0, "Validation failed: item id is NULL.");
-        return false;
-    }
-    
-	if (item->description == NULL || item->description->str == NULL || strlen(item->description->str) == 0) {
-		d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_WARNING,
-						  5, 1.0, "Validation failed: item description is NULL.");
-        return false;
-    }
-
-	if (item->rarity == NULL || item->rarity->str == NULL || strlen(item->rarity->str) == 0) {
-		d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_WARNING,
-						  5, 1.0, "Validation failed: item rarity is NULL.");
-        return false;
-    }
-
     // Item type must be within the defined enum range.
     if (item->type < ITEM_TYPE_WEAPON || item->type > ITEM_TYPE_AMMUNITION) {
-		d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_ERROR,
-						  5, 1.0, "Validation failed: item '%s' has invalid type: %d", item->name->str, item->type);
+        d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_ERROR,
+                          5, 1.0, "Validation failed: item '%s' has invalid type: %d", item->name->str, item->type);
         return false;
     }
 
     // Weight should not be negative.
     if (item->weight_kg < 0.0f) {
         d_LogErrorF("Validation failed: item '%s' has negative weight: %.2f", item->name->str, item->weight_kg);
+        return false;
+    }
+    return true;
+}
+
+/**
+ * @brief Validates the core data of a single item by delegating to specialized functions.
+ */
+bool ie_ValidateItem(const Item_t* item)
+{
+    // A NULL item pointer is the most fundamental invalidity.
+    if (item == NULL) {
+        d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_ERROR,
+                          1, 1.0, "Validation failed: item pointer is NULL.");
+        return false;
+    }
+
+    // Delegate checks to the helper functions.
+    if (!ie_ValidateItemStrings(item)) {
+        return false;
+    }
+    if (!ie_ValidateItemValues(item)) {
         return false;
     }
 
@@ -353,20 +399,24 @@ bool ie_ValidateItem(const Item_t* item)
  */
 Item_t* ie_FindItemByID(Item_t* database, int count, const char* id)
 {
+    // Cannot search with invalid inputs (Guard Clause)
     if (database == NULL || id == NULL) {
-		d_LogWarning("Cannot search for item by ID with NULL parameters.");
-        return NULL; // Cannot search with invalid inputs.
+        d_LogWarning("Cannot search for item by ID with NULL parameters.");
+        return NULL;
     }
-
     for (int i = 0; i < count; i++) {
-        // Ensure the item's ID and string are not NULL before comparing.
-        if (database[i].id != NULL && database[i].id->str != NULL) {
-            if (strcmp(database[i].id->str, id) == 0) {
-                return &database[i]; // Found it!
-            }
+        // Skip corrupted items safely (Guard Clause)
+        if (d_IsStringInvalid(database[i].id)) {
+            continue;
+        }
+
+        // Perform the comparison
+        if (d_CompareStringToCString(database[i].id, id) == 0) {
+            return &database[i]; // Found it!
         }
     }
-	d_LogWarningF("Item with ID '%s' not found in database.", id);
+
+    d_LogWarningF("Item with ID '%s' not found in database.", id);
     return NULL; // Item not found.
 }
 
@@ -383,30 +433,37 @@ void ie_DrawDbStatus(const dString_t* status_text)
 
 /**
  * @brief Counts items by type and draws the statistics to the screen.
+ * @details Nesting is reduced by using guard clauses for pointer checks.
  */
 void ie_DrawDbStats(const Item_t* database, int count)
 {
-    if (database != NULL) {
-        dString_t* stats_text = d_InitString();
-        if (stats_text) {
-            int weapon_count = 0, armor_count = 0, consumable_count = 0;
-            
-            for (int i = 0; i < count; i++) {
-                switch (database[i].type) {
-                    case ITEM_TYPE_WEAPON:      weapon_count++; break;
-                    case ITEM_TYPE_ARMOR:       armor_count++; break;
-                    case ITEM_TYPE_CONSUMABLE:  consumable_count++; break;
-                    default: break;
-                }
-            }
-            
-            d_FormatString(stats_text, "Weapons: %d | Armor: %d | Consumables: %d",
-                    weapon_count, armor_count, consumable_count);
-            
-            a_DrawText( d_PeekString(stats_text), 50, 50, 200, 200, 200, app.font_type,
-                       TEXT_ALIGN_LEFT, 0 );
-            
-            d_DestroyString(stats_text);
+    // Guard against null database pointer
+    if (database == NULL) {
+        return;
+    }
+
+    dString_t* stats_text = d_InitString();
+    // Guard against memory allocation failure
+    if (stats_text == NULL) {
+        return;
+    }
+
+    int weapon_count = 0, armor_count = 0, consumable_count = 0;
+    
+    for (int i = 0; i < count; i++) {
+        switch (database[i].type) {
+            case ITEM_TYPE_WEAPON:      weapon_count++; break;
+            case ITEM_TYPE_ARMOR:       armor_count++; break;
+            case ITEM_TYPE_CONSUMABLE:  consumable_count++; break;
+            default: break;
         }
     }
+    
+    d_FormatString(stats_text, "Weapons: %d | Armor: %d | Consumables: %d",
+            weapon_count, armor_count, consumable_count);
+    
+    a_DrawText(d_PeekString(stats_text), 50, 50, 200, 200, 200, app.font_type,
+               TEXT_ALIGN_LEFT, 0);
+    
+    d_DestroyString(stats_text);
 }

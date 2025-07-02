@@ -97,7 +97,8 @@ EDITOR_OBJS = \
 							$(OBJ_DIR)/items_editor/creation.o\
 							$(OBJ_DIR)/items_editor/edit.o\
 							$(OBJ_DIR)/items_editor/utils.o\
-							$(OBJ_DIR)/items.o
+							$(OBJ_DIR)/items_editor/advanced.o \
+							$(OBJ_DIR)/items.o \ 
 
 $(OBJ_DIR)/%.o: $(EDITOR_DIR)/%.c | $(OBJ_DIR) $(WEO_DIR)
 	$(CC) -c $< -o $@ -ggdb $(CFLAGS)
@@ -182,16 +183,19 @@ $(OBJ_DIR)/items.o: src/items.c
 # which conflicts with the test's own 'main' function. The undefined references this
 # creates must be solved in the test file itself (see Step 2 below).
 EDITOR_MODULE_OBJS = \
-		$(OBJ_DIR)/world_editor/creation.o\
-		$(OBJ_DIR)/world_editor/utils.o\
-		$(OBJ_DIR)/world_editor/edit.o \
+    $(OBJ_DIR)/world_editor/creation.o\
+    $(OBJ_DIR)/world_editor/utils.o\
+    $(OBJ_DIR)/world_editor/edit.o \
     $(OBJ_DIR)/world_editor.o \
     $(OBJ_DIR)/init_editor.o \
     $(OBJ_DIR)/items_editor.o \
     $(OBJ_DIR)/entity_editor.o \
     $(OBJ_DIR)/color_editor.o \
     $(OBJ_DIR)/ui_editor.o \
-	#$(OBJ_DIR)/editor.o
+    $(OBJ_DIR)/items_editor/creation.o \
+    $(OBJ_DIR)/items_editor/edit.o \
+    $(OBJ_DIR)/items_editor/utils.o \
+    $(OBJ_DIR)/items_editor/advanced.o
 
 # Generic pattern rule to build any editor object file from its source file.
 # This avoids conflicts with other rules and keeps the Makefile clean.
@@ -254,45 +258,6 @@ test-world-editor-basic: always $(EDITOR_MODULE_OBJS)
 test-world-editor-advanced: always $(EDITOR_MODULE_OBJS)
 	$(CC) $(TEST_CFLAGS) -o $(BIN_DIR)/test_world_editor_advanced tests/editor/test_world_editor_advanced.c $(EDITOR_MODULE_OBJS) -lDaedalus -lArchimedes $(CFLAGS)
 
-.PHONY: test-items-editor-creation
-test-items-editor-creation: always $(OBJ_DIR)/items.o tests/editor/mocks.o $(OBJ_DIR)/items_editor.o
-	$(CC) $(TEST_CFLAGS) -o $(BIN_DIR)/test_items_editor_creation \
-		tests/editor/test_items_editor_creation.c \
-		$(OBJ_DIR)/items.o \
-		$(OBJ_DIR)/items_editor.o \
-		tests/editor/mocks.o \
-		-lDaedalus -lArchimedes -lm $(CFLAGS)
-
-.PHONY: run-test-items-editor-creation
-run-test-items-editor-creation: test-items-editor-creation
-	@./$(BIN_DIR)/test_items_editor_creation
-
-.PHONY: test-items-editor-utils
-test-items-editor-utils: always $(OBJ_DIR)/items.o tests/editor/mocks.o $(OBJ_DIR)/items_editor/utils.o
-	$(CC) $(TEST_CFLAGS) -o $(BIN_DIR)/test_items_editor_utils \
-		tests/editor/test_items_editor_utils.c \
-		$(OBJ_DIR)/items.o \
-		$(OBJ_DIR)/items_editor.o \
-		$(OBJ_DIR)/items_editor/utils.o \
-		tests/editor/mocks.o \
-		-lDaedalus -lArchimedes -lm $(CFLAGS)
-
-# The items editor tests depend on ALL other editor modules.
-.PHONY: test-items-editor-basic  
-test-items-editor-basic: always $(OBJ_DIR)/items.o tests/editor/mocks.o $(OBJ_DIR)/items_editor/creation.o $(OBJ_DIR)/items_editor/edit.o $(OBJ_DIR)/items_editor/utils.o
-	$(CC) $(TEST_CFLAGS) -o $(BIN_DIR)/test_items_editor_basic \
-		tests/editor/test_items_editor_basic.c \
-		$(OBJ_DIR)/items.o \
-		tests/editor/mocks.o \
-		$(OBJ_DIR)/items_editor/creation.o \
-		$(OBJ_DIR)/items_editor/edit.o \
-		$(OBJ_DIR)/items_editor/utils.o \
-		-lDaedalus -lArchimedes -lm $(CFLAGS)
-
-.PHONY: test-items-editor-advanced
-test-items-editor-advanced: always $(EDITOR_MODULE_OBJS)
-	$(CC) $(TEST_CFLAGS) -o $(BIN_DIR)/test_items_editor_advanced tests/editor/test_items_editor_advanced.c $(EDITOR_MODULE_OBJS) -lDaedalus -lArchimedes $(CFLAGS)
-
 # --- Individual Test Runners (for detailed output) ---
 .PHONY: run-test-items-creation-destruction
 run-test-items-creation-destruction: test-items-creation-destruction
@@ -338,6 +303,71 @@ run-test-world-editor-basic: test-world-editor-basic
 run-test-world-editor-advanced: test-world-editor-advanced
 	@./$(BIN_DIR)/test_world_editor_advanced
 
+#================================================
+# ITEMS EDITOR TESTS
+#================================================
+# This variable contains ALL modules related to the items editor.
+# By using this for all items editor tests, we ensure they can all see each other's functions.
+ITEMS_EDITOR_MODULE_OBJS = \
+    $(OBJ_DIR)/items.o \
+    $(OBJ_DIR)/items_editor.o \
+    $(OBJ_DIR)/items_editor/creation.o \
+    $(OBJ_DIR)/items_editor/edit.o \
+    $(OBJ_DIR)/items_editor/utils.o \
+    $(OBJ_DIR)/items_editor/advanced.o
+
+# The items editor tests depend on all other items editor modules.
+.PHONY: test-items-editor-basic
+test-items-editor-basic: always $(ITEMS_EDITOR_MODULE_OBJS) tests/editor/mocks.o
+	$(CC) $(TEST_CFLAGS) -o $(BIN_DIR)/test_items_editor_basic \
+		tests/editor/test_items_editor_basic.c \
+		$(ITEMS_EDITOR_MODULE_OBJS) \
+		tests/editor/mocks.o \
+		-lDaedalus -lArchimedes -lm $(CFLAGS)
+
+.PHONY: test-items-editor-advanced
+test-items-editor-advanced: always $(ITEMS_EDITOR_MODULE_OBJS) tests/editor/mocks.o
+	$(CC) $(TEST_CFLAGS) -o $(BIN_DIR)/test_items_editor_advanced \
+		tests/editor/test_items_editor_advanced.c \
+		$(ITEMS_EDITOR_MODULE_OBJS) \
+		tests/editor/mocks.o \
+		-lDaedalus -lArchimedes -lm $(CFLAGS)
+
+.PHONY: test-items-editor-creation
+test-items-editor-creation: always $(ITEMS_EDITOR_MODULE_OBJS) tests/editor/mocks.o
+	$(CC) $(TEST_CFLAGS) -o $(BIN_DIR)/test_items_editor_creation \
+		tests/editor/test_items_editor_creation.c \
+		$(ITEMS_EDITOR_MODULE_OBJS) \
+		tests/editor/mocks.o \
+		-lDaedalus -lArchimedes -lm $(CFLAGS)
+
+.PHONY: test-items-editor-utils
+test-items-editor-utils: always $(ITEMS_EDITOR_MODULE_OBJS) tests/editor/mocks.o
+	$(CC) $(TEST_CFLAGS) -o $(BIN_DIR)/test_items_editor_utils \
+		tests/editor/test_items_editor_utils.c \
+		$(ITEMS_EDITOR_MODULE_OBJS) \
+		tests/editor/mocks.o \
+		-lDaedalus -lArchimedes -lm $(CFLAGS)
+
+.PHONY: test-items-editor-edit
+test-items-editor-edit: always $(ITEMS_EDITOR_MODULE_OBJS) tests/editor/mocks.o
+	$(CC) $(TEST_CFLAGS) -o $(BIN_DIR)/test_items_editor_edit \
+		tests/editor/test_items_editor_edit.c \
+		$(ITEMS_EDITOR_MODULE_OBJS) \
+		tests/editor/mocks.o \
+		-lDaedalus -lArchimedes -lm $(CFLAGS)
+
+
+# --- Individual Items Editor Test Runners ---
+
+.PHONY: run-test-items-editor-creation
+run-test-items-editor-creation: test-items-editor-creation
+	@./$(BIN_DIR)/test_items_editor_creation
+
+.PHONY: run-test-items-editor-edit
+run-test-items-editor-edit: test-items-editor-edit
+	@./$(BIN_DIR)/test_items_editor_edit
+
 .PHONY: run-test-items-editor-basic
 run-test-items-editor-basic: test-items-editor-basic
 	@./$(BIN_DIR)/test_items_editor_basic
@@ -349,6 +379,7 @@ run-test-items-editor-advanced: test-items-editor-advanced
 .PHONY: run-test-items-editor-utils
 run-test-items-editor-utils: test-items-editor-utils
 	@./$(BIN_DIR)/test_items_editor_utils
+
 
 # --- Global Test Runner ---
 .PHONY: test

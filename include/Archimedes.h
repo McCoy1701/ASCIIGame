@@ -110,7 +110,7 @@ typedef struct _widget_t
   struct _widget_t* next;
   struct _widget_t* prev;
   void (*action)( void );
-  void (*data);
+  void* data;
 } aWidget_t;
 
 typedef struct

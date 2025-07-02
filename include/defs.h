@@ -36,9 +36,13 @@
 #define MAX_COLOR_GROUPS        16
 #define MAX_COLOR_PALETTE       48
 #define GAME_GLYPH_TEXTURE_SIZE 256
-#define MAX_NAME_LENGTH         32
-#define MAX_DESCRIPTION_LENGTH  256
-#define MAX_ID_LENGTH           16
+#define MAX_LINE_LENGTH        1024
+#define MAX_FILENAME_LENGTH    256
+#define MAX_NAME_LENGTH        32
+#define MAX_ID_LENGTH          32
+#define MAX_DESCRIPTION_LENGTH 256
+#define MAX_INPUT_LENGTH       16
+#define MAX_MATERIALS          100
 
 #define SCREEN_ORIGIN_X SCREEN_WIDTH  / 2
 #define SCREEN_ORIGIN_Y SCREEN_HEIGHT / 2

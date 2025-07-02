@@ -8,6 +8,22 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+/**
+ * @brief Saves the current item database to a file.
+ * 
+ * @param filename The path of the file to save.
+ * @return 0 on success, -1 on failure.
+ */
+int ie_save(const char* filename);
+
+/**
+ * @brief Loads an item database from a file, replacing the current one.
+ * 
+ * @param filename The path of the file to load.
+ * @return 0 on success, -1 on failure.
+ */
+int ie_load(const char* filename);
+
 /*
  * Initialize the Items Editor subsystem and set up the UI framework
  *
@@ -53,7 +69,7 @@ void e_DestroyItemEditor( void );
  * -- Selection highlighting overrides type colors with yellow background
  * -- Handles NULL item pointers gracefully without crashing
  */
-void ie_DrawItemCell(int index, Item_t* item, int grid_x, int grid_y, bool is_selected);
+void ie_DrawItemCell(int index, Item_t* item, int panel_x, int panel_y, bool is_selected);
 
 /*
  * Calculate screen position and dimensions for an item cell in the grid
@@ -73,7 +89,7 @@ void ie_DrawItemCell(int index, Item_t* item, int grid_x, int grid_y, bool is_se
  * -- Essential for translating logical grid positions to visual display
  */
 void ie_GetItemCellSize(int index, int grid_width, int grid_height, 
-                        int* x, int* y, int* w, int* h);
+                        int* x, int* y, int* w, int* h, int panel_x, int panel_y);
 
 /*
  * Determine which item cell contains the current mouse cursor position
@@ -89,7 +105,7 @@ void ie_GetItemCellSize(int index, int grid_width, int grid_height,
  * -- Output coordinates remain unchanged if mouse is outside grid area
  * -- Critical for item clicking and selection interface functionality
  */
-void ie_GetItemCellAtMouse(int grid_width, int grid_height, uint8_t* grid_x, uint8_t* grid_y);
+void ie_GetItemCellAtMouse(int grid_width, int grid_height, uint8_t* grid_x, uint8_t* grid_y, int panel_x, int panel_y);
 
 /*
  * Handle mouse interaction with the item properties panel for editing
@@ -104,7 +120,7 @@ void ie_GetItemCellAtMouse(int grid_width, int grid_height, uint8_t* grid_x, uin
  * -- Used for enabling inline editing of item statistics and attributes
  * -- Enables direct manipulation of damage, armor, weight, and other values
  */
-void ie_ItemPropertiesMouseCheck(Item_t* selected_item, int* property_index);
+void ie_ItemPropertiesMouseCheck(Item_t* selected_item, int* property_index, int panel_x, int panel_y);
 
 /*
  * Handle mouse interaction with the material selection panel
@@ -169,7 +185,7 @@ void ie_DrawItemProperties(Item_t* item, int panel_x, int panel_y, int selected_
  * -- Quality indicator reflects average of value and durability factors
  * -- Limited to MATERIALS_GRID_MAX materials for interface constraints
  */
-void ie_DrawMaterialGrid(Material_t* materials, int material_count, int selected_index);
+void ie_DrawMaterialGrid(Material_t* materials, int material_count, int selected_index, int panel_x, int panel_y);
 
 /*
  * Calculate screen position for material selection grid cells
@@ -186,7 +202,7 @@ void ie_DrawMaterialGrid(Material_t* materials, int material_count, int selected
  * -- Output pointers must be valid; no validation performed
  * -- Supports grid layouts up to MATERIALS_GRID_WIDTH × MATERIALS_GRID_HEIGHT
  */
-void ie_GetMaterialCellSize(int index, int* x, int* y, int* w, int* h);
+void ie_GetMaterialCellSize(int index, int* x, int* y, int* w, int* h, int panel_x, int panel_y);
 
 /*
  * Generic grid mouse detection utility for various UI panels
@@ -363,10 +379,11 @@ Item_t* ie_FindItemByID(Item_t* database, int count, const char* id);
  * @param ench The index of the enchantment level.
  * @return A pointer to the newly created Item_t, or NULL on failure.
  */
-Item_t* ie_CreateItemWithParameters(ItemType_t type, int mat_id, int rare, int qual, int ench);
+Item_t* ie_CreateItemWithParameters(ItemType_t type, int mat_id, int rare, int ench);
 
 /**
  * @brief Counts items by type and draws the statistics to the screen.
+ * 
  * @param database A pointer to the item database.
  * @param count The number of items in the database.
  */
@@ -374,26 +391,79 @@ void ie_DrawDbStats(const Item_t* database, int count);
 
 /**
  * @brief Draws the simple "Items: X loaded" status text.
+ * 
  * @param status_text The dString containing the status message.
  */
 void ie_DrawDbStatus(const dString_t* status_text);
 
 /**
  * @brief Provides safe, read-only access to the items database.
+ * 
  * @return A pointer to the global item database.
  */
 Item_t* ie_GetDatabase(void);
 
 /**
  * @brief Provides safe, read-only access to the item count.
+ * 
  * @return The current number of items in the database.
  */
 int ie_GetItemCount(void);
 
 /**
  * @brief Provides safe, read-only access to the status text string.
+ * 
  * @return A pointer to the dString for the status text.
  */
 dString_t* ie_GetStatusText(void);
 
+/**
+ * @brief Adds a newly created item to the main items database.
+ * 
+ * @param item A pointer to the item to add. The function takes ownership of this pointer.
+ * @return void
+ */
+void ie_AddItemToDatabase(Item_t* item);
+
+/**
+ * @brief Creates a temporary item and draws its properties to show a preview.
+ * 
+ * @param t The item type.
+ * @param m The material index.
+ * @param r The weapon range.
+ * @param q The weapon quality.
+ * @param e The weapon enchantment.
+ * @return void
+ */
+void ie_DrawItemCreationPreview(int t, int m, int r, int q, int e);
+
+/**
+ * @brief Creates a hardcoded list of materials for the editor.
+ * 
+ * @param count Output pointer for the number of materials created.
+ * @return A pointer to the array of materials.
+ */
+Material_t* load_materials_database(int* count);
+
+/**
+ * @brief Applies a new material to an item and recalculates its stats.
+ * 
+ * @param item The item to modify.
+ * @param material The new material to apply.
+ * @return void
+ */
+void ie_ApplyMaterialToItem(Item_t* item, Material_t* material);
+
+/**
+ * @brief Adjusts a specific property of an item up or down.
+ * 
+ * @param item The item to modify.
+ * @param property_index The index of the property to change (based on draw order).
+ * @param adjustment The amount to change by (+1 or -1).
+ * @return void
+ */
+void ie_AdjustItemProperty(Item_t* item, int prop_idx, int adj);
+
+Material_t* ie_GetMaterialsDatabase(void);
+int         ie_GetMaterialsCount(void);
 #endif

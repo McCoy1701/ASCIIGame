@@ -175,11 +175,11 @@ static void iec_DrawCreationStatus(void)
     const char* material_str = material_select_widget ? material_select_widget->options[material_index] : "N/A";
 
     d_FormatString(status_text, "Creating: %s | Rarity: %s | Material: %s", type_str, rarity_str, material_str);
-    a_DrawText(d_PeekString(status_text), 50, 100, 255, 255, 200, app.font_type, TEXT_ALIGN_LEFT, 0);
+    a_DrawText(d_PeekString(status_text), 15, 100, 100, 100, 200, app.font_type, TEXT_ALIGN_LEFT, 0);
     
     d_DestroyString(status_text);
     
-    a_DrawText("1: Type | 2: Rarity | 3: Material | ESC: Back", 50, SCREEN_HEIGHT - 60, 200, 200, 200, app.font_type, TEXT_ALIGN_LEFT, 0);
+    a_DrawText("1: Type | 2: Rarity | 3: Material | ESC: Back", 15, SCREEN_HEIGHT - 100, 200, 200, 180, app.font_type, TEXT_ALIGN_LEFT, 0);
 }
 
 
@@ -187,39 +187,52 @@ static void iec_DrawCreationStatus(void)
 // ITEM GENERATION
 // =============================================================================
 
-Item_t* ie_CreateItemWithParameters(ItemType_t type, int mat_id, int rare, int qual, int ench)
+Item_t* ie_CreateItemWithParameters(ItemType_t type, int mat_id, int rare, int ench)
 {
     if (g_force_creation_failure) {
-        d_LogDebug("Chaos flag active: Forcing item creation failure for test.");
         return NULL;
     }
     
-    Material_t material;
-    MaterialProperties_t props;
+    // Get the shared materials database
+    Material_t* materials_db = ie_GetMaterialsDatabase();
+    int material_count = ie_GetMaterialsCount();
 
-    // Create material based on the mat_id passed from the UI
-    switch(mat_id) {
-        case 1:  material = create_material("Steel",      (props = create_default_material_properties(), props.min_damage_fact = 1.2f, props.armor_value_fact = 1.2f, props)); break;
-        case 2:  material = create_material("Silver",     (props = create_default_material_properties(), props.value_coins_fact = 2.0f, props)); break;
-        case 3:  material = create_material("Gold",       (props = create_default_material_properties(), props.value_coins_fact = 3.0f, props)); break;
-        case 4:  material = create_material("Mithril",    (props = create_default_material_properties(), props.weight_fact = 0.5f, props.armor_value_fact = 1.8f, props)); break;
-        case 5:  material = create_material("Adamantine", (props = create_default_material_properties(), props.durability_fact = 2.0f, props.min_damage_fact = 1.8f, props)); break;
-        default: material = create_material("Iron", create_default_material_properties()); break;
+    // Defensive check: ensure the material ID is valid
+    if (!materials_db || mat_id >= material_count) {
+        d_LogErrorF("Invalid material ID %d used for item creation.", mat_id);
+        return NULL;
     }
+    // Get a pointer to the selected material from the database
+    Material_t* selected_material = &materials_db[mat_id];
 
     Item_t* new_item = NULL;
-    (void)rare; (void)qual; (void)ench; // Silence unused warnings for now
+    (void)rare; (void)ench; // Silence unused warnings for now
 
     switch (type) {
-        case ITEM_TYPE_WEAPON:     new_item = create_weapon("Crafted Sword", "crafted_weapon", material, 5, 10, 1, '/'); break;
-        case ITEM_TYPE_ARMOR:      new_item = create_armor("Crafted Mail", "crafted_armor", material, 15, 2, '[', 0, 0); break;
-        case ITEM_TYPE_KEY:        { Lock_t lock = create_lock("Generic Door", "A generic lock.", 50, 10); new_item = create_key("Crafted Key", "crafted_key", lock, '~'); destroy_lock(&lock); break; }
-        case ITEM_TYPE_CONSUMABLE: new_item = create_consumable("Crafted Potion", "crafted_consumable", 50, _default_on_consume, '!'); break;
-        case ITEM_TYPE_AMMUNITION: new_item = create_ammunition("Crafted Arrow", "crafted_ammo", material, 3, 6, '|'); break;
-        default:                   d_LogErrorF("Attempted to create item with unknown type: %d", type); break;
+        case ITEM_TYPE_WEAPON:
+            new_item = create_weapon("Crafted Sword", "crafted_weapon", *selected_material, 5, 10, 1, '/');
+            break;
+        case ITEM_TYPE_ARMOR:
+            new_item = create_armor("Crafted Mail", "crafted_armor", *selected_material, 15, 2, '[', 0, 0);
+            break;
+        case ITEM_TYPE_KEY: {
+            Lock_t lock = create_lock("Generic Door", "A generic lock.", 50, 10);
+            new_item = create_key("Crafted Key", "crafted_key", lock, '~');
+            destroy_lock(&lock);
+            break;
+        }
+        case ITEM_TYPE_CONSUMABLE:
+            new_item = create_consumable("Crafted Potion", "crafted_consumable", 50, _default_on_consume, '!');
+            break;
+        case ITEM_TYPE_AMMUNITION:
+            new_item = create_ammunition("Crafted Arrow", "crafted_ammo", *selected_material, 3, 6, '|');
+            break;
+        default:
+            d_LogErrorF("Attempted to create item with unknown type: %d", type);
+            break;
     }
-    
-    d_DestroyString(material.name);
+
+    // We no longer need to free the material, as we're just using a pointer from the database.
     return new_item;
 }
 
@@ -231,18 +244,25 @@ void iec_GenerateItem(void)
         (ItemType_t)item_type_index, 
         material_index, 
         rarity_index, 
-        0, // Quality is removed and no longer used
         enchantment_index
     );
 
     if (new_item) {
         ie_AddItemToDatabase(new_item);
         d_LogInfoF("Generated new item: %s", d_PeekString(new_item->name));
+        
+        // FIX: Hide the creation menu before switching modes.
+        if (app.active_widget && strcmp(app.active_widget->name, "item_generation_menu") == 0) {
+            app.active_widget->hidden = 1;
+        }
+        
+        // Now, switch to the edit mode
         ie_edit();
     } else {
         d_LogError("Failed to generate item with selected parameters.");
     }
 }
+
 
 
 void iec_GenerateRandomItem(void)
@@ -260,12 +280,17 @@ void iec_GenerateRandomItem(void)
     int random_enchantment = (random_rarity > 1) ? (rand() % 4) : 0;
 
     Item_t* random_item = ie_CreateItemWithParameters(random_type, random_material,
-                                                     random_rarity, 0, // Quality is removed
+                                                     random_rarity,
                                                      random_enchantment);
 
     if (random_item) {
         ie_AddItemToDatabase(random_item);
         d_LogInfoF("Generated random item: %s", d_PeekString(random_item->name));
+        
+        if (app.active_widget && strcmp(app.active_widget->name, "item_generation_menu") == 0) {
+            app.active_widget->hidden = 1;
+        }
+
         ie_edit();
     } else {
         d_LogError("Failed to generate random item.");

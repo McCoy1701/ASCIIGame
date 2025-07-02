@@ -47,23 +47,12 @@ Item_t* items_database = NULL;           // Main item collection
 int items_count = 0;                     // Total number of items loaded
 dString_t* items_status_text = NULL;     // Status display text
 
-/*
- * Save the current items database to persistent storage (currently unimplemented)
- */
-void ie_save( void )
-{
-	d_LogInfo("Items save functionality not yet implemented");
-	// TODO: Implement items database serialization
-}
+static Material_t* materials_database = NULL;   // Available materials
+static int materials_count = 0;                 // Total materials available
 
-/*
- * Load items database from persistent storage (currently unimplemented)
- */
-void ie_load( void )
-{
-	d_LogInfo("Items load functionality not yet implemented");
-	// TODO: Implement items database loading from file
-}
+Material_t* ie_GetMaterialsDatabase(void) { return materials_database; }
+int         ie_GetMaterialsCount(void)    { return materials_count; }
+
 
 /*
  * Initialize the Items Editor subsystem and set up the UI framework
@@ -84,6 +73,11 @@ void e_InitItemEditor( void )
     if (items_database == NULL) {
         items_database = load_items_database(&items_count);
         d_LogInfoF("Loaded %d items for editing", items_count);
+    }
+    // Load materials database if not already loaded
+    if (materials_database == NULL) {
+        materials_database = load_materials_database(&materials_count);
+        d_LogInfoF("Loaded %d materials for editing", materials_count);
     }
 
     a_InitWidgets( "resources/widgets/editor/items.json" );
@@ -203,7 +197,16 @@ void e_DestroyItemEditor( void )
         items_count = 0;
     }
     
-    // CHANGED: Use d_DestroyString for proper cleanup
+    if (materials_database != NULL) {
+        // Since materials are simpler, we can just free the top-level pointers
+        for(int i = 0; i < materials_count; i++) {
+            d_DestroyString(materials_database[i].name);
+        }
+        free(materials_database);
+        materials_database = NULL;
+        materials_count = 0;
+    }
+    
     if (items_status_text != NULL) {
         d_DestroyString(items_status_text);
         items_status_text = NULL;
@@ -211,7 +214,6 @@ void e_DestroyItemEditor( void )
     
     d_LogInfo("Items Editor destroyed and memory cleaned up");
 }
-
 /*
  * Load items database from storage or create empty database for editing
  */
@@ -341,32 +343,174 @@ void ie_FreeItemsDatabase(Item_t* database, int count)
 	d_LogInfo("Items database memory freed successfully.");
 }
 
+/**
+ * @brief Adds a newly created item to the main items database.
+ * @param item A pointer to the item to add. The function takes ownership of this pointer.
+ */
 void ie_AddItemToDatabase(Item_t* item) {
-    d_LogInfo("STUB: ie_AddItemToDatabase called");
-    // This will eventually add the item to the main items_database.
-    // We destroy the item here for now to prevent memory leaks during testing.
-    if (item) {
-        destroy_item(item);
+    if (!item) {
+        d_LogError("Attempted to add a NULL item to the database.");
+        return;
+    }
+
+    if (items_count >= MAX_ITEMS) {
+        d_LogError("Cannot add new item, database is full!");
+        destroy_item(item); // Clean up the item that couldn't be added
+        return;
+    }
+    
+    // Find the first empty slot to place the item.
+    // This is a simple approach; a real implementation might resize the database.
+    items_database[items_count] = *item; // Copy the item data into the array
+    items_count++;
+    
+    // IMPORTANT: The item data has been copied. We now free the original
+    // container that was allocated by the create_* function, but not its internal
+    // strings, which are now "owned" by the database copy.
+    free(item);
+    
+    d_LogInfoF("Successfully added new item to database. Total items: %d", items_count);
+}
+
+/**
+ * @brief Creates a temporary item and draws its properties to show a preview.
+ */
+void ie_DrawItemCreationPreview(int t, int m, int r, int q, int e) {
+    // Create a temporary item on the stack to generate a preview
+    Item_t* preview_item = ie_CreateItemWithParameters((ItemType_t)t, m, r, e);
+
+    if (preview_item) {
+        // Draw its properties in the preview panel area
+        ie_DrawItemProperties(preview_item, ITEM_PREVIEW_X, ITEM_PREVIEW_Y, -1);
+        
+        // IMPORTANT: Destroy the temporary item to prevent memory leaks
+        destroy_item(preview_item);
+    }
+}
+/**
+ * @brief Creates a hardcoded list of materials for the editor.
+ * @param count Output pointer for the number of materials created.
+ * @return A pointer to the array of materials.
+ */
+Material_t* load_materials_database(int* count) {
+    d_LogInfo("Loading materials database...");
+    *count = 10; // We now create all 10 materials
+    
+    Material_t* db = malloc(sizeof(Material_t) * (*count));
+    if (!db) {
+        *count = 0;
+        return NULL;
+    }
+
+    MaterialProperties_t props;
+
+    // The order here MUST match the order in your items.json file
+    db[0] = create_material("Iron", // Default (1.0f for everything)
+		create_default_material_properties()
+	);
+    db[1] = create_material("Steel",      (
+		props = create_default_material_properties(), 
+		props.min_damage_fact = 1.2f, props.armor_value_fact = 1.2f, props));
+    db[2] = create_material("Silver",     (
+		props = create_default_material_properties(), 
+		props.value_coins_fact = 2.0f, props
+		)
+	);
+    db[3] = create_material("Gold",       (
+		props = create_default_material_properties(), 
+		props.value_coins_fact = 3.0f, props
+		)
+	);
+    db[4] = create_material("Mithril",    (
+		props = create_default_material_properties(), 
+		props.weight_fact = 0.5f, props.armor_value_fact = 1.8f, props
+		)
+	);
+    db[5] = create_material("Adamantine", (
+		props = create_default_material_properties(), 
+		props.durability_fact = 2.0f, props.min_damage_fact = 1.8f, props
+		)
+	);
+    db[6] = create_material("Leather",    (
+		props = create_default_material_properties(), 
+		props.weight_fact = 0.7f, props.armor_value_fact = 0.8f, props
+		)
+	);
+    db[7] = create_material("Wood",       (
+		props = create_default_material_properties(), 
+		props.weight_fact = 0.8f, props.min_damage_fact = 0.7f, props
+		)
+	);
+    db[8] = create_material("Stone",      (
+		props = create_default_material_properties(), 
+		props.weight_fact = 2.5f, props.max_damage_fact = 1.5f, props.durability_fact = 0.5f, props
+		)
+	);
+    db[9] = create_material("Crystal",    (
+		props = create_default_material_properties(), 
+		props.enchant_value_fact = 2.0f, props.durability_fact = 0.3f, props
+		)
+	);
+
+    return db;
+}
+
+
+/**
+ * @brief Applies a new material to an item and recalculates its stats.
+ * @param item The item to modify.
+ * @param material The new material to apply.
+ */
+void ie_ApplyMaterialToItem(Item_t* item, Material_t* material) {
+    if (!item || !material) return;
+
+    d_LogInfoF("Applying material '%s' to item '%s'", d_PeekString(material->name), d_PeekString(item->name));
+
+    // Copy the new material data
+    item->material_data.properties = material->properties;
+    d_SetString(item->material_data.name, d_PeekString(material->name), 0);
+    
+    // Recalculate stats based on the item's type
+    switch(item->type) {
+        case ITEM_TYPE_WEAPON:
+            apply_material_to_weapon(item);
+            break;
+        case ITEM_TYPE_ARMOR:
+            apply_material_to_armor(item);
+            break;
+        case ITEM_TYPE_AMMUNITION:
+            apply_material_to_ammunition(item);
+            break;
+        default:
+            // Other types are not affected by materials in the same way.
+            break;
     }
 }
 
-void ie_DrawItemCreationPreview(int t, int m, int r, int q, int e) {
-    (void)t;(void)m;(void)r;(void)q;(void)e; // Silence warnings
-}
+/**
+ * @brief Adjusts a specific property of an item up or down.
+ * @param item The item to modify.
+ * @param property_index The index of the property to change (based on draw order).
+ * @param adjustment The amount to change by (+1 or -1).
+ */
+void ie_AdjustItemProperty(Item_t* item, int property_index, int adjustment)
+{
+    if (!item) return;
 
-// Stubs for edit mode functions
-Material_t* load_materials_database(int* count) {
-    d_LogInfo("STUB: load_materials_database called");
-    if (count) *count = 0;
-    return NULL;
-}
-
-void ie_ApplyMaterialToItem(Item_t* item, Material_t* material) {
-    (void)item; (void)material;
-}
-
-void ie_AdjustItemProperty(Item_t* item, int prop_idx, int adj) {
-    (void)item; (void)prop_idx; (void)adj;
+    // This switch maps the line number from the UI to the actual item property
+    switch (item->type) {
+        case ITEM_TYPE_WEAPON:
+            if (property_index == 4) item->data.weapon.min_damage += adjustment;
+            if (property_index == 5) item->data.weapon.max_damage += adjustment;
+            if (property_index == 6) item->data.weapon.range_tiles += adjustment;
+            break;
+        case ITEM_TYPE_ARMOR:
+            if (property_index == 4) item->data.armor.armor_value += adjustment;
+            if (property_index == 5) item->data.armor.evasion_value += adjustment;
+            break;
+        default:
+            break;
+    }
 }
 
 // ============================================================================
