@@ -45,8 +45,7 @@ static void e_ItemEditorRenderLoop( float dt );
 // Global state for items editor
 Item_t* items_database = NULL;           // Main item collection
 int items_count = 0;                     // Total number of items loaded
-char* items_status_text = NULL;          // Status display text
-
+dString_t* items_status_text = NULL;     // Status display text
 
 /*
  * Save the current items database to persistent storage (currently unimplemented)
@@ -71,22 +70,24 @@ void ie_load( void )
  */
 void e_InitItemEditor( void )
 {
-	aWidget_t* w;
-	app.delegate.logic = e_ItemEditorDoLoop;
-	app.delegate.draw  = e_ItemEditorRenderLoop;
+    aWidget_t* w;
+    app.delegate.logic = e_ItemEditorDoLoop;
+    app.delegate.draw  = e_ItemEditorRenderLoop;
 
-	// Initialize status display
-	items_status_text = malloc( sizeof(char) * 100 );
-	snprintf(items_status_text, 100, "Items: %d loaded", items_count);
+    // CHANGED: Initialize status display using Daedalus functions
+    if (items_status_text == NULL) {
+        items_status_text = d_InitString();
+    }
+    d_FormatString(items_status_text, "Items: %d loaded", items_count);
 
-	// Load items database if not already loaded
-	if (items_database == NULL) {
-		items_database = load_items_database(&items_count);
-		d_LogInfoF("Loaded %d items for editing", items_count);
-	}
+    // Load items database if not already loaded
+    if (items_database == NULL) {
+        items_database = load_items_database(&items_count);
+        d_LogInfoF("Loaded %d items for editing", items_count);
+    }
 
-	a_InitWidgets( "resources/widgets/editor/items.json" );
-	app.active_widget = a_GetWidget( "tab_bar" );
+    a_InitWidgets( "resources/widgets/editor/items.json" );
+    app.active_widget = a_GetWidget( "tab_bar" );
 
 	// DEFENSIVE: Handle missing widgets gracefully for testing
 	if (app.active_widget != NULL) {
@@ -156,11 +157,12 @@ void e_InitItemEditor( void )
 static void e_ItemEditorDoLoop( float dt )
 {
 	a_DoInput();
-	
-	// Update status text
-	if (items_status_text != NULL) {
-		snprintf(items_status_text, 100, "Items Database: %d items loaded", items_count);
-	}
+    
+    // CHANGED: Update the dString instead of using snprintf
+    if (items_status_text != NULL) {
+        d_ClearString(items_status_text);
+        d_FormatString(items_status_text, "Items Database: %d items loaded", items_count);
+    }
 	
 	if ( app.keyboard[ SDL_SCANCODE_ESCAPE ] == 1 ) {
 		app.keyboard[SDL_SCANCODE_ESCAPE] = 0;
@@ -178,38 +180,16 @@ static void e_ItemEditorDoLoop( float dt )
 
 static void e_ItemEditorRenderLoop( float dt )
 {
-	// Draw items database status
-	if (items_status_text != NULL) {
-		a_DrawText( items_status_text, 750, 10, 255, 255, 255, app.font_type,
-		           TEXT_ALIGN_CENTER, 0 );
-	}
+    (void)dt; // dt is not used in this loop yet, silence warning.
 
-	// Draw database statistics
-	if (items_database != NULL) {
-		char stats_text[256];
-		int weapon_count = 0, armor_count = 0, consumable_count = 0;
-		
-		// Count items by type
-		for (int i = 0; i < items_count; i++) {
-			switch (items_database[i].type) {
-				case ITEM_TYPE_WEAPON: weapon_count++; break;
-				case ITEM_TYPE_ARMOR: armor_count++; break;
-				case ITEM_TYPE_CONSUMABLE: consumable_count++; break;
-				default: break;
-			}
-		}
-		
-		snprintf(stats_text, 256, "Weapons: %d | Armor: %d | Consumables: %d",
-		        weapon_count, armor_count, consumable_count);
-		a_DrawText( stats_text, 50, 50, 200, 200, 200, app.font_type,
-		           TEXT_ALIGN_LEFT, 0 );
-	}
+	// Draw database status and statistics
+    ie_DrawDbStatus(items_status_text);
+    ie_DrawDbStats(items_database, items_count);
 
-	// Visual indicators (different colors from world editor)
-	a_DrawFilledRect( 100, 100, 32, 32, 255, 165, 0, 255 );  // Orange for items
-	a_DrawFilledRect( 300, 300, 32, 32, 255, 215, 0, 255 );  // Gold for items
+    a_DrawFilledRect( 100, 100, 32, 32, 255, 165, 0, 255 );  // Orange for items
+    a_DrawFilledRect( 300, 300, 32, 32, 255, 215, 0, 255 );  // Gold for items
 
-	a_DrawWidgets();
+    a_DrawWidgets();
 }
 
 /*
@@ -217,18 +197,19 @@ static void e_ItemEditorRenderLoop( float dt )
  */
 void e_DestroyItemEditor( void )
 {
-	if (items_database != NULL) {
-		ie_FreeItemsDatabase(items_database, items_count);
-		items_database = NULL;
-		items_count = 0;
-	}
-	
-	if (items_status_text != NULL) {
-		free(items_status_text);
-		items_status_text = NULL;
-	}
-	
-	d_LogInfo("Items Editor destroyed and memory cleaned up");
+    if (items_database != NULL) {
+        ie_FreeItemsDatabase(items_database, items_count);
+        items_database = NULL;
+        items_count = 0;
+    }
+    
+    // CHANGED: Use d_DestroyString for proper cleanup
+    if (items_status_text != NULL) {
+        d_DestroyString(items_status_text);
+        items_status_text = NULL;
+    }
+    
+    d_LogInfo("Items Editor destroyed and memory cleaned up");
 }
 
 /*
@@ -386,4 +367,32 @@ void ie_ApplyMaterialToItem(Item_t* item, Material_t* material) {
 
 void ie_AdjustItemProperty(Item_t* item, int prop_idx, int adj) {
     (void)item; (void)prop_idx; (void)adj;
+}
+
+// ============================================================================
+// PUBLIC GETTERS for accessing module state
+// ============================================================================
+
+/**
+ * @brief Provides safe, read-only access to the items database.
+ * @return A pointer to the global item database.
+ */
+Item_t* ie_GetDatabase(void) {
+    return items_database;
+}
+
+/**
+ * @brief Provides safe, read-only access to the item count.
+ * @return The current number of items in the database.
+ */
+int ie_GetItemCount(void) {
+    return items_count;
+}
+
+/**
+ * @brief Provides safe, read-only access to the status text string.
+ * @return A pointer to the dString for the status text.
+ */
+dString_t* ie_GetStatusText(void) {
+    return items_status_text;
 }

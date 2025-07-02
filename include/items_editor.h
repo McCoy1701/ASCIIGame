@@ -364,4 +364,36 @@ Item_t* ie_FindItemByID(Item_t* database, int count, const char* id);
  * @return A pointer to the newly created Item_t, or NULL on failure.
  */
 Item_t* ie_CreateItemWithParameters(ItemType_t type, int mat_id, int rare, int qual, int ench);
+
+/**
+ * @brief Counts items by type and draws the statistics to the screen.
+ * @param database A pointer to the item database.
+ * @param count The number of items in the database.
+ */
+void ie_DrawDbStats(const Item_t* database, int count);
+
+/**
+ * @brief Draws the simple "Items: X loaded" status text.
+ * @param status_text The dString containing the status message.
+ */
+void ie_DrawDbStatus(const dString_t* status_text);
+
+/**
+ * @brief Provides safe, read-only access to the items database.
+ * @return A pointer to the global item database.
+ */
+Item_t* ie_GetDatabase(void);
+
+/**
+ * @brief Provides safe, read-only access to the item count.
+ * @return The current number of items in the database.
+ */
+int ie_GetItemCount(void);
+
+/**
+ * @brief Provides safe, read-only access to the status text string.
+ * @return A pointer to the dString for the status text.
+ */
+dString_t* ie_GetStatusText(void);
+
 #endif

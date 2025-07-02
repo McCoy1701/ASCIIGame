@@ -217,25 +217,6 @@
       },
       {
         "type"    : "WT_SELECT",
-        "name"    : "quality_level", 
-        "x"       : 220,
-        "y"       : 330,
-        "label"   : "Quality",
-        "boxed"   : 1,
-        "hidden"  : 1,
-        "padding" : 1,
-        "fg"      : [   0,   0,   0, 255 ],
-        "bg"      : [ 255, 255, 255, 255 ],
-        "options" : [
-          "Poor",
-          "Average", 
-          "Good",
-          "Excellent",
-          "Masterwork"
-        ]
-      },
-      {
-        "type"    : "WT_SELECT",
         "name"    : "enchantment_level",
         "x"       : 220,
         "y"       : 380,

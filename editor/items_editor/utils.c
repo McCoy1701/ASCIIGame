@@ -369,3 +369,44 @@ Item_t* ie_FindItemByID(Item_t* database, int count, const char* id)
 	d_LogWarningF("Item with ID '%s' not found in database.", id);
     return NULL; // Item not found.
 }
+
+/**
+ * @brief Draws the simple "Items: X loaded" status text.
+ */
+void ie_DrawDbStatus(const dString_t* status_text)
+{
+    if (status_text != NULL) {
+        a_DrawText( d_PeekString(status_text), 750, 10, 255, 255, 255, app.font_type,
+                   TEXT_ALIGN_CENTER, 0 );
+    }
+}
+
+/**
+ * @brief Counts items by type and draws the statistics to the screen.
+ */
+void ie_DrawDbStats(const Item_t* database, int count)
+{
+    if (database != NULL) {
+        dString_t* stats_text = d_InitString();
+        if (stats_text) {
+            int weapon_count = 0, armor_count = 0, consumable_count = 0;
+            
+            for (int i = 0; i < count; i++) {
+                switch (database[i].type) {
+                    case ITEM_TYPE_WEAPON:      weapon_count++; break;
+                    case ITEM_TYPE_ARMOR:       armor_count++; break;
+                    case ITEM_TYPE_CONSUMABLE:  consumable_count++; break;
+                    default: break;
+                }
+            }
+            
+            d_FormatString(stats_text, "Weapons: %d | Armor: %d | Consumables: %d",
+                    weapon_count, armor_count, consumable_count);
+            
+            a_DrawText( d_PeekString(stats_text), 50, 50, 200, 200, 200, app.font_type,
+                       TEXT_ALIGN_LEFT, 0 );
+            
+            d_DestroyString(stats_text);
+        }
+    }
+}
