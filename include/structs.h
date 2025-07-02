@@ -114,6 +114,12 @@ typedef struct // WorldObject_t
 
 } WorldObject_t;
 
+typedef struct
+{
+  int* data;
+  int count;
+} GameTileArray_t;
+
 typedef struct // Lock_t
 {
   dString_t* name;

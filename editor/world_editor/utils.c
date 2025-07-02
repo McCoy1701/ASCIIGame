@@ -101,7 +101,8 @@ void we_DrawWorldCell( int index, World_t* map, WorldPosition_t pos, WorldPositi
 
 }
 
-void we_DrawSelectGrid( World_t* map, WorldPosition_t pos, WorldPosition_t highlight )
+GameTileArray_t* e_GetDrawSelectGrid( World_t* map, WorldPosition_t pos,
+                                   WorldPosition_t highlight )
 {
   int grid_w    = ( highlight.x - pos.x );
   int grid_h    = ( highlight.y - pos.y );
@@ -121,6 +122,19 @@ void we_DrawSelectGrid( World_t* map, WorldPosition_t pos, WorldPosition_t highl
     current_y = highlight.y;
 
   }
+
+  GameTileArray_t* new_game_tile_array = ( GameTileArray_t* )malloc(
+    sizeof( GameTileArray_t ) );
+
+  if ( new_game_tile_array == NULL )
+  {
+    printf( "Failed to allocate memory for new_game_tile_array\n" );
+    return NULL;
+  }
+
+  new_game_tile_array->data = ( int* )malloc( sizeof( int ) *
+                                            ( grid_w + 1 ) * ( grid_h + 1 ) *
+                                              map->z_height );
 
   int x, y, w, h;
 
@@ -150,6 +164,8 @@ void we_DrawSelectGrid( World_t* map, WorldPosition_t pos, WorldPosition_t highl
       break;
   }
   
+  int k = 0;
+
   for ( int i = 0; i < grid_w + 1; i++ )
   {
     for ( int j = 0; j < grid_h + 1; j++ )
@@ -162,6 +178,8 @@ void we_DrawSelectGrid( World_t* map, WorldPosition_t pos, WorldPosition_t highl
 
           current_glyph = map[current_index].tile.glyph;
           current_fg = map[current_index].tile.fg;
+          
+          new_game_tile_array->data[k++] = current_index;
           break;
 
         case REGION_LEVEL:
@@ -173,6 +191,8 @@ void we_DrawSelectGrid( World_t* map, WorldPosition_t pos, WorldPosition_t highl
           
           current_fg = map[pos.world_index].regions[current_index].
             tile.fg;
+          
+          new_game_tile_array->data[k++] = current_index;
 
           break;
 
@@ -185,6 +205,8 @@ void we_DrawSelectGrid( World_t* map, WorldPosition_t pos, WorldPosition_t highl
 
           current_glyph = map[pos.world_index].regions[pos.region_index].
             tiles[current_index].glyph;
+
+          new_game_tile_array->data[k++] = current_index;
 
           current_index -= ( map->local_width * map->local_height * pos.local_z );
 
@@ -206,6 +228,38 @@ void we_DrawSelectGrid( World_t* map, WorldPosition_t pos, WorldPosition_t highl
       
     }
   }
+
+  new_game_tile_array->count = k;
+
+  return new_game_tile_array;
+}
+
+void e_ChangeGameTile( World_t* map, WorldPosition_t pos, GameTileArray_t* tile_array, int glyph_index )
+{
+  int index = 0;
+
+  for ( int i = 0; i < tile_array->count; i++ )
+  {
+    index = tile_array->data[i];
+    switch (pos.level)
+    {
+      case WORLD_LEVEL:
+       map[index].tile.glyph = glyph_index;
+       break;
+
+      case REGION_LEVEL:
+        map[pos.world_index].regions[index].tile.glyph = glyph_index;
+       break;
+
+      case LOCAL_LEVEL:
+        map[pos.world_index].regions[pos.region_index].
+          tiles[index].glyph = glyph_index;
+
+       break;
+    }
+  }
+
+  free( tile_array );
 
 }
 

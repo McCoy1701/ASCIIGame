@@ -47,7 +47,7 @@ static void we_EditLogic( float dt )
     }
 
   }
-
+  
   if ( app.mouse.button == 1 )
   {
     if ( map != NULL )
@@ -85,7 +85,13 @@ static void we_EditLogic( float dt )
       }
     }
   }
-  
+  if ( app.mouse.button == 3 )
+  {
+    app.mouse.button = 0;
+    GameTileArray_t* temp = e_GetDrawSelectGrid( map, selected_pos, highlighted_pos );
+    e_ChangeGameTile( map, selected_pos, temp, glyph_index );
+
+  }
   if ( app.keyboard[SDL_SCANCODE_F] == 1 )
   {
     app.keyboard[SDL_SCANCODE_F] = 0;
@@ -171,7 +177,6 @@ static void we_EditDraw( float dt )
       we_DrawWorldCell( i, map, selected_pos, highlighted_pos );
     }
 
-    we_DrawSelectGrid( map, selected_pos, highlighted_pos );
 
   }
   

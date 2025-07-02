@@ -90,7 +90,9 @@ void we_save( void );
 void we_load( void );
 
 void we_DrawWorldCell( int index, World_t* map, WorldPosition_t pos, WorldPosition_t highlight );
-void we_DrawSelectGrid( World_t* map, WorldPosition_t pos, WorldPosition_t highlight );
+GameTileArray_t* e_GetDrawSelectGrid( World_t* map, WorldPosition_t pos,
+                                   WorldPosition_t highlight );
+void e_ChangeGameTile( World_t* map, WorldPosition_t pos, GameTileArray_t* tile_array, int glyph_index );
 void wec_GenerateWorld( void );
 
 #endif
