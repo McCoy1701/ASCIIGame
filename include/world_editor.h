@@ -89,7 +89,8 @@ void we_save( void );
  */
 void we_load( void );
 
-void we_DrawWorldCell( int index, World_t* map, WorldPosition_t pos );
+void we_DrawWorldCell( int index, World_t* map, WorldPosition_t pos, WorldPosition_t highlight );
+void we_DrawSelectGrid( World_t* map, WorldPosition_t pos, WorldPosition_t highlight );
 void wec_GenerateWorld( void );
 
 #endif

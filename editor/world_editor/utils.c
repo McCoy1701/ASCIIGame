@@ -6,11 +6,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void we_DrawWorldCell( int index, World_t* map, WorldPosition_t pos )
+void we_DrawWorldCell( int index, World_t* map, WorldPosition_t pos, WorldPosition_t highlight )
 {
   int x, y, w, h;
   uint32_t i = 0;
   uint16_t current_index = 0;
+  uint16_t highlight_index = 0;
   int current_glyph = 0;
   int current_bg = 0;
   int current_fg = 0;
@@ -22,10 +23,11 @@ void we_DrawWorldCell( int index, World_t* map, WorldPosition_t pos )
 
       i = index;
 
-      current_index = pos.world_index;
-      current_glyph = map[i].tile.glyph;
-      current_bg    = map[i].tile.bg;
-      current_fg    = map[i].tile.fg;
+      current_index   = pos.world_index;
+      highlight_index = highlight.world_index;
+      current_glyph   = map[i].tile.glyph;
+      current_bg      = map[i].tile.bg;
+      current_fg      = map[i].tile.fg;
       break;
 
     case REGION_LEVEL:
@@ -34,10 +36,11 @@ void we_DrawWorldCell( int index, World_t* map, WorldPosition_t pos )
 
       i = index;
 
-      current_index = pos.region_index;
-      current_glyph = map[pos.world_index].regions[i].tile.glyph;
-      current_bg    = map[pos.world_index].regions[i].tile.bg;
-      current_fg    = map[pos.world_index].regions[i].tile.fg;
+      current_index   = pos.region_index;
+      highlight_index = highlight.region_index;
+      current_glyph   = map[pos.world_index].regions[i].tile.glyph;
+      current_bg      = map[pos.world_index].regions[i].tile.bg;
+      current_fg      = map[pos.world_index].regions[i].tile.fg;
       break;
 
     case LOCAL_LEVEL:
@@ -47,12 +50,13 @@ void we_DrawWorldCell( int index, World_t* map, WorldPosition_t pos )
       i = ( ( pos.local_z * ( map->local_width * map->local_height ) 
         + index ) );
 
-      current_index = pos.local_index;
-      current_glyph = map[pos.world_index].regions[pos.region_index].
+      current_index   = pos.local_index;
+      highlight_index = highlight.local_index;
+      current_glyph   = map[pos.world_index].regions[pos.region_index].
         tiles[i].glyph;
-      current_bg    = map[pos.world_index].regions[pos.region_index].tiles[i]
+      current_bg      = map[pos.world_index].regions[pos.region_index].tiles[i]
         .bg;
-      current_fg    = map[pos.world_index].regions[pos.region_index].tiles[i]
+      current_fg      = map[pos.world_index].regions[pos.region_index].tiles[i]
         .fg;
 
       break;
@@ -82,6 +86,126 @@ void we_DrawWorldCell( int index, World_t* map, WorldPosition_t pos )
     a_BlitTextureRect( game_glyphs->texture, game_glyphs->rects[current_glyph],
                       x, y, 2, master_colors[APOLLO_PALETE][current_fg] );
 
+  }
+  
+  if( i == highlight_index )
+  {
+    a_DrawFilledRect( x, y, game_glyphs->rects[current_glyph].w * 2,
+                     game_glyphs->rects[current_glyph].h * 2, 
+                     255, 0, 255, 255 );
+
+    a_BlitTextureRect( game_glyphs->texture, game_glyphs->rects[current_glyph],
+                      x, y, 2, master_colors[APOLLO_PALETE][current_fg] );
+
+  }
+
+}
+
+void we_DrawSelectGrid( World_t* map, WorldPosition_t pos, WorldPosition_t highlight )
+{
+  int grid_w    = ( highlight.x - pos.x );
+  int grid_h    = ( highlight.y - pos.y );
+  int current_x = pos.x, current_y  = pos.y;
+  int current_z = pos.local_z;
+
+  if ( grid_w < 0 )
+  {
+    grid_w = ( pos.x - highlight.x );
+    current_x = highlight.x;
+    current_z = highlight.local_z;
+
+  }
+
+  if ( grid_h < 0 )
+  {
+    grid_h = ( pos.y - highlight.y );
+    current_y = highlight.y;
+
+  }
+
+  int x, y, w, h;
+
+  int current_index = 0;
+  int current_glyph = 0;
+  int current_width = 0, current_height = 0;
+  int current_fg    = 0;
+
+  switch ( pos.level )
+  {
+    case WORLD_LEVEL:
+      current_width  = map->world_width;
+      current_height = map->world_height;
+      break;
+    
+    case REGION_LEVEL:
+      current_width  = map->region_width;
+      current_height = map->region_height;
+      break;
+    
+    case LOCAL_LEVEL:
+      current_width  = map->local_width;
+      current_height = map->local_height;
+      break;
+
+    default:
+      break;
+  }
+  
+  for ( int i = 0; i < grid_w + 1; i++ )
+  {
+    for ( int j = 0; j < grid_h + 1; j++ )
+    {
+      switch ( pos.level )
+      {
+        case WORLD_LEVEL:
+          current_index = INDEX_2( ( current_x + i ), ( current_y + j ),
+                                  current_height );
+
+          current_glyph = map[current_index].tile.glyph;
+          current_fg = map[current_index].tile.fg;
+          break;
+
+        case REGION_LEVEL:
+          current_index = INDEX_2( ( current_x + i ), ( current_y + j ),
+                                  current_height );
+
+          current_glyph = map[pos.world_index].regions[current_index].
+            tile.glyph;
+          
+          current_fg = map[pos.world_index].regions[current_index].
+            tile.fg;
+
+          break;
+
+        case LOCAL_LEVEL:
+          current_index = INDEX_3( ( current_y + j ), ( current_x + i ),
+                                     current_z, current_width, current_height );
+          
+          current_fg = map[pos.world_index].regions[pos.region_index].
+            tiles[current_index].fg;
+
+          current_glyph = map[pos.world_index].regions[pos.region_index].
+            tiles[current_index].glyph;
+
+          current_index -= ( map->local_width * map->local_height * pos.local_z );
+
+          break;
+
+        default:
+          break;
+      }
+
+      e_GetCellSize( current_index, current_width, current_height,
+                     &x, &y, &w, &h );
+
+      a_DrawFilledRect( x, y, game_glyphs->rects[current_glyph].w * 2,
+                       game_glyphs->rects[current_glyph].h * 2, 
+                       255, 0, 255, 255 );
+
+      a_BlitTextureRect( game_glyphs->texture, game_glyphs->rects[current_glyph],
+                        x, y, 2, master_colors[APOLLO_PALETE][current_fg] );
+      
+    }
   }
 
 }
@@ -140,7 +264,7 @@ void e_MapMouseCheck( WorldPosition_t* pos )
                        SCREEN_ORIGIN_X, SCREEN_ORIGIN_Y, CELL_WIDTH,
                        CELL_HEIGHT, &pos->x, &pos->y, 1 );
 
-      pos->world_index = INDEX_2( pos->y, pos->x, map->world_height );
+      pos->world_index = INDEX_2( pos->x, pos->y, map->world_height );
       break;
 
     case REGION_LEVEL:
@@ -148,7 +272,7 @@ void e_MapMouseCheck( WorldPosition_t* pos )
                        SCREEN_ORIGIN_X, SCREEN_ORIGIN_Y, CELL_WIDTH,
                        CELL_HEIGHT, &pos->x, &pos->y, 1 );
 
-      pos->region_index = INDEX_2( pos->y, pos->x,
+      pos->region_index = INDEX_2( pos->x, pos->y,
                                          map->region_height );
       break;
 
@@ -173,7 +297,7 @@ void e_GlyphMouseCheck( int* index, uint8_t* grid_x, uint8_t* grid_y )
   e_GetCellAtMouse( 28, 11, 900, 245, GLYPH_WIDTH, GLYPH_HEIGHT,
                     grid_x, grid_y, 0 );
 
-  *index = INDEX_2( *grid_x, *grid_y, 28 );
+  *index = INDEX_2( *grid_y, *grid_x, 28 );
 
 }
 
@@ -183,7 +307,7 @@ void e_ColorMouseCheck( int* index, uint8_t* grid_x, uint8_t* grid_y )
   e_GetCellAtMouse( 7, 9, 927, 100, GLYPH_WIDTH, GLYPH_HEIGHT,
                     grid_x, grid_y, 0 );
 
-  *index = INDEX_2( *grid_x, *grid_y, 6 );
+  *index = INDEX_2( *grid_y, *grid_x, 6 );
 
 }
 

@@ -9,12 +9,12 @@
 static void we_EditLogic( float dt );
 static void we_EditDraw( float dt );
 
-WorldPosition_t selected_pos;
+static WorldPosition_t selected_pos;
+static WorldPosition_t highlighted_pos;
 int glyph_index = 0;
 int color_index = 0;
 uint8_t selected_glyph_x = 0, selected_glyph_y = 0;
 uint8_t selected_color_x = 0, selected_color_y = 0;
-uint8_t highlighted_glyph_x = 0, highlighted_glyph_y = 0;
 
 void we_edit( void )
 {
@@ -37,12 +37,24 @@ void we_edit( void )
 static void we_EditLogic( float dt )
 {
   a_DoInput();
+  
+  if ( map != NULL )
+  {
+    if ( map != NULL )
+    {
+      e_MapMouseCheck( &highlighted_pos );
+
+    }
+
+  }
 
   if ( app.mouse.button == 1 )
   {
     if ( map != NULL )
     {
       e_MapMouseCheck( &selected_pos );
+      highlighted_pos.local_z = selected_pos.local_z;
+      highlighted_pos.level   = selected_pos.level;
 
     }
 
@@ -156,8 +168,10 @@ static void we_EditDraw( float dt )
 
     for ( uint16_t i = 0; i < draw_size; i++ )
     {
-      we_DrawWorldCell( i, map, selected_pos );
+      we_DrawWorldCell( i, map, selected_pos, highlighted_pos );
     }
+
+    we_DrawSelectGrid( map, selected_pos, highlighted_pos );
 
   }
   
