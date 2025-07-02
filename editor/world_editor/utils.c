@@ -112,7 +112,6 @@ void we_DrawSelectGrid( World_t* map, WorldPosition_t pos, WorldPosition_t highl
   {
     grid_w = ( pos.x - highlight.x );
     current_x = highlight.x;
-    current_z = highlight.local_z;
 
   }
 
