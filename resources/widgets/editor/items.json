@@ -77,7 +77,7 @@
   },
   {
     "type"       : "WT_CONTAINER",
-    "name"       : "world_menu_bar",
+    "name"       : "items_menu_bar",
     "x"          : 10,
     "y"          : 670,
     "label"      : "Menu",
@@ -111,7 +111,7 @@
         "hidden"  : 0,
         "padding": 1,
         "fg"      : [   0,   0,   0, 255 ],
-        "bg"      : [ 255, 255, 255, 255 ]
+        "bg"      : [ 255, 165,   0, 255 ]
       },
       {
         "type"    : "WT_BUTTON",
@@ -135,9 +135,293 @@
         "hidden"  : 0,
         "padding": 1,
         "fg"      : [   0,   0,   0, 255 ],
+        "bg"      : [ 255, 215,   0, 255 ]
+      }
+    ]
+  },
+  {
+    "type"       : "WT_CONTAINER",
+    "name"       : "item_generation_menu",
+    "x"          : 200,
+    "y"          : 150,
+    "label"      : "Item Creation",
+    "boxed"      : 1,
+    "hidden"     : 1,
+    "padding"    : 6,
+    "flex"       : 2,
+    "spacing"    : 10,
+    "fg"         : [ 255, 255,   0, 255 ],
+    "bg"         : [  50,  50,  50, 200 ],
+    "components" : [
+      {
+        "type"    : "WT_SELECT",
+        "name"    : "item_type",
+        "x"       : 220,
+        "y"       : 180,
+        "label"   : "Item Type",
+        "boxed"   : 1,
+        "hidden"  : 1,
+        "padding" : 1,
+        "fg"      : [   0,   0,   0, 255 ],
+        "bg"      : [ 255, 255, 255, 255 ],
+        "options" : [
+          "Weapon",
+          "Armor", 
+          "Key",
+          "Consumable",
+          "Ammunition"
+        ]
+      },
+      {
+        "type"    : "WT_SELECT",
+        "name"    : "material_type",
+        "x"       : 220,
+        "y"       : 230,
+        "label"   : "Material",
+        "boxed"   : 1,
+        "hidden"  : 1,
+        "padding" : 1,
+        "fg"      : [   0,   0,   0, 255 ],
+        "bg"      : [ 255, 255, 255, 255 ],
+        "options" : [
+          "Iron",
+          "Steel",
+          "Silver", 
+          "Gold",
+          "Mithril",
+          "Adamantine",
+          "Leather",
+          "Wood",
+          "Stone",
+          "Crystal"
+        ]
+      },
+      {
+        "type"    : "WT_SELECT",
+        "name"    : "rarity_level",
+        "x"       : 220,
+        "y"       : 280,
+        "label"   : "Rarity",
+        "boxed"   : 1,
+        "hidden"  : 1,
+        "padding" : 1,
+        "fg"      : [   0,   0,   0, 255 ],
+        "bg"      : [ 255, 255, 255, 255 ],
+        "options" : [
+          "Common",
+          "Uncommon",
+          "Rare",
+          "Epic", 
+          "Legendary"
+        ]
+      },
+      {
+        "type"    : "WT_SELECT",
+        "name"    : "quality_level", 
+        "x"       : 220,
+        "y"       : 330,
+        "label"   : "Quality",
+        "boxed"   : 1,
+        "hidden"  : 1,
+        "padding" : 1,
+        "fg"      : [   0,   0,   0, 255 ],
+        "bg"      : [ 255, 255, 255, 255 ],
+        "options" : [
+          "Poor",
+          "Average", 
+          "Good",
+          "Excellent",
+          "Masterwork"
+        ]
+      },
+      {
+        "type"    : "WT_SELECT",
+        "name"    : "enchantment_level",
+        "x"       : 220,
+        "y"       : 380,
+        "label"   : "Enchantment",
+        "boxed"   : 1,
+        "hidden"  : 1,
+        "padding" : 1,
+        "fg"      : [   0,   0,   0, 255 ],
+        "bg"      : [ 255, 255, 255, 255 ],
+        "options" : [
+          "None",
+          "Minor",
+          "Major",
+          "Epic"
+        ]
+      },
+      {
+        "type"    : "WT_BUTTON",
+        "name"    : "generate_item",
+        "x"       : 220,
+        "y"       : 430,
+        "label"   : "Generate Item",
+        "boxed"   : 1,
+        "hidden"  : 1,
+        "padding" : 1,
+        "fg"      : [   0,   0,   0, 255 ],
+        "bg"      : [ 117, 167,  67, 255 ]
+      },
+      {
+        "type"    : "WT_BUTTON",
+        "name"    : "random_item",
+        "x"       : 350,
+        "y"       : 430,
+        "label"   : "Random",
+        "boxed"   : 1,
+        "hidden"  : 1,
+        "padding" : 1,
+        "fg"      : [   0,   0,   0, 255 ],
+        "bg"      : [ 255, 165,   0, 255 ]
+      },
+      {
+        "type"    : "WT_BUTTON",
+        "name"    : "template_load",
+        "x"       : 450,
+        "y"       : 430,
+        "label"   : "Template",
+        "boxed"   : 1,
+        "hidden"  : 1,
+        "padding" : 1,
+        "fg"      : [   0,   0,   0, 255 ],
+        "bg"      : [ 255, 215,   0, 255 ]
+      }
+    ]
+  },
+  {
+    "type"       : "WT_CONTAINER",
+    "name"       : "items_edit_menu",
+    "x"          : 450,
+    "y"          : 570,
+    "label"      : "Item Editor",
+    "boxed"      : 1,
+    "hidden"     : 1,
+    "padding"    : 6,
+    "flex"       : 2,
+    "spacing"    : 10,
+    "fg"         : [ 255, 255,   0, 255 ],
+    "bg"         : [  40,  40,  40, 200 ],
+    "components" : [
+      {
+        "type"    : "WT_BUTTON",
+        "name"    : "save_items",
+        "x"       : 470,
+        "y"       : 600,
+        "label"   : "Save Items",
+        "boxed"   : 1,
+        "hidden"  : 1,
+        "padding" : 1,
+        "fg"      : [   0,   0,   0, 255 ],
+        "bg"      : [ 117, 167,  67, 255 ]
+      },
+      {
+        "type"    : "WT_BUTTON",
+        "name"    : "create_item",
+        "x"       : 580,
+        "y"       : 600,
+        "label"   : "New Item",
+        "boxed"   : 1,
+        "hidden"  : 1,
+        "padding" : 1,
+        "fg"      : [   0,   0,   0, 255 ],
+        "bg"      : [ 255, 165,   0, 255 ]
+      },
+      {
+        "type"    : "WT_BUTTON",
+        "name"    : "duplicate_item",
+        "x"       : 690,
+        "y"       : 600,
+        "label"   : "Duplicate",
+        "boxed"   : 1,
+        "hidden"  : 1,
+        "padding" : 1,
+        "fg"      : [   0,   0,   0, 255 ],
+        "bg"      : [ 255, 215,   0, 255 ]
+      }
+    ]
+  },
+  {
+    "type"       : "WT_CONTAINER",
+    "name"       : "items_save_menu",
+    "x"          : 640,
+    "y"          : 480,
+    "label"      : "Save Items",
+    "boxed"      : 1,
+    "hidden"     : 1,
+    "padding"    : 6,
+    "flex"       : 2,
+    "spacing"    : 10,
+    "fg"         : [ 255, 255,   0, 255 ],
+    "bg"         : [  50,  50,  50, 200 ],
+    "components" : [
+      {
+        "type"    : "WT_INPUT",
+        "name"    : "items_file_name",
+        "x"       : 660,
+        "y"       : 510,
+        "label"   : "Database Name",
+        "max_length" : 32,
+        "boxed"   : 1,
+        "hidden"  : 1,
+        "padding" : 1,
+        "fg"      : [   0,   0,   0, 255 ],
         "bg"      : [ 255, 255, 255, 255 ]
+      },
+      {
+        "type"    : "WT_BUTTON",
+        "name"    : "items_save_button",
+        "x"       : 660,
+        "y"       : 560,
+        "label"   : "Save Database",
+        "boxed"   : 1,
+        "hidden"  : 1,
+        "padding" : 1,
+        "fg"      : [   0,   0,   0, 255 ],
+        "bg"      : [ 117, 167,  67, 255 ]
+      }
+    ]
+  },
+  {
+    "type"       : "WT_CONTAINER",
+    "name"       : "items_load_menu",
+    "x"          : 640,
+    "y"          : 480,
+    "label"      : "Load Items",
+    "boxed"      : 1,
+    "hidden"     : 1,
+    "padding"    : 6,
+    "flex"       : 2,
+    "spacing"    : 10,
+    "fg"         : [ 255, 255,   0, 255 ],
+    "bg"         : [  50,  50,  50, 200 ],
+    "components" : [
+      {
+        "type"    : "WT_INPUT",
+        "name"    : "items_load_file_name",
+        "x"       : 660,
+        "y"       : 510,
+        "label"   : "Database Name",
+        "max_length" : 32,
+        "boxed"   : 1,
+        "hidden"  : 1,
+        "padding" : 1,
+        "fg"      : [   0,   0,   0, 255 ],
+        "bg"      : [ 255, 255, 255, 255 ]
+      },
+      {
+        "type"    : "WT_BUTTON",
+        "name"    : "items_load_button",
+        "x"       : 660,
+        "y"       : 560,
+        "label"   : "Load Database",
+        "boxed"   : 1,
+        "hidden"  : 1,
+        "padding" : 1,
+        "fg"      : [   0,   0,   0, 255 ],
+        "bg"      : [ 255, 215,   0, 255 ]
       }
     ]
   }
 ]
-

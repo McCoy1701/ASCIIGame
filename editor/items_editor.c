@@ -15,7 +15,8 @@
 #include "color_editor.h"
 #include "ui_editor.h"
 #include "items.h"
-
+// Chaos Flag for testing failure cases
+static bool g_force_load_failure = false;
 /*
  * Execute one frame of items editor logic processing and input handling
  *
@@ -46,25 +47,6 @@ Item_t* items_database = NULL;           // Main item collection
 int items_count = 0;                     // Total number of items loaded
 char* items_status_text = NULL;          // Status display text
 
-/*
- * Enter item creation mode (placeholder implementation)
- */
-void ie_creation(void)
-{
-	d_LogInfo("Item creation mode requested - not yet fully implemented");
-	// TODO: Implement full item creation mode
-	// This will eventually call the ie_creation() function from items_editor/creation.c
-}
-
-/*
- * Enter item editing mode (placeholder implementation)
- */
-void ie_edit(void)
-{
-	d_LogInfo("Item editing mode requested - not yet fully implemented");
-	// TODO: Implement full item editing mode
-	// This will eventually call the ie_edit() function from items_editor/edit.c
-}
 
 /*
  * Save the current items database to persistent storage (currently unimplemented)
@@ -106,53 +88,66 @@ void e_InitItemEditor( void )
 	a_InitWidgets( "resources/widgets/editor/items.json" );
 	app.active_widget = a_GetWidget( "tab_bar" );
 
-	// Set up main tab navigation
-	aContainerWidget_t* tab_container = ( aContainerWidget_t* )app.active_widget->data;
-	for ( int i = 0; i < tab_container->num_components; i++ ) {
-		aWidget_t* current = &tab_container->components[i];
+	// DEFENSIVE: Handle missing widgets gracefully for testing
+	if (app.active_widget != NULL) {
+		// Set up main tab navigation
+		aContainerWidget_t* tab_container = ( aContainerWidget_t* )app.active_widget->data;
+		if (tab_container != NULL) {
+			for ( int i = 0; i < tab_container->num_components; i++ ) {
+				aWidget_t* current = &tab_container->components[i];
 
-		if ( strcmp( current->name, "world" ) == 0 ) {
-			current->action = e_InitWorldEditor;
+				if ( strcmp( current->name, "world" ) == 0 ) {
+					current->action = e_InitWorldEditor;
+				}
+				
+				if ( strcmp( current->name, "item" ) == 0 ) {
+					current->action = e_InitItemEditor;
+				}
+				
+				if ( strcmp( current->name, "entity" ) == 0 ) {
+					current->action = e_InitEntityEditor;
+				}
+				
+				if ( strcmp( current->name, "colors" ) == 0 ) {
+					current->action = e_InitColorEditor;
+				}
+				
+				if ( strcmp( current->name, "ui" ) == 0 ) {
+					current->action = e_InitUIEditor;
+				}
+			}
+		} else {
+			d_LogWarning("Tab container is NULL - widget system not fully initialized");
 		}
-		
-		if ( strcmp( current->name, "item" ) == 0 ) {
-			current->action = e_InitItemEditor;
-		}
-		
-		if ( strcmp( current->name, "entity" ) == 0 ) {
-			current->action = e_InitEntityEditor;
-		}
-		
-		if ( strcmp( current->name, "colors" ) == 0 ) {
-			current->action = e_InitColorEditor;
-		}
-		
-		if ( strcmp( current->name, "ui" ) == 0 ) {
-			current->action = e_InitUIEditor;
-		}
+	} else {
+		d_LogWarning("Tab bar widget not found - running in minimal mode");
 	}
 
 	// Set up items menu bar (like world_menu_bar in world editor)
 	w = a_GetWidget( "items_menu_bar" );
-	aContainerWidget_t* items_menu_container = ( aContainerWidget_t* )w->data;
-	for ( int i = 0; i < items_menu_container->num_components; i++ ) {
-		aWidget_t* current = &items_menu_container->components[i];
+	if (w != NULL && w->data != NULL) {
+		aContainerWidget_t* items_menu_container = ( aContainerWidget_t* )w->data;
+		for ( int i = 0; i < items_menu_container->num_components; i++ ) {
+			aWidget_t* current = &items_menu_container->components[i];
 
-		if ( strcmp( current->name, "creation" ) == 0 ) {
-			current->action = ie_creation;
-		}
+			if ( strcmp( current->name, "creation" ) == 0 ) {
+				current->action = ie_creation;
+			}
 
-		if ( strcmp( current->name, "edit" ) == 0 ) {
-			current->action = ie_edit;
-		}
+			if ( strcmp( current->name, "edit" ) == 0 ) {
+				current->action = ie_edit;
+			}
 
-		if ( strcmp( current->name, "save" ) == 0 ) {
-			current->action = ie_save;
-		}
+			if ( strcmp( current->name, "save" ) == 0 ) {
+				current->action = ie_save;
+			}
 
-		if ( strcmp( current->name, "load" ) == 0 ) {
-			current->action = ie_load;
+			if ( strcmp( current->name, "load" ) == 0 ) {
+				current->action = ie_load;
+			}
 		}
+	} else {
+		d_LogWarning("Items menu bar widget not found - menu callbacks not configured");
 	}
 
 	d_LogInfo("Items Editor initialized with menu system and database");
@@ -240,7 +235,12 @@ void e_DestroyItemEditor( void )
  * Load items database from storage or create empty database for editing
  */
 Item_t* load_items_database(int* items_count)
-{
+{	
+	if (g_force_load_failure) {
+        d_LogDebug("Chaos flag active: Forcing database load failure for test.");
+        *items_count = 0;
+        return NULL;
+    }
 	d_LogInfo("Loading items database...");
 	
 	// Allocate memory for items database
@@ -260,6 +260,10 @@ Item_t* load_items_database(int* items_count)
 	d_SetString(database[0].name, "Iron Sword", 0);
 	database[0].description = d_InitString();
 	d_SetString(database[0].description, "A basic iron sword", 0);
+	database[0].id = d_InitString();
+	d_SetString(database[0].id, "iron_sword", 0);
+	database[0].rarity = d_InitString();
+	d_SetString(database[0].rarity, "common", 0);
 	database[0].glyph = 47; // Assuming '/' character for sword
 	database[0].weight_kg = 2.5f;
 	database[0].value_coins = 50;
@@ -274,6 +278,10 @@ Item_t* load_items_database(int* items_count)
 	d_SetString(database[1].name, "Leather Armor", 0);
 	database[1].description = d_InitString();
 	d_SetString(database[1].description, "Basic leather protection", 0);
+	database[1].id = d_InitString();
+	d_SetString(database[1].id, "leather_armor", 0);
+	database[1].rarity = d_InitString();
+	d_SetString(database[1].rarity, "common", 0);
 	database[1].glyph = 91; // Assuming '[' character for armor
 	database[1].weight_kg = 5.0f;
 	database[1].value_coins = 75;
@@ -287,6 +295,10 @@ Item_t* load_items_database(int* items_count)
 	d_SetString(database[2].name, "Health Potion", 0);
 	database[2].description = d_InitString();
 	d_SetString(database[2].description, "Restores health when consumed", 0);
+	database[2].id = d_InitString();
+	d_SetString(database[2].id, "health_potion", 0);
+	database[2].rarity = d_InitString();
+	d_SetString(database[2].rarity, "common", 0);
 	database[2].glyph = 33; // Assuming '!' character for potion
 	database[2].weight_kg = 0.2f;
 	database[2].value_coins = 25;
@@ -298,35 +310,80 @@ Item_t* load_items_database(int* items_count)
 }
 
 /*
- * Free items database and all associated memory
+ * Free items database and all associated memory defensively
  */
 void ie_FreeItemsDatabase(Item_t* database, int count)
 {
+	// First, check if the database pointer itself is NULL.
 	if (database == NULL) {
-		d_LogWarning("Attempted to free NULL items database");
+		d_LogWarning("Attempted to free a NULL items database pointer.");
 		return;
 	}
 	
-	d_LogInfoF("Freeing items database with %d items", count);
+	d_LogInfoF("Freeing items database with %d items...", count);
 	
-	// Free individual item data
+	// Loop through each item in the database.
 	for (int i = 0; i < count; i++) {
+		// Log which item index we are processing. This is always safe.
+
+		// Defensively check and free the 'name' string.
 		if (database[i].name != NULL) {
 			d_DestroyString(database[i].name);
+		} else {
+			d_LogWarningF("  - Item %d has a NULL name pointer. Cannot free.", i);
 		}
+		
+		// Defensively check and free the 'description' string.
 		if (database[i].description != NULL) {
 			d_DestroyString(database[i].description);
+		} else {
+			d_LogWarningF("  - Item %d has a NULL description pointer. Cannot free.", i);
 		}
+		
+		// Defensively check and free the 'id' string.
 		if (database[i].id != NULL) {
 			d_DestroyString(database[i].id);
+		} else {
+			d_LogWarningF("  - Item %d has a NULL id pointer. Cannot free.", i);
 		}
+		
+		// Defensively check and free the 'rarity' string.
 		if (database[i].rarity != NULL) {
 			d_DestroyString(database[i].rarity);
+		} else {
+			d_LogWarningF("  - Item %d has a NULL rarity pointer. Cannot free.", i);
 		}
 	}
 	
-	// Free the main database array
+	// Finally, free the main database array itself.
 	free(database);
-	d_LogInfo("Items database memory freed successfully");
+	d_LogInfo("Items database memory freed successfully.");
 }
 
+void ie_AddItemToDatabase(Item_t* item) {
+    d_LogInfo("STUB: ie_AddItemToDatabase called");
+    // This will eventually add the item to the main items_database.
+    // We destroy the item here for now to prevent memory leaks during testing.
+    if (item) {
+        destroy_item(item);
+    }
+}
+
+void ie_DrawItemCreationPreview(int t, int m, int r, int q, int e) {
+    (void)t;(void)m;(void)r;(void)q;(void)e; // Silence warnings
+}
+
+// Stubs for edit mode functions
+Material_t* load_materials_database(int* count) {
+    d_LogInfo("STUB: load_materials_database called");
+    if (count) *count = 0;
+    return NULL;
+}
+
+void ie_ApplyMaterialToItem(Item_t* item, Material_t* material) {
+    (void)item; (void)material;
+}
+
+void ie_AdjustItemProperty(Item_t* item, int prop_idx, int adj) {
+    (void)item; (void)prop_idx; (void)adj;
+}

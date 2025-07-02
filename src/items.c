@@ -1,3 +1,5 @@
+// src/items.c - 
+
 #define LOG( msg ) printf( "%s | File: %s, Line: %d\n", msg, __FILE__, __LINE__ )
 #include "Daedalus.h"
 #include "items.h"
@@ -367,8 +369,8 @@ Item_t* create_key(const char* name, const char* id, Lock_t lock, char glyph)
 
     // Keys don't have materials, so create default neutral material
     item->material_data.properties = create_default_material_properties();
-    d_LogDebug("Creating default material properties with neutral factors");
-    d_LogDebug("Default material properties initialized");
+    d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_DEBUG,
+                      5, 3.0, "Creating default material properties with neutral factors");
     
     item->material_data.name = d_InitString();
     if (item->material_data.name == NULL) {
@@ -1168,8 +1170,9 @@ Material_t create_material(const char* name, MaterialProperties_t properties)
     // Set the properties
     material.properties = properties;
     
-    d_LogInfoF("Material '%s' created successfully [weight:%.2f, value:%.2f, durability:%.2f]", 
-               name, properties.weight_fact, properties.value_coins_fact, properties.durability_fact);
+    d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_INFO,
+                      5, 3.0, "Material '%s' created successfully [weight:%.2f, value:%.2f, durability:%.2f]", 
+                      name, properties.weight_fact, properties.value_coins_fact, properties.durability_fact);
 
     return material;
 }
@@ -1178,8 +1181,9 @@ Material_t create_material(const char* name, MaterialProperties_t properties)
  * Initializes neutral material properties for standard items
  */
 MaterialProperties_t create_default_material_properties(void)
-{
-    d_LogDebug("Creating default material properties with neutral factors");
+{   
+    d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_DEBUG,
+                      5, 3.0, "Creating default material properties with neutral factors");
     
     MaterialProperties_t props = {
         .weight_fact = 1.0f,
@@ -1192,8 +1196,8 @@ MaterialProperties_t create_default_material_properties(void)
         .stealth_value_fact = 1.0f,
         .enchant_value_fact = 1.0f
     };
-    
-    d_LogDebug("Default material properties initialized");
+    d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_DEBUG,
+                      5, 3.0, "Default material properties initialized");
     return props;
 }
 

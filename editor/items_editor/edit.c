@@ -62,50 +62,60 @@ static int property_adjustment = 0;                   // Current property value 
  */
 void ie_edit( void )
 {
-	app.delegate.logic = ie_EditLogic;
-	app.delegate.draw = ie_EditDraw;
+    app.delegate.logic = ie_EditLogic;
+    app.delegate.draw = ie_EditDraw;
 
-	app.active_widget = a_GetWidget( "items_edit_menu" );
-	aContainerWidget_t* container = a_GetContainerFromWidget( "items_edit_menu" );
-	app.active_widget->hidden = 0;
+    app.active_widget = a_GetWidget( "items_edit_menu" );
+    aContainerWidget_t* container = a_GetContainerFromWidget( "items_edit_menu" );
 
-	// Initialize editing state
-	selected_item_index = -1;
-	selected_property_index = 0;
-	selected_material_index = 0;
-	editing_properties = false;
-	property_adjustment = 0;
+    // FIX: Add a defensive check for the widget before using it.
+    if (app.active_widget != NULL) {
+        app.active_widget->hidden = 0;
+    } else {
+        d_LogWarning("Edit mode entered but 'items_edit_menu' widget not found!");
+    }
 
-	// Load items and materials databases
-	if (items_database == NULL) {
-		items_database = load_items_database(&items_count);
-		d_LogInfoF("Loaded %d items for editing", items_count);
-	}
-	
-	if (materials_database == NULL) {
-		materials_database = load_materials_database(&materials_count);
-		d_LogInfoF("Loaded %d materials for editing", materials_count);
-	}
+    // Initialize editing state
+    selected_item_index = -1;
+    selected_property_index = 0;
+    selected_material_index = 0;
+    editing_properties = false;
+    property_adjustment = 0;
 
-	// Configure UI components
-	for ( int i = 0; i < container->num_components; i++ ) {
-		aWidget_t* current = &container->components[i];
-		current->hidden = 0;
+    // Load items and materials databases
+    if (items_database == NULL) {
+        items_database = load_items_database(&items_count);
+        d_LogInfoF("Loaded %d items for editing", items_count);
+    }
+    
+    if (materials_database == NULL) {
+        materials_database = load_materials_database(&materials_count);
+        d_LogInfoF("Loaded %d materials for editing", materials_count);
+    }
 
-		if ( strcmp( current->name, "save_items" ) == 0 ) {
-			//current->action = ie_SaveItemsDatabase;
-		}
-		
-		if ( strcmp( current->name, "create_item" ) == 0 ) {
-			//current->action = ie_CreateNewItem;
-		}
-		
-		if ( strcmp( current->name, "duplicate_item" ) == 0 ) {
-			//current->action = ie_DuplicateSelectedItem;
-		}
-	}
+    if (container != NULL) {
+        // Configure UI components
+        for ( int i = 0; i < container->num_components; i++ ) {
+            aWidget_t* current = &container->components[i];
+            current->hidden = 0;
 
-	d_LogInfo("Item editing mode initialized successfully");
+            if ( strcmp( current->name, "save_items" ) == 0 ) {
+                //current->action = ie_SaveItemsDatabase;
+            }
+            
+            if ( strcmp( current->name, "create_item" ) == 0 ) {
+                //current->action = ie_CreateNewItem;
+            }
+            
+            if ( strcmp( current->name, "duplicate_item" ) == 0 ) {
+                //current->action = ie_DuplicateSelectedItem;
+            }
+        }
+    } else {
+        d_LogWarning("Edit mode running without 'items_edit_menu' container; actions not set.");
+    }
+
+    d_LogInfo("Item editing mode initialized successfully");
 }
 
 static void ie_EditLogic( float dt )
@@ -183,7 +193,7 @@ static void ie_EditLogic( float dt )
 	// Handle escape to return to main items editor
 	if ( app.keyboard[ SDL_SCANCODE_ESCAPE ] == 1 ) {
 		app.keyboard[SDL_SCANCODE_ESCAPE] = 0;
-		e_InitItemsEditor();
+		e_InitItemEditor();
 	}
 
 	a_DoWidget();

@@ -274,23 +274,98 @@ void ie_GetCellAtMouse(int width, int height, int origin_x, int origin_y,
 /*
  * Filter and sort items based on type and properties 
  */
-int ie_FilterItemsByType(Item_t** items, int item_count, ItemType_t filter_type, Item_t** filtered_items)
+int ie_FilterItemsByType(Item_t* items, int item_count, ItemType_t filter_type, Item_t** filtered_items)
 {
-	int filtered_count = 0;
-	
-	for (int i = 0; i < item_count; i++) {
-		if (filter_type == ITEM_TYPE_WEAPON && is_weapon(items[i])) {
-			filtered_items[filtered_count++] = items[i];
-		} else if (filter_type == ITEM_TYPE_ARMOR && is_armor(items[i])) {
-			filtered_items[filtered_count++] = items[i];
-		} else if (filter_type == ITEM_TYPE_CONSUMABLE && is_consumable(items[i])) {
-			filtered_items[filtered_count++] = items[i];
-		} else if (filter_type == ITEM_TYPE_KEY && is_key(items[i])) {
-			filtered_items[filtered_count++] = items[i];
-		} else if (filter_type == ITEM_TYPE_AMMUNITION && is_ammunition(items[i])) {
-			filtered_items[filtered_count++] = items[i];
-		}
-	}
-	
-	return filtered_count;
+    int filtered_count = 0;
+    
+    // Check for valid inputs to prevent crashes
+    if (!items || !filtered_items) {
+        return 0;
+    }
+    
+    for (int i = 0; i < item_count; i++) {
+        // Directly check the type of the item in the array
+        if (items[i].type == filter_type) {
+            // Store a pointer TO that item in the filtered list
+            filtered_items[filtered_count++] = &items[i];
+        }
+    }
+    
+    return filtered_count;
+}
+
+/**
+ * @brief Validates the core data of a single item.
+ */
+bool ie_ValidateItem(const Item_t* item)
+{
+    // A NULL item pointer is inherently invalid.
+    if (item == NULL) {
+		d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_ERROR,
+		                  1, 1.0, "Validation failed: item pointer is NULL.");
+        return false;
+    }
+
+    // Essential string fields must not be NULL.
+    if (item->name == NULL || item->name->str == NULL || strlen(item->name->str) == 0) {
+		d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_WARNING,
+						  5, 1.0, "Validation failed: item name is NULL.");
+        return false;
+    }
+
+    if (item->id == NULL || item->id->str == NULL || strlen(item->id->str) == 0) {
+		d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_WARNING,
+						  5, 1.0, "Validation failed: item id is NULL.");
+        return false;
+    }
+    
+	if (item->description == NULL || item->description->str == NULL || strlen(item->description->str) == 0) {
+		d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_WARNING,
+						  5, 1.0, "Validation failed: item description is NULL.");
+        return false;
+    }
+
+	if (item->rarity == NULL || item->rarity->str == NULL || strlen(item->rarity->str) == 0) {
+		d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_WARNING,
+						  5, 1.0, "Validation failed: item rarity is NULL.");
+        return false;
+    }
+
+    // Item type must be within the defined enum range.
+    if (item->type < ITEM_TYPE_WEAPON || item->type > ITEM_TYPE_AMMUNITION) {
+		d_LogRateLimitedF(D_LOG_RATE_LIMIT_FLAG_HASH_FORMAT_STRING, D_LOG_LEVEL_ERROR,
+						  5, 1.0, "Validation failed: item '%s' has invalid type: %d", item->name->str, item->type);
+        return false;
+    }
+
+    // Weight should not be negative.
+    if (item->weight_kg < 0.0f) {
+        d_LogErrorF("Validation failed: item '%s' has negative weight: %.2f", item->name->str, item->weight_kg);
+        return false;
+    }
+
+    // If all checks pass, the item is considered valid.
+    return true;
+}
+
+/**
+ * @brief Finds an item in a database by its unique string ID.
+ */
+Item_t* ie_FindItemByID(Item_t* database, int count, const char* id)
+{
+    if (database == NULL || id == NULL) {
+		d_LogWarning("Cannot search for item by ID with NULL parameters.");
+        return NULL; // Cannot search with invalid inputs.
+    }
+
+    for (int i = 0; i < count; i++) {
+        // Ensure the item's ID and string are not NULL before comparing.
+        if (database[i].id != NULL && database[i].id->str != NULL) {
+            if (strcmp(database[i].id->str, id) == 0) {
+                return &database[i]; // Found it!
+            }
+        }
+    }
+	d_LogWarningF("Item with ID '%s' not found in database.", id);
+    return NULL; // Item not found.
 }

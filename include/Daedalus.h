@@ -407,6 +407,19 @@ void d_DestroyString(dString_t* sb);
  */
 void d_AppendString(dString_t* sb, const char* str, size_t len);
 /*
+ * Set the content of an existing dString_t to a new value
+ *
+ * @param string: Pointer to existing dString_t structure
+ * @param content: C-string content to copy into the dString_t
+ * @param flags: Optional flags for string handling behavior
+ * @return: Success/failure indicator
+ * -- Frees existing string content if any
+ * -- Allocates new memory for content and copies data
+ * -- Handles null pointers gracefully
+ * -- Updates internal string length and capacity
+ */
+int d_SetString(dString_t* string, const char* content, int flags);
+/*
  * Add a limited portion of a string to the string builder
  *
  * `sb` - Pointer to string builder

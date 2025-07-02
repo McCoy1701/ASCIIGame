@@ -137,7 +137,6 @@ int main( void )
   dLogConfig_t config = { .default_level = D_LOG_LEVEL_DEBUG };
   dLogger_t* logger = d_CreateLogger(config);
   d_SetGlobalLogger(logger);
-  d_AddLogHandler(d_GetGlobalLogger(), d_ConsoleLogHandler, NULL);
   a_Init( SCREEN_WIDTH, SCREEN_HEIGHT, "Archimedes" );
 
   e_InitEditor();

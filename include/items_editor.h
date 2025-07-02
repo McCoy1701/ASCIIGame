@@ -226,7 +226,7 @@ void ie_GetCellAtMouse(int width, int height, int origin_x, int origin_y,
  * -- Return value indicates how many items were added to filtered array
  * -- Essential for type-specific item editing and organization interfaces
  */
-int ie_FilterItemsByType(Item_t** items, int item_count, ItemType_t filter_type, Item_t** filtered_items);
+int ie_FilterItemsByType(Item_t* items, int item_count, ItemType_t filter_type, Item_t** filtered_items);
 
 /*
  * Initialize item editing mode with UI setup and data loading
@@ -324,4 +324,44 @@ Item_t* load_items_database(int* items_count);
  * -- Essential for preventing memory leaks during editor shutdown
  */
 void ie_FreeItemsDatabase(Item_t* database, int count);
+
+/**
+ * @brief Finds an item in a database by its unique string ID.
+ * 
+ * @param database A pointer to the array of items.
+ * @param count The number of items in the database.
+ * @param id The string ID to search for.
+ * @return A pointer to the found item, or NULL if not found.
+ */
+Item_t* ie_FindItemByID(Item_t* database, int count, const char* id);
+
+/**
+ * @brief Validates the core data of a single item.
+ *
+ * @param item A pointer to the item to validate.
+ * @return `true` if the item is valid, `false` otherwise.
+ */
+bool ie_ValidateItem(const Item_t* item);
+
+/**
+ * @brief Finds an item in a database by its unique string ID.
+ * 
+ * @param database A pointer to the array of items.
+ * @param count The number of items in the database.
+ * @param id The string ID to search for.
+ * @return A pointer to the found item, or NULL if not found.
+ */
+Item_t* ie_FindItemByID(Item_t* database, int count, const char* id);
+
+/**
+ * @brief Creates an item using the specified parameters.
+ * 
+ * @param type The type of item to create.
+ * @param mat_id The index of the material to use.
+ * @param rare The index of the rarity level.
+ * @param qual The index of the quality level.
+ * @param ench The index of the enchantment level.
+ * @return A pointer to the newly created Item_t, or NULL on failure.
+ */
+Item_t* ie_CreateItemWithParameters(ItemType_t type, int mat_id, int rare, int qual, int ench);
 #endif
