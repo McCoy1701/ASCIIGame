@@ -9,12 +9,12 @@
 static void we_EditLogic( float dt );
 static void we_EditDraw( float dt );
 
-WorldPosition_t selected_pos;
+static WorldPosition_t selected_pos;
+static WorldPosition_t highlighted_pos;
 int glyph_index = 0;
 int color_index = 0;
 uint8_t selected_glyph_x = 0, selected_glyph_y = 0;
 uint8_t selected_color_x = 0, selected_color_y = 0;
-uint8_t highlighted_glyph_x = 0, highlighted_glyph_y = 0;
 
 void we_edit( void )
 {
@@ -37,12 +37,24 @@ void we_edit( void )
 static void we_EditLogic( float dt )
 {
   a_DoInput();
+  
+  if ( map != NULL )
+  {
+    if ( map != NULL )
+    {
+      e_MapMouseCheck( &highlighted_pos );
 
+    }
+
+  }
+  
   if ( app.mouse.button == 1 )
   {
     if ( map != NULL )
     {
       e_MapMouseCheck( &selected_pos );
+      highlighted_pos.local_z = selected_pos.local_z;
+      highlighted_pos.level   = selected_pos.level;
 
     }
 
@@ -73,14 +85,23 @@ static void we_EditLogic( float dt )
       }
     }
   }
-  
+  if ( app.mouse.button == 3 )
+  {
+    app.mouse.button = 0;
+    GameTileArray_t* temp = e_GetDrawSelectGrid( map, selected_pos, highlighted_pos );
+    e_ChangeGameTileGlyph( map, selected_pos, temp, glyph_index );
+
+  }
   if ( app.keyboard[SDL_SCANCODE_F] == 1 )
   {
     app.keyboard[SDL_SCANCODE_F] = 0;
 
     if ( map != NULL )
     {
-      switch ( selected_pos.level ) {
+      GameTileArray_t* temp = e_GetDrawSelectGrid( map, selected_pos, highlighted_pos );
+      e_ChangeGameTileColor( map, selected_pos, temp, color_index, 1 );
+      
+      /*switch ( selected_pos.level ) {
         case WORLD_LEVEL:
           map[selected_pos.world_index].tile.fg = color_index;
           break;
@@ -94,7 +115,7 @@ static void we_EditLogic( float dt )
           map[selected_pos.world_index].regions[selected_pos.region_index].
             tiles[selected_pos.local_index].fg = color_index;
           break;
-      }
+      }*/
     }
   }
   
@@ -104,7 +125,10 @@ static void we_EditLogic( float dt )
 
     if ( map != NULL )
     {
-      switch ( selected_pos.level ) {
+      GameTileArray_t* temp = e_GetDrawSelectGrid( map, selected_pos, highlighted_pos );
+      e_ChangeGameTileColor( map, selected_pos, temp, color_index, 0 );
+
+      /*switch ( selected_pos.level ) {
         case WORLD_LEVEL:
           map[selected_pos.world_index].tile.bg = color_index;
           break;
@@ -118,7 +142,7 @@ static void we_EditLogic( float dt )
           map[selected_pos.world_index].regions[selected_pos.region_index].
             tiles[selected_pos.local_index].bg = color_index;
           break;
-      }
+      }*/
     }
   }
   
@@ -156,8 +180,9 @@ static void we_EditDraw( float dt )
 
     for ( uint16_t i = 0; i < draw_size; i++ )
     {
-      we_DrawWorldCell( i, map, selected_pos );
+      we_DrawWorldCell( i, map, selected_pos, highlighted_pos );
     }
+
 
   }
   

@@ -51,7 +51,7 @@
 #define INDEX_3( x, y, z, width, height ) ( ( z * ( width * height ) )\
     + ( y * height ) + x )
 
-#define INDEX_2( x, y, height ) ( ( y * height ) + x )
+#define INDEX_2( x, y, height ) ( ( x * height ) + y )
 
 #endif
 

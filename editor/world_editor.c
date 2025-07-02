@@ -19,7 +19,8 @@ static void e_WorldEditorDraw( float );
 
 World_t* map = NULL;
 
-WorldPosition_t current_pos;
+static WorldPosition_t current_pos;
+static WorldPosition_t highlighted_pos;
 char* pos_text;
 
 void e_InitWorldEditor( void )
@@ -123,6 +124,8 @@ static void e_WorldEditorLogic( float dt )
   a_DoInput();
   if ( map!= NULL )
   {
+    e_MapMouseCheck( &highlighted_pos );
+    
     if ( ( current_pos.world_index % map->world_width ) == 0 )
     {
       //printf( "top\n" );
@@ -156,6 +159,8 @@ static void e_WorldEditorLogic( float dt )
   }
   
   e_LevelZHeightCheck( &current_pos );
+  highlighted_pos.level = current_pos.level;
+  highlighted_pos.local_z = current_pos.local_z;
 
   if ( app.keyboard[SDL_SCANCODE_ESCAPE] == 1 )
   {
@@ -194,7 +199,7 @@ static void e_WorldEditorDraw( float dt )
 
     for ( uint16_t i = 0; i < draw_size; i++ )
     {
-      we_DrawWorldCell( i, map, current_pos );
+      we_DrawWorldCell( i, map, current_pos, highlighted_pos );
     }
 
 
