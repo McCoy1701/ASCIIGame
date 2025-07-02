@@ -92,7 +92,10 @@ void we_load( void );
 void we_DrawWorldCell( int index, World_t* map, WorldPosition_t pos, WorldPosition_t highlight );
 GameTileArray_t* e_GetDrawSelectGrid( World_t* map, WorldPosition_t pos,
                                    WorldPosition_t highlight );
-void e_ChangeGameTile( World_t* map, WorldPosition_t pos, GameTileArray_t* tile_array, int glyph_index );
+void e_ChangeGameTileGlyph( World_t* map, WorldPosition_t pos, GameTileArray_t* tile_array, int glyph_index );
+void e_ChangeGameTileColor( World_t* map, WorldPosition_t pos,
+                            GameTileArray_t* tile_array, int color_index,
+                            int type );
 void wec_GenerateWorld( void );
 
 #endif

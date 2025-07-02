@@ -89,7 +89,7 @@ static void we_EditLogic( float dt )
   {
     app.mouse.button = 0;
     GameTileArray_t* temp = e_GetDrawSelectGrid( map, selected_pos, highlighted_pos );
-    e_ChangeGameTile( map, selected_pos, temp, glyph_index );
+    e_ChangeGameTileGlyph( map, selected_pos, temp, glyph_index );
 
   }
   if ( app.keyboard[SDL_SCANCODE_F] == 1 )
@@ -98,7 +98,10 @@ static void we_EditLogic( float dt )
 
     if ( map != NULL )
     {
-      switch ( selected_pos.level ) {
+      GameTileArray_t* temp = e_GetDrawSelectGrid( map, selected_pos, highlighted_pos );
+      e_ChangeGameTileColor( map, selected_pos, temp, color_index, 1 );
+      
+      /*switch ( selected_pos.level ) {
         case WORLD_LEVEL:
           map[selected_pos.world_index].tile.fg = color_index;
           break;
@@ -112,7 +115,7 @@ static void we_EditLogic( float dt )
           map[selected_pos.world_index].regions[selected_pos.region_index].
             tiles[selected_pos.local_index].fg = color_index;
           break;
-      }
+      }*/
     }
   }
   
@@ -122,7 +125,10 @@ static void we_EditLogic( float dt )
 
     if ( map != NULL )
     {
-      switch ( selected_pos.level ) {
+      GameTileArray_t* temp = e_GetDrawSelectGrid( map, selected_pos, highlighted_pos );
+      e_ChangeGameTileColor( map, selected_pos, temp, color_index, 0 );
+
+      /*switch ( selected_pos.level ) {
         case WORLD_LEVEL:
           map[selected_pos.world_index].tile.bg = color_index;
           break;
@@ -136,7 +142,7 @@ static void we_EditLogic( float dt )
           map[selected_pos.world_index].regions[selected_pos.region_index].
             tiles[selected_pos.local_index].bg = color_index;
           break;
-      }
+      }*/
     }
   }
   

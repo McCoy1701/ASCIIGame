@@ -234,7 +234,7 @@ GameTileArray_t* e_GetDrawSelectGrid( World_t* map, WorldPosition_t pos,
   return new_game_tile_array;
 }
 
-void e_ChangeGameTile( World_t* map, WorldPosition_t pos, GameTileArray_t* tile_array, int glyph_index )
+void e_ChangeGameTileGlyph( World_t* map, WorldPosition_t pos, GameTileArray_t* tile_array, int glyph_index )
 {
   int index = 0;
 
@@ -256,6 +256,67 @@ void e_ChangeGameTile( World_t* map, WorldPosition_t pos, GameTileArray_t* tile_
           tiles[index].glyph = glyph_index;
 
        break;
+    }
+  }
+
+  free( tile_array );
+
+}
+
+void e_ChangeGameTileColor( World_t* map, WorldPosition_t pos,
+                            GameTileArray_t* tile_array, int color_index,
+                            int type )
+{
+  int index = 0;
+
+  for ( int i = 0; i < tile_array->count; i++ )
+  {
+    index = tile_array->data[i];
+    switch (pos.level)
+    {
+      case WORLD_LEVEL:
+        if ( type == 1 )
+        {
+          map[index].tile.fg = color_index;
+
+        }
+ 
+        else
+        {
+          map[index].tile.bg = color_index;
+
+        }
+        break;
+
+      case REGION_LEVEL:
+        if ( type == 1 )
+        {
+          map[pos.world_index].regions[index].tile.fg = color_index;
+
+        }
+ 
+        else
+        {
+          map[pos.world_index].regions[index].tile.bg = color_index;
+
+        }
+        break;
+
+      case LOCAL_LEVEL:
+        if ( type == 1 )
+        {
+          map[pos.world_index].regions[pos.region_index].
+            tiles[index].fg = color_index;
+
+        }
+ 
+        else
+        {
+          map[pos.world_index].regions[pos.region_index].
+            tiles[index].bg = color_index;
+
+        }
+        break;
     }
   }
 
