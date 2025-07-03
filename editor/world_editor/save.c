@@ -49,18 +49,21 @@ void we_Save( void )
 static void wes_SaveLogic( float dt )
 {
   a_DoInput();
-  
-  if ( app.keyboard[ SDL_SCANCODE_ESCAPE ] == 1 )
+
+  if ( app.keyboard[SDL_SCANCODE_ESCAPE] == 1 )
   {
     app.keyboard[SDL_SCANCODE_ESCAPE] = 0;
     e_InitWorldEditor();
   }
-
+  
   a_DoWidget();
 }
 
 static void wes_SaveDraw( float dt )
 {
+  a_DrawText( "Save?", 635, 270, 255, 255, 255, app.font_type,
+             TEXT_ALIGN_CENTER, 0 );
+
   a_DrawWidgets();
 }
 
@@ -77,6 +80,11 @@ void wes_SaveYes( void )
 
 void wes_SaveNo( void )
 {
+  if ( map != NULL )
+  {
+    e_DestroyWorldEditor();
+
+  }
   e_InitEditor();
 
 }

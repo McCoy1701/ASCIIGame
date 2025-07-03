@@ -168,11 +168,16 @@ static void e_WorldEditorLogic( float dt )
     app.keyboard[SDL_SCANCODE_ESCAPE] = 0;
     if ( map != NULL )
     {
-      e_DestroyWorldEditor();
+      we_Save();
 
     }
 
-    e_InitEditor();
+    else
+    {
+      e_InitEditor();
+
+    }
+
   }
 
   a_DoWidget();
