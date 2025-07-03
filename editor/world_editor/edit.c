@@ -412,11 +412,14 @@ static void we_EditDraw( float dt )
   }
   
   a_DrawFilledRect( 1125, 100, game_glyphs->rects[glyph_index].w * 2,
-                    game_glyphs->rects[glyph_index].h * 2, 255, 0, 0, 255 );
+                    game_glyphs->rects[glyph_index].h * 2, 
+                    master_colors[APOLLO_PALETE][bg_index].r,
+                    master_colors[APOLLO_PALETE][bg_index].g,
+                    master_colors[APOLLO_PALETE][bg_index].b,
+                    master_colors[APOLLO_PALETE][bg_index].a );
 
   a_BlitTextureRect( game_glyphs->texture, game_glyphs->rects[glyph_index],
-                     1125, 100, 2, (aColor_t){.r = 255, .g = 255, .b = 255,
-                                             .a = 255 } );
+                     1125, 100, 2, master_colors[APOLLO_PALETE][fg_index]);
 
   a_DrawText( wem_strings[editor_mode], 1100, 10, 255, 255, 255, app.font_type,
              TEXT_ALIGN_CENTER, 0 );
