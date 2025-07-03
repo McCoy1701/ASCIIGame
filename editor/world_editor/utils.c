@@ -1,3 +1,11 @@
+/*
+ * world_editor/utils.c:
+ *
+ * Copyright (c) 2025 Jacob Kellum <jkellum819@gmail.com>
+ *                    Mathew Storm <smattymat@gmail.com>
+ ************************************************************************
+ */
+
 #include "Archimedes.h"
 #include "defs.h"
 #include "editor.h"
@@ -244,34 +252,19 @@ GameTileArray_t* e_GetSelectGrid( World_t* map, WorldPosition_t pos,
     printf( "Failed to allocate memory for new_game_tile_array\n" );
     return NULL;
   }
+  
+  new_game_tile_array->w            = grid_w + 1;
+  new_game_tile_array->h            = grid_h + 1;
+  new_game_tile_array->level        = pos.level;
+  new_game_tile_array->world_index  = pos.world_index;
+  new_game_tile_array->region_index = pos.region_index;
+  new_game_tile_array->local_index  = pos.local_index;
 
   new_game_tile_array->data = ( int* )malloc( sizeof( int ) *
                                             ( grid_w + 1 ) * ( grid_h + 1 ) *
                                               map->z_height );
 
   int current_index = 0;
-  int current_width = 0, current_height = 0;
-
-  switch ( pos.level )
-  {
-    case WORLD_LEVEL:
-      current_width  = map->world_width;
-      current_height = map->world_height;
-      break;
-    
-    case REGION_LEVEL:
-      current_width  = map->region_width;
-      current_height = map->region_height;
-      break;
-    
-    case LOCAL_LEVEL:
-      current_width  = map->local_width;
-      current_height = map->local_height;
-      break;
-
-    default:
-      break;
-  }
   
   int k = 0;
 
@@ -283,14 +276,14 @@ GameTileArray_t* e_GetSelectGrid( World_t* map, WorldPosition_t pos,
       {
         case WORLD_LEVEL:
           current_index = INDEX_2( ( current_x + i ), ( current_y + j ),
-                                  current_height );
+                                  map->world_height );
 
           new_game_tile_array->data[k++] = current_index;
           break;
 
         case REGION_LEVEL:
           current_index = INDEX_2( ( current_x + i ), ( current_y + j ),
-                                  current_height );
+                                  map->region_height );
 
           new_game_tile_array->data[k++] = current_index;
 
@@ -298,12 +291,10 @@ GameTileArray_t* e_GetSelectGrid( World_t* map, WorldPosition_t pos,
 
         case LOCAL_LEVEL:
           current_index = INDEX_3( ( current_y + j ), ( current_x + i ),
-                                     current_z, current_width, current_height );
+                                     current_z, map->local_width,
+                                     map->local_height );
           
           new_game_tile_array->data[k++] = current_index;
-          break;
-
-        default:
           break;
       }
     }
@@ -401,6 +392,105 @@ void e_ChangeGameTileColor( World_t* map, WorldPosition_t pos,
   }
 
   free( tile_array );
+
+}
+
+void e_ChangeGameTile( World_t* map, WorldPosition_t pos,
+                       GameTileArray_t* tile_array )
+{
+  int index = 0;
+  int current_index = 0;
+  int current_x = pos.x;
+  int current_y = pos.y;
+  int k = 0;
+  
+  for ( int i = 0; i < tile_array->w; i++ )
+  {
+    for ( int j = 0; j < tile_array->h; j++ )
+    {
+      index = tile_array->data[k];
+      switch (pos.level)
+      {
+        case WORLD_LEVEL:
+          current_index = INDEX_2( ( current_x + i ), ( current_y + j ),
+                                  map->world_height );
+          
+          switch ( tile_array->level ) 
+          {
+            case WORLD_LEVEL:
+              map[current_index].tile = map[index].tile;
+              break;
+
+            case REGION_LEVEL:
+              map[current_index].tile = 
+                map[tile_array->world_index].regions[index].tile;
+              break;
+
+            case LOCAL_LEVEL:
+              map[current_index].tile = map[tile_array->world_index].
+                regions[tile_array->region_index].tiles[index];
+              break;
+          }
+          break;
+
+        case REGION_LEVEL:
+          current_index = INDEX_2( ( current_x + i ), ( current_y + j ),
+                                  map->region_height );
+          
+          switch ( tile_array->level ) 
+          {
+            case WORLD_LEVEL:
+              map[pos.world_index].regions[current_index].tile = 
+                map[index].tile;
+              break;
+
+            case REGION_LEVEL:
+              map[pos.world_index].regions[current_index].tile = 
+                map[tile_array->world_index].regions[index].tile;
+              break;
+
+            case LOCAL_LEVEL:
+              map[pos.world_index].regions[current_index].tile =
+                map[tile_array->world_index].regions[tile_array->region_index].tiles[index];
+              break;
+          }
+          break;
+
+        case LOCAL_LEVEL:
+          current_index = INDEX_3( ( current_y + j ), ( current_x + i ),
+                                     pos.local_z, map->local_width,
+                                     map->local_height );
+          
+          switch ( tile_array->level ) 
+          {
+            case WORLD_LEVEL:
+              map[pos.world_index].regions[pos.region_index]
+                .tiles[current_index] = map[index].tile;
+              break;
+
+            case REGION_LEVEL:
+              map[pos.world_index].regions[pos.region_index]
+                .tiles[current_index] = map[pos.world_index]
+                .regions[index].tile;
+              break;
+
+            case LOCAL_LEVEL:
+              map[pos.world_index].regions[pos.region_index]
+                .tiles[current_index] = map[pos.world_index]
+                .regions[pos.region_index].tiles[index];
+              break;
+          }
+          break;
+      }
+      
+      
+      if ( k < tile_array->count )
+      {
+        k++;
+      }
+    }
+
+  }
 
 }
 

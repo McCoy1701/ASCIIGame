@@ -1,3 +1,11 @@
+/*
+ * defs.h:
+ *
+ * Copyright (c) 2025 Jacob Kellum <jkellum819@gmail.com>
+ *                    Mathew Storm <smattymat@gmail.com>
+ ************************************************************************
+ */
+
 #ifndef __DEFINITIONS_H__
 #define __DEFINITIONS_H__
 

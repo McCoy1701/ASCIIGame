@@ -1,3 +1,11 @@
+/*
+ * init_editor.h:
+ *
+ * Copyright (c) 2025 Jacob Kellum <jkellum819@gmail.com>
+ *                    Mathew Storm <smattymat@gmail.com>
+ ************************************************************************
+ */
+
 #ifndef __INIT_EDITOR_H__
 #define __INIT_EDITOR_H__
 

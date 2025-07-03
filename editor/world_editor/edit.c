@@ -1,3 +1,11 @@
+/*
+ * world_editor/edit.c:
+ *
+ * Copyright (c) 2025 Jacob Kellum <jkellum819@gmail.com>
+ *                    Mathew Storm <smattymat@gmail.com>
+ ************************************************************************
+ */
+
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -18,6 +26,8 @@ uint8_t selected_glyph_x = 0, selected_glyph_y = 0;
 uint8_t selected_fg_x = 0, selected_fg_y = 0;
 uint8_t selected_bg_x = 0, selected_bg_y = 0;
 int editor_mode = 0;
+GameTileArray_t* clipboard = NULL;
+static char* pos_text;
 
 char* wem_strings[WEM_MAX+1] =
 {
@@ -30,7 +40,7 @@ char* wem_strings[WEM_MAX+1] =
   "WEM_MAX"
 };
 
-void we_edit( void )
+void we_Edit( void )
 {
   app.delegate.logic = we_EditLogic;
   app.delegate.draw  = we_EditDraw;
@@ -45,6 +55,14 @@ void we_edit( void )
     current->hidden = 1;
 
   }
+  
+  pos_text = malloc( sizeof(char) * 50 );
+
+  selected_pos = (WorldPosition_t){ .world_index = 0, .region_index = 0,
+    .local_index = 0, .level = 0, .local_z = 0 };
+  snprintf(pos_text, 50, "%d,%d,%d,%d,%d\n", selected_pos.world_index,
+           selected_pos.region_index, selected_pos.local_index, selected_pos.level,
+           selected_pos.local_z );
 
 }
 
@@ -78,21 +96,32 @@ static void we_EditLogic( float dt )
     app.mouse.button = 0;
     if ( map != NULL )
     {
-      switch ( selected_pos.level ) {
-        case WORLD_LEVEL:
-          map[selected_pos.world_index].tile.glyph = glyph_index;
-          break;
+      if ( editor_mode == WEM_NONE )
+      {
+        switch ( selected_pos.level ) {
+          case WORLD_LEVEL:
+            map[selected_pos.world_index].tile.glyph = glyph_index;
+            break;
 
-        case REGION_LEVEL:
-          map[selected_pos.world_index].regions[selected_pos.region_index].
-            tile.glyph = glyph_index;
-          break;
+          case REGION_LEVEL:
+            map[selected_pos.world_index].regions[selected_pos.region_index].
+              tile.glyph = glyph_index;
+            break;
 
-        case LOCAL_LEVEL:
-          map[selected_pos.world_index].regions[selected_pos.region_index].
-            tiles[selected_pos.local_index].glyph = glyph_index;
-          break;
+          case LOCAL_LEVEL:
+            map[selected_pos.world_index].regions[selected_pos.region_index].
+              tiles[selected_pos.local_index].glyph = glyph_index;
+            break;
+        }
       }
+      
+      if ( editor_mode == WEM_PASTE )
+      {
+        e_ChangeGameTile( map, selected_pos, clipboard );
+        editor_mode = WEM_NONE;
+
+      }
+
     }
   }
   
@@ -108,6 +137,12 @@ static void we_EditLogic( float dt )
         GameTileArray_t* temp = e_GetSelectGrid( map, selected_pos, highlighted_pos );
         e_ChangeGameTileGlyph( map, selected_pos, temp, glyph_index );
         editor_mode = WEM_NONE;
+      }
+
+      if ( editor_mode == WEM_COPY )
+      {
+        clipboard = e_GetSelectGrid( map, selected_pos, highlighted_pos );
+        editor_mode = WEM_PASTE;
       }
 
     }
@@ -233,6 +268,12 @@ static void we_EditLogic( float dt )
     switch ( editor_mode )
     {
       case WEM_NONE:
+        if ( clipboard != NULL )
+        {
+          free( clipboard );
+        }
+        free( pos_text );
+
         e_InitWorldEditor();
         break;
 
@@ -287,7 +328,8 @@ static void we_EditDraw( float dt )
       we_DrawWorldCell( i, map, selected_pos, highlighted_pos );
     }
 
-    if ( editor_mode == WEM_SELECT )
+    if ( editor_mode == WEM_SELECT || editor_mode == WEM_COPY ||
+      editor_mode == WEM_MASS_CHANGE )
     {
       e_DrawSelectGrid( map, selected_pos, highlighted_pos );
     }
@@ -365,6 +407,13 @@ static void we_EditDraw( float dt )
                                              .a = 255 } );
 
   a_DrawText( wem_strings[editor_mode], 1100, 10, 255, 255, 255, app.font_type,
+             TEXT_ALIGN_CENTER, 0 );
+  
+  snprintf(pos_text, 50, "%d,%d,%d,%d,%d\n", selected_pos.world_index,
+           selected_pos.region_index, selected_pos.local_index, selected_pos.level,
+           selected_pos.local_z );
+  
+  a_DrawText( pos_text, 1000, 650, 255, 255, 255, app.font_type,
              TEXT_ALIGN_CENTER, 0 );
 
   a_DrawWidgets();

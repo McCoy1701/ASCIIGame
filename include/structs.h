@@ -1,3 +1,11 @@
+/*
+ * structs.h:
+ *
+ * Copyright (c) 2025 Jacob Kellum <jkellum819@gmail.com>
+ *                    Mathew Storm <smattymat@gmail.com>
+ ************************************************************************
+ */
+
 #ifndef __STRUCTS_H__
 #define __STRUCTS_H__
 
@@ -118,6 +126,11 @@ typedef struct
 {
   int* data;
   int count;
+  uint8_t w, h;
+  uint8_t world_index;
+  uint8_t region_index;
+  uint16_t local_index;
+  uint8_t level;
 } GameTileArray_t;
 
 typedef struct // Lock_t

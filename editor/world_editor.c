@@ -1,3 +1,12 @@
+/*
+ * world_editor.c:
+ *
+ * Copyright (c) 2025 Jacob Kellum <jkellum819@gmail.com>
+ *                    Mathew Storm <smattymat@gmail.com>
+ ************************************************************************
+ */
+
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -82,36 +91,28 @@ void e_InitWorldEditor( void )
 
     if ( strcmp( current->name, "creation" ) == 0 )
     {
-      current->action = we_creation;
+      current->action = we_Creation;
     }
 
     if ( strcmp( current->name, "edit" ) == 0 )
     {
-      current->action = we_edit;
+      current->action = we_Edit;
     }
 
     if ( strcmp( current->name, "save" ) == 0 )
     {
-      current->action = we_save;
+      current->action = we_Save;
     }
 
     if ( strcmp( current->name, "load" ) == 0 )
     {
-      current->action = we_load;
+      current->action = we_Load;
     }
   }
 
 }
 
-void we_save( void )
-{
-  if ( map != NULL )
-  {
-    SaveWorld( map, "resources/world/map.dat" );
-  }
-}
-
-void we_load( void )
+void we_Load( void )
 {
   if ( map == NULL ) 
   {

@@ -85,6 +85,7 @@ editor: $(BIN_DIR)/editor
 
 EDITOR_OBJS = \
 							$(OBJ_DIR)/world_editor/creation.o\
+							$(OBJ_DIR)/world_editor/save.o\
 							$(OBJ_DIR)/world_editor/edit.o\
 							$(OBJ_DIR)/world_editor/utils.o\
 							$(OBJ_DIR)/color_editor.o\
