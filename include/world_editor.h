@@ -8,6 +8,10 @@ extern World_t* map;
 enum
 {
   WEM_NONE,
+  WEM_BRUSH,
+  WEM_COPY,
+  WEM_PASTE,
+  WEM_MASS_CHANGE,
   WEM_SELECT,
   WEM_MAX
 };
