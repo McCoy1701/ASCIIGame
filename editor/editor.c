@@ -1,3 +1,11 @@
+/*
+ * editor.c:
+ *
+ * Copyright (c) 2025 Jacob Kellum <jkellum819@gmail.com>
+ *                    Mathew Storm <smattymat@gmail.com>
+ ************************************************************************
+ */
+
 #include <stdio.h>
 
 #include "Archimedes.h"
@@ -23,7 +31,7 @@ void e_InitEditor( void )
   
   if ( game_glyphs == NULL )
   {
-    game_glyphs = e_InitGlyphs( "resources/fonts/CodePage737Font.png",
+    game_glyphs = e_InitGlyphs( "resources/fonts/CodePage437.png",
                                9, 16 );
 
   }

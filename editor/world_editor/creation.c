@@ -1,3 +1,11 @@
+/*
+ * world_editor/creation.c:
+ *
+ * Copyright (c) 2025 Jacob Kellum <jkellum819@gmail.com>
+ *                    Mathew Storm <smattymat@gmail.com>
+ ************************************************************************
+ */
+
 #include "Archimedes.h"
 #include "init_editor.h"
 #include "structs.h"
@@ -11,7 +19,7 @@ int region_size_index   = 0;
 int local_size_index    = 0;
 int z_height_size_index = 0;
 
-void we_creation( void )
+void we_Creation( void )
 {
   app.delegate.logic = we_CreationLogic;
   app.delegate.draw  = we_CreationDraw;

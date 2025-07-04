@@ -1,3 +1,11 @@
+/*
+ * world_editor.h:
+ *
+ * Copyright (c) 2025 Jacob Kellum <jkellum819@gmail.com>
+ *                    Mathew Storm <smattymat@gmail.com>
+ ************************************************************************
+ */
+
 #ifndef __WORLD_EDITOR_H__
 #define __WORLD_EDITOR_H__
 
@@ -63,7 +71,7 @@ void e_LoadColorPalette( aColor_t palette[MAX_COLOR_GROUPS][MAX_COLOR_PALETTE],
  * -- Does not generate a world until user clicks "generate" button
  * -- Replaces current world map if one exists
  */
-void we_creation( void );
+void we_Creation( void );
 
 /*
  * Enter world editing mode (currently unimplemented placeholder)
@@ -74,7 +82,7 @@ void we_creation( void );
  * -- Placeholder prevents crashes when UI buttons are activated
  * -- Implementation pending based on world structure requirements
  */
-void we_edit( void );
+void we_Edit( void );
 
 /*
  * Save the current world to persistent storage (currently unimplemented)
@@ -86,7 +94,7 @@ void we_edit( void );
  * -- Implementation requires definition of world file format
  * -- Should validate world data before attempting save operation
  */
-void we_save( void );
+void we_Save( void );
 
 /*
  * Load a world from persistent storage (currently unimplemented)
@@ -98,17 +106,33 @@ void we_save( void );
  * -- Implementation requires world file format specification
  * -- Should free existing world before loading new one
  */
-void we_load( void );
+void we_Load( void );
 
-void we_DrawWorldCell( int index, World_t* map, WorldPosition_t pos, WorldPosition_t highlight );
+void we_DrawWorldCell( int index, World_t* map, WorldPosition_t pos,
+    WorldPosition_t highlight );
+
+void we_DrawEditorHotKeys( int x, int y, int key, int abbv0, int abbv1,
+                           int abbv2, int abbv3 );
+
 GameTileArray_t* e_GetSelectGrid( World_t* map, WorldPosition_t pos,
                                    WorldPosition_t highlight );
+
 void e_DrawSelectGrid( World_t* map, WorldPosition_t pos,
                                    WorldPosition_t highlight );
-void e_ChangeGameTileGlyph( World_t* map, WorldPosition_t pos, GameTileArray_t* tile_array, int glyph_index );
-void e_ChangeGameTileColor( World_t* map, WorldPosition_t pos,
-                            GameTileArray_t* tile_array, int color_index,
-                            int type );
+
+void e_ChangeGameTile( World_t* map, WorldPosition_t pos,
+                            GameTileArray_t* tile_array, int glyph_index,
+                            int bg_index, int fg_index );
+
+void e_PasteGameTile( World_t* map, WorldPosition_t pos,
+                       GameTileArray_t* tile_array );
+
+void e_DrawPastePreview( World_t* map, WorldPosition_t pos,
+                       GameTileArray_t* tile_array );
+
 void wec_GenerateWorld( void );
+
+void wes_SaveYes( void );
+void wes_SaveNo( void );
 
 #endif

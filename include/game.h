@@ -1,3 +1,11 @@
+/*
+ * game.h:
+ *
+ * Copyright (c) 2025 Jacob Kellum <jkellum819@gmail.com>
+ *                    Mathew Storm <smattymat@gmail.com>
+ ************************************************************************
+ */
+
 #include "Archimedes.h"
 #include "structs.h"
 
