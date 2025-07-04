@@ -31,7 +31,7 @@ void e_InitEditor( void )
   
   if ( game_glyphs == NULL )
   {
-    game_glyphs = e_InitGlyphs( "resources/fonts/CodePage737Font.png",
+    game_glyphs = e_InitGlyphs( "resources/fonts/CodePage437.png",
                                9, 16 );
 
   }

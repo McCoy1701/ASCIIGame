@@ -578,10 +578,10 @@ void e_MapMouseCheck( WorldPosition_t* pos )
 void e_GlyphMouseCheck( int* index, uint8_t* grid_x, uint8_t* grid_y )
 {
 
-  e_GetCellAtMouse( 16, 18, 1125, 245, GLYPH_WIDTH, GLYPH_HEIGHT,
+  e_GetCellAtMouse( 17, 17, 1125, 245, GLYPH_WIDTH, GLYPH_HEIGHT,
                     grid_x, grid_y, 0 );
 
-  *index = INDEX_2( *grid_y, *grid_x, 15 );
+  *index = INDEX_2( *grid_y, *grid_x, 16 );
 
 }
 

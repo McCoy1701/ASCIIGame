@@ -336,7 +336,7 @@ static void we_EditDraw( float dt )
 
   }
   
-  a_DrawFilledRect( 1120, 95, 145, 442, 0, 0, 255, 255 ); //Glyph grid background
+  a_DrawFilledRect( 1120, 95, 154, 442, 0, 0, 255, 255 ); //Glyph grid background
   
   int cx = 0, cy = 0;
   for ( int i = 0; i < MAX_COLOR_PALETTE; i++ )
@@ -378,7 +378,7 @@ static void we_EditDraw( float dt )
   int gx = 0, gy = 0;
   for ( int i = 0; i < game_glyphs->count; i++ )
   {
-    if ( gx + GLYPH_WIDTH > ( 15 * GLYPH_WIDTH ) )
+    if ( gx + GLYPH_WIDTH > ( 16 * GLYPH_WIDTH ) )
     {
       gx = 0;
       gy += GLYPH_HEIGHT + 1;
