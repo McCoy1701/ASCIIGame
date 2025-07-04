@@ -11,6 +11,7 @@
 
 #include "Archimedes.h"
 #include "editor.h"
+#include "glyphs.h"
 #include "structs.h"
 #include "world_editor.h"
 
@@ -101,23 +102,42 @@ static void we_EditLogic( float dt )
         switch ( selected_pos.level ) {
           case WORLD_LEVEL:
             map[selected_pos.world_index].tile.glyph = glyph_index;
+
+            map[selected_pos.world_index].tile.bg = bg_index;
+
+            map[selected_pos.world_index].tile.fg = fg_index;
+
             break;
 
           case REGION_LEVEL:
             map[selected_pos.world_index].regions[selected_pos.region_index].
               tile.glyph = glyph_index;
+
+            map[selected_pos.world_index].regions[selected_pos.region_index].
+              tile.bg = bg_index;
+
+            map[selected_pos.world_index].regions[selected_pos.region_index].
+              tile.fg = fg_index;
+
             break;
 
           case LOCAL_LEVEL:
             map[selected_pos.world_index].regions[selected_pos.region_index].
               tiles[selected_pos.local_index].glyph = glyph_index;
+            
+            map[selected_pos.world_index].regions[selected_pos.region_index].
+              tiles[selected_pos.local_index].bg = bg_index;
+
+            map[selected_pos.world_index].regions[selected_pos.region_index].
+              tiles[selected_pos.local_index].fg = fg_index;
+
             break;
         }
       }
       
       if ( editor_mode == WEM_PASTE )
       {
-        e_ChangeGameTile( map, selected_pos, clipboard );
+        e_PasteGameTile( map, selected_pos, clipboard );
         editor_mode = WEM_NONE;
 
       }
@@ -135,7 +155,9 @@ static void we_EditLogic( float dt )
       if ( editor_mode == WEM_MASS_CHANGE )
       {
         GameTileArray_t* temp = e_GetSelectGrid( map, selected_pos, highlighted_pos );
-        e_ChangeGameTileGlyph( map, selected_pos, temp, glyph_index );
+        e_ChangeGameTile( map, selected_pos, temp, glyph_index,
+                               bg_index, fg_index );
+
         editor_mode = WEM_NONE;
       }
 
@@ -177,87 +199,11 @@ static void we_EditLogic( float dt )
     editor_mode = WEM_PASTE;
   }
   
-  if ( app.keyboard[SDL_SCANCODE_F] == 1 )
-  {
-    app.keyboard[SDL_SCANCODE_F] = 0;
-
-    if ( map != NULL )
-    {
-      GameTileArray_t* temp;
-
-      switch ( editor_mode )
-      {
-      case WEM_NONE:
-        switch ( selected_pos.level )
-        {
-        case WORLD_LEVEL:
-          map[selected_pos.world_index].tile.fg = fg_index;
-          break;
-
-        case REGION_LEVEL:
-          map[selected_pos.world_index].regions[selected_pos.region_index].
-          tile.fg = fg_index;
-          break;
-
-        case LOCAL_LEVEL:
-          map[selected_pos.world_index].regions[selected_pos.region_index].
-          tiles[selected_pos.local_index].fg = fg_index;
-          break;
-        }
-        break;
-
-      case WEM_BRUSH:
-        break;
-
-      case WEM_MASS_CHANGE:
-        temp = e_GetSelectGrid( map, selected_pos, highlighted_pos );
-        e_ChangeGameTileColor( map, selected_pos, temp, fg_index, 1 );
-        editor_mode = WEM_NONE;
-        break;
-      }
-      
-    }
-  }
-  
   if ( app.keyboard[SDL_SCANCODE_B] == 1 )
   {
     app.keyboard[SDL_SCANCODE_B] = 0;
 
-    if ( map != NULL )
-    {
-      GameTileArray_t* temp;
-
-      switch ( editor_mode )
-      {
-      case WEM_NONE:
-        switch ( selected_pos.level ) {
-        case WORLD_LEVEL:
-          map[selected_pos.world_index].tile.bg = bg_index;
-          break;
-
-        case REGION_LEVEL:
-          map[selected_pos.world_index].regions[selected_pos.region_index].
-          tile.bg = bg_index;
-          break;
-
-        case LOCAL_LEVEL:
-          map[selected_pos.world_index].regions[selected_pos.region_index].
-          tiles[selected_pos.local_index].bg = bg_index;
-          break;
-        }
-        break;
-
-      case WEM_BRUSH:
-        break;
-
-      case WEM_MASS_CHANGE:
-        temp = e_GetSelectGrid( map, selected_pos, highlighted_pos );
-        e_ChangeGameTileColor( map, selected_pos, temp, bg_index, 0 );
-        editor_mode = WEM_NONE;
-        break;
-      }
-
-    }
+    editor_mode = WEM_BRUSH;
   }
   
   e_LevelZHeightCheck( &selected_pos );
@@ -332,6 +278,15 @@ static void we_EditDraw( float dt )
       editor_mode == WEM_MASS_CHANGE )
     {
       e_DrawSelectGrid( map, selected_pos, highlighted_pos );
+    }
+
+    if ( editor_mode == WEM_PASTE )
+    {
+      if ( clipboard != NULL )
+      {
+        e_DrawPastePreview(map, selected_pos, clipboard );
+
+      }
     }
 
   }
@@ -419,11 +374,29 @@ static void we_EditDraw( float dt )
                     master_colors[APOLLO_PALETE][bg_index].a );
 
   a_BlitTextureRect( game_glyphs->texture, game_glyphs->rects[glyph_index],
-                     1125, 100, 2, master_colors[APOLLO_PALETE][fg_index]);
+                     1125, 100, 2, master_colors[APOLLO_PALETE][fg_index] );
 
-  a_DrawText( wem_strings[editor_mode], 1100, 10, 255, 255, 255, app.font_type,
-             TEXT_ALIGN_CENTER, 0 );
+  we_DrawEditorHotKeys( 1215, 100, GLYPH_UPPER_B, GLYPH_UPPER_B, GLYPH_UPPER_R,
+                       GLYPH_UPPER_S, GLYPH_UPPER_H );
   
+  we_DrawEditorHotKeys( 1215, 116, GLYPH_UPPER_C, GLYPH_UPPER_C, GLYPH_UPPER_O,
+                       GLYPH_UPPER_P, GLYPH_UPPER_Y );
+  
+  we_DrawEditorHotKeys( 1215, 132, GLYPH_UPPER_P, GLYPH_UPPER_P, GLYPH_UPPER_S,
+                       GLYPH_UPPER_T, GLYPH_UPPER_E );
+ 
+  we_DrawEditorHotKeys( 1215, 148, GLYPH_UPPER_X, GLYPH_UPPER_M, GLYPH_UPPER_A,
+                       GLYPH_UPPER_S, GLYPH_UPPER_S );
+
+  we_DrawEditorHotKeys( 1215, 164, GLYPH_UPPER_S, GLYPH_UPPER_S, GLYPH_UPPER_L,
+                       GLYPH_UPPER_C, GLYPH_UPPER_T );
+  
+  if ( editor_mode != WEM_NONE )
+  {
+    a_DrawRect( 1215, 100 + ( GLYPH_HEIGHT * ( editor_mode - 1 ) ),
+               GLYPH_WIDTH * 6, GLYPH_HEIGHT, 255, 255, 0, 0 );
+  }
+
   snprintf(pos_text, 50, "%d,%d,%d,%d,%d\n", selected_pos.world_index,
            selected_pos.region_index, selected_pos.local_index, selected_pos.level,
            selected_pos.local_z );

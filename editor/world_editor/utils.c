@@ -6,13 +6,15 @@
  ************************************************************************
  */
 
+#include <stdio.h>
+#include <stdlib.h>
+
 #include "Archimedes.h"
 #include "defs.h"
 #include "editor.h"
+#include "glyphs.h"
 #include "structs.h"
 #include "world_editor.h"
-#include <stdio.h>
-#include <stdlib.h>
 
 void we_DrawWorldCell( int index, World_t* map, WorldPosition_t pos, WorldPosition_t highlight )
 {
@@ -305,7 +307,9 @@ GameTileArray_t* e_GetSelectGrid( World_t* map, WorldPosition_t pos,
   return new_game_tile_array;
 }
 
-void e_ChangeGameTileGlyph( World_t* map, WorldPosition_t pos, GameTileArray_t* tile_array, int glyph_index )
+void e_ChangeGameTile( World_t* map, WorldPosition_t pos,
+                            GameTileArray_t* tile_array, int glyph_index,
+                            int bg_index, int fg_index )
 {
   int index = 0;
 
@@ -315,78 +319,31 @@ void e_ChangeGameTileGlyph( World_t* map, WorldPosition_t pos, GameTileArray_t* 
     switch (pos.level)
     {
       case WORLD_LEVEL:
-       map[index].tile.glyph = glyph_index;
-       break;
+        map[index].tile.glyph = glyph_index;
+       
+        map[index].tile.bg    = bg_index;
+       
+        map[index].tile.fg    = fg_index;
+        break;
 
       case REGION_LEVEL:
         map[pos.world_index].regions[index].tile.glyph = glyph_index;
-       break;
+        
+        map[pos.world_index].regions[index].tile.bg    = bg_index;
+        
+        map[pos.world_index].regions[index].tile.fg    = fg_index;
+        break;
 
       case LOCAL_LEVEL:
         map[pos.world_index].regions[pos.region_index].
           tiles[index].glyph = glyph_index;
+        
+        map[pos.world_index].regions[pos.region_index].
+          tiles[index].bg = bg_index;
+        
+        map[pos.world_index].regions[pos.region_index].
+          tiles[index].fg = fg_index;
 
-       break;
-    }
-  }
-
-  free( tile_array );
-
-}
-
-void e_ChangeGameTileColor( World_t* map, WorldPosition_t pos,
-                            GameTileArray_t* tile_array, int color_index,
-                            int type )
-{
-  int index = 0;
-
-  for ( int i = 0; i < tile_array->count; i++ )
-  {
-    index = tile_array->data[i];
-    switch (pos.level)
-    {
-      case WORLD_LEVEL:
-        if ( type == 1 )
-        {
-          map[index].tile.fg = color_index;
-
-        }
- 
-        else
-        {
-          map[index].tile.bg = color_index;
-
-        }
-        break;
-
-      case REGION_LEVEL:
-        if ( type == 1 )
-        {
-          map[pos.world_index].regions[index].tile.fg = color_index;
-
-        }
- 
-        else
-        {
-          map[pos.world_index].regions[index].tile.bg = color_index;
-
-        }
-        break;
-
-      case LOCAL_LEVEL:
-        if ( type == 1 )
-        {
-          map[pos.world_index].regions[pos.region_index].
-            tiles[index].fg = color_index;
-
-        }
- 
-        else
-        {
-          map[pos.world_index].regions[pos.region_index].
-            tiles[index].bg = color_index;
-
-        }
         break;
     }
   }
@@ -395,7 +352,7 @@ void e_ChangeGameTileColor( World_t* map, WorldPosition_t pos,
 
 }
 
-void e_ChangeGameTile( World_t* map, WorldPosition_t pos,
+void e_PasteGameTile( World_t* map, WorldPosition_t pos,
                        GameTileArray_t* tile_array )
 {
   int index = 0;
@@ -414,7 +371,7 @@ void e_ChangeGameTile( World_t* map, WorldPosition_t pos,
         case WORLD_LEVEL:
           current_index = INDEX_2( ( current_x + i ), ( current_y + j ),
                                   map->world_height );
-          
+
           switch ( tile_array->level ) 
           {
             case WORLD_LEVEL:
@@ -482,6 +439,134 @@ void e_ChangeGameTile( World_t* map, WorldPosition_t pos,
           }
           break;
       }
+      
+      if ( k < tile_array->count )
+      {
+        k++;
+      }
+    }
+
+  }
+
+}
+
+void e_DrawPastePreview( World_t* map, WorldPosition_t pos,
+                       GameTileArray_t* tile_array )
+{
+  int index = 0;
+  int current_index = 0;
+  int current_x = pos.x;
+  int current_y = pos.y;
+  int x = 0, y = 0, w = 0, h = 0;
+  int current_width = 0, current_height = 0;
+  GameTile_t current_tile = {0};
+  int k = 0;
+  
+  for ( int i = 0; i < tile_array->w; i++ )
+  {
+    for ( int j = 0; j < tile_array->h; j++ )
+    {
+      index = tile_array->data[k];
+      switch (pos.level)
+      {
+        case WORLD_LEVEL:
+          current_index = INDEX_2( ( current_x + i ), ( current_y + j ),
+                                  map->world_height );
+          
+          current_width  = map->world_width;
+          current_height = map->world_height;
+
+          switch ( tile_array->level ) 
+          {
+            case WORLD_LEVEL:
+              current_tile = map[index].tile;
+              printf( "0 %d, %d, %d\n", current_index, index, tile_array->level );
+              break;
+
+            case REGION_LEVEL:
+              current_tile = 
+                map[tile_array->world_index].regions[index].tile;
+              printf( "1 %d, %d, %d\n", current_index, index, tile_array->level );
+              break;
+
+            case LOCAL_LEVEL:
+              current_tile = map[tile_array->world_index].
+                regions[tile_array->region_index].tiles[index];
+              printf( "2 %d, %d, %d\n", current_index, index, tile_array->level );
+              break;
+          }
+          break;
+
+        case REGION_LEVEL:
+          current_index = INDEX_2( ( current_x + i ), ( current_y + j ),
+                                  map->region_height );
+          
+          current_width  = map->region_width;
+          current_height = map->region_height;
+
+          switch ( tile_array->level ) 
+          {
+            case WORLD_LEVEL:
+              current_tile = 
+                map[index].tile;
+              printf( "3 %d, %d, %d\n", current_index, index, tile_array->level );
+              break;
+
+            case REGION_LEVEL:
+              current_tile =
+                map[tile_array->world_index].regions[index].tile;
+              printf( "4 %d, %d, %d\n", current_index, index, tile_array->level );
+              break;
+
+            case LOCAL_LEVEL:
+              current_tile =
+                map[tile_array->world_index].regions[tile_array->region_index].tiles[index];
+              printf( "5 %d, %d, %d\n", current_index, index, tile_array->level );
+              break;
+          }
+          break;
+
+        case LOCAL_LEVEL:
+          current_index = INDEX_3( ( current_y + j ), ( current_x + i ),
+                                     pos.local_z, map->local_width,
+                                     map->local_height );
+          
+          current_index -= ( map->local_width * map->local_height * pos.local_z );
+          
+          current_width  = map->local_width;
+          current_height = map->local_height;
+          
+          switch ( tile_array->level ) 
+          {
+            case WORLD_LEVEL:
+              current_tile = map[index].tile;
+              printf( "6 %d, %d, %d\n", current_index, index, tile_array->level );
+              break;
+
+            case REGION_LEVEL:
+              current_tile = map[tile_array->world_index]
+                .regions[index].tile;
+              printf( "7 %d, %d, %d\n", current_index, index, tile_array->level );
+              break;
+
+            case LOCAL_LEVEL:
+              current_tile = map[tile_array->world_index]
+                .regions[tile_array->region_index].tiles[index];
+              printf( "8 %d, %d, %d\n", current_index, index, tile_array->level );
+              break;
+          }
+          break;
+      }
+      
+      e_GetCellSize( current_index, current_width, current_height,
+                     &x, &y, &w, &h );
+
+      a_DrawFilledRect( x, y, game_glyphs->rects[current_tile.glyph].w * 2,
+                       game_glyphs->rects[current_tile.glyph].h * 2, 
+                       255, 0, 255, 255 );
+
+      a_BlitTextureRect( game_glyphs->texture, game_glyphs->rects[current_tile.glyph],
+                        x, y, 2, master_colors[APOLLO_PALETE][current_tile.fg] );
       
       
       if ( k < tile_array->count )
@@ -568,9 +653,6 @@ void e_MapMouseCheck( WorldPosition_t* pos )
       pos->local_index = INDEX_3( pos->y, pos->x,
                                   pos->local_z, map->local_width,
                                   map->local_height );
-      break;
-
-    default:
       break;
   }
 } 
@@ -678,6 +760,30 @@ void e_LoadColorPalette( aColor_t palette[MAX_COLOR_GROUPS][MAX_COLOR_PALETTE],
   }
 
   fclose( file );
+
+}
+
+void we_DrawEditorHotKeys( int x, int y, int key, int abbv0, int abbv1,
+                           int abbv2, int abbv3 )
+{
+  a_DrawFilledRect( x, y, GLYPH_WIDTH * 6, GLYPH_HEIGHT,
+                   master_colors[APOLLO_PALETE][36].r,
+                   master_colors[APOLLO_PALETE][36].g,
+                   master_colors[APOLLO_PALETE][36].b,
+                   master_colors[APOLLO_PALETE][36].a );
+
+  a_BlitTextureRect( game_glyphs->texture, game_glyphs->rects[key],
+                    x, y, 1, master_colors[APOLLO_PALETE][10] );
+  a_BlitTextureRect( game_glyphs->texture, game_glyphs->rects[GLYPH_COLON],
+                    x + 9, y, 1, master_colors[APOLLO_PALETE][10] );
+  a_BlitTextureRect( game_glyphs->texture, game_glyphs->rects[abbv0],
+                    x + 18, y, 1, master_colors[APOLLO_PALETE][10] );
+  a_BlitTextureRect( game_glyphs->texture, game_glyphs->rects[abbv1],
+                    x + 27, y, 1, master_colors[APOLLO_PALETE][10] );
+  a_BlitTextureRect( game_glyphs->texture, game_glyphs->rects[abbv2],
+                    x + 36, y, 1, master_colors[APOLLO_PALETE][10] );
+  a_BlitTextureRect( game_glyphs->texture, game_glyphs->rects[abbv3],
+                    x + 42, y, 1, master_colors[APOLLO_PALETE][10] );
 
 }
 

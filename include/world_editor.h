@@ -111,20 +111,23 @@ void we_Load( void );
 void we_DrawWorldCell( int index, World_t* map, WorldPosition_t pos,
     WorldPosition_t highlight );
 
+void we_DrawEditorHotKeys( int x, int y, int key, int abbv0, int abbv1,
+                           int abbv2, int abbv3 );
+
 GameTileArray_t* e_GetSelectGrid( World_t* map, WorldPosition_t pos,
                                    WorldPosition_t highlight );
 
 void e_DrawSelectGrid( World_t* map, WorldPosition_t pos,
                                    WorldPosition_t highlight );
 
-void e_ChangeGameTileGlyph( World_t* map, WorldPosition_t pos,
-    GameTileArray_t* tile_array, int glyph_index );
-
-void e_ChangeGameTileColor( World_t* map, WorldPosition_t pos,
-                            GameTileArray_t* tile_array, int color_index,
-                            int type );
-
 void e_ChangeGameTile( World_t* map, WorldPosition_t pos,
+                            GameTileArray_t* tile_array, int glyph_index,
+                            int bg_index, int fg_index );
+
+void e_PasteGameTile( World_t* map, WorldPosition_t pos,
+                       GameTileArray_t* tile_array );
+
+void e_DrawPastePreview( World_t* map, WorldPosition_t pos,
                        GameTileArray_t* tile_array );
 
 void wec_GenerateWorld( void );
