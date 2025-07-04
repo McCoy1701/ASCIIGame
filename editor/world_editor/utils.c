@@ -480,19 +480,16 @@ void e_DrawPastePreview( World_t* map, WorldPosition_t pos,
           {
             case WORLD_LEVEL:
               current_tile = map[index].tile;
-              printf( "0 %d, %d, %d\n", current_index, index, tile_array->level );
               break;
 
             case REGION_LEVEL:
               current_tile = 
                 map[tile_array->world_index].regions[index].tile;
-              printf( "1 %d, %d, %d\n", current_index, index, tile_array->level );
               break;
 
             case LOCAL_LEVEL:
               current_tile = map[tile_array->world_index].
                 regions[tile_array->region_index].tiles[index];
-              printf( "2 %d, %d, %d\n", current_index, index, tile_array->level );
               break;
           }
           break;
@@ -509,19 +506,16 @@ void e_DrawPastePreview( World_t* map, WorldPosition_t pos,
             case WORLD_LEVEL:
               current_tile = 
                 map[index].tile;
-              printf( "3 %d, %d, %d\n", current_index, index, tile_array->level );
               break;
 
             case REGION_LEVEL:
               current_tile =
                 map[tile_array->world_index].regions[index].tile;
-              printf( "4 %d, %d, %d\n", current_index, index, tile_array->level );
               break;
 
             case LOCAL_LEVEL:
               current_tile =
                 map[tile_array->world_index].regions[tile_array->region_index].tiles[index];
-              printf( "5 %d, %d, %d\n", current_index, index, tile_array->level );
               break;
           }
           break;
@@ -540,19 +534,16 @@ void e_DrawPastePreview( World_t* map, WorldPosition_t pos,
           {
             case WORLD_LEVEL:
               current_tile = map[index].tile;
-              printf( "6 %d, %d, %d\n", current_index, index, tile_array->level );
               break;
 
             case REGION_LEVEL:
               current_tile = map[tile_array->world_index]
                 .regions[index].tile;
-              printf( "7 %d, %d, %d\n", current_index, index, tile_array->level );
               break;
 
             case LOCAL_LEVEL:
               current_tile = map[tile_array->world_index]
                 .regions[tile_array->region_index].tiles[index];
-              printf( "8 %d, %d, %d\n", current_index, index, tile_array->level );
               break;
           }
           break;
