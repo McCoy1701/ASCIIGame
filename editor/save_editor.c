@@ -128,7 +128,7 @@ World_t* LoadWorld( const char* filename )
 
     for ( int j = 0; j < ( region_width * region_height ); j++ )
     {
-      new_world[i].regions[j].tiles = (GameTile_t*)malloc( sizeof(GameTile_t )
+      new_world[i].regions[j].tiles = ( GameTile_t* )malloc( sizeof( GameTile_t )
                                       * local_width * local_height * z_height );
       if ( new_world[i].regions[j].tiles == NULL )
       {

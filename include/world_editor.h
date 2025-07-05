@@ -48,17 +48,6 @@ void e_InitWorldEditor( void );
  * -- After calling, world editor functions become unsafe to use
  */
 void e_DestroyWorldEditor( void );
-void e_GetCellSize( int index, int width, int height,
-                    int* x, int* y, int* w, int* h );
-void e_GetCellAtMouse( int width, int height, int originx, int originy,
-                       int cell_width, int cell_height, uint8_t* grid_x,
-                       uint8_t* grid_y, int centered );
-void e_MapMouseCheck( WorldPosition_t* pos );
-void e_GlyphMouseCheck( int* index, uint8_t* grid_x, uint8_t* grid_y );
-void e_ColorMouseCheck( int* index, uint8_t* grid_x, uint8_t* grid_y );
-void e_LevelZHeightCheck( WorldPosition_t* pos );
-void e_LoadColorPalette( aColor_t palette[MAX_COLOR_GROUPS][MAX_COLOR_PALETTE],
-                       const char * filename );
 
 /*
  * Enter world creation mode with generation parameters UI
@@ -113,22 +102,6 @@ void we_DrawWorldCell( int index, World_t* map, WorldPosition_t pos,
 
 void we_DrawEditorHotKeys( int x, int y, int key, int abbv0, int abbv1,
                            int abbv2, int abbv3 );
-
-GameTileArray_t* e_GetSelectGrid( World_t* map, WorldPosition_t pos,
-                                   WorldPosition_t highlight );
-
-void e_DrawSelectGrid( World_t* map, WorldPosition_t pos,
-                                   WorldPosition_t highlight );
-
-void e_ChangeGameTile( World_t* map, WorldPosition_t pos,
-                            GameTileArray_t* tile_array, int glyph_index,
-                            int bg_index, int fg_index );
-
-void e_PasteGameTile( World_t* map, WorldPosition_t pos,
-                       GameTileArray_t* tile_array );
-
-void e_DrawPastePreview( World_t* map, WorldPosition_t pos,
-                       GameTileArray_t* tile_array );
 
 void wec_GenerateWorld( void );
 

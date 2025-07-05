@@ -11,6 +11,7 @@
 #include "Archimedes.h"
 #include "Daedalus.h"
 #include "defs.h"
+#include "editor.h"
 #include "init_editor.h"
 #include "world_editor.h"
 #include "item_editor.h"
@@ -23,6 +24,7 @@ static void eDraw( float );
 
 GlyphArray_t* game_glyphs = NULL;
 aColor_t master_colors[MAX_COLOR_GROUPS][48] = {0};
+float zoom_level = 2.0f;
 
 void e_InitEditor( void )
 {

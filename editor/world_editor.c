@@ -123,6 +123,7 @@ void we_Load( void )
 static void e_WorldEditorLogic( float dt )
 {
   a_DoInput();
+  
   if ( map!= NULL )
   {
     e_MapMouseCheck( &highlighted_pos );

@@ -70,7 +70,7 @@ void we_Edit( void )
 static void we_EditLogic( float dt )
 {
   a_DoInput();
-  
+
   if ( map != NULL )
   {
     e_MapMouseCheck( &highlighted_pos );
