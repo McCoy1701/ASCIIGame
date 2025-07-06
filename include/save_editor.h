@@ -13,6 +13,8 @@
 
 int SaveWorld( World_t* world, const char* filename );
 World_t* LoadWorld( const char* filename );
+World_t* LoadPartialWorld( const char* filename );
+int LoadPartialRegion( WorldPosition_t* pos, World_t* world, const char* filename );
 
 #endif
 

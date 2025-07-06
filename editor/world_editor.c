@@ -116,7 +116,7 @@ void we_Load( void )
 {
   if ( map == NULL ) 
   {
-    map = LoadWorld( "resources/world/map.dat" );
+    map = LoadPartialWorld( "resources/world/map.dat" );
   }
 }
 

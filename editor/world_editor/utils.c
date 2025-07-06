@@ -13,6 +13,7 @@
 #include "defs.h"
 #include "editor.h"
 #include "glyphs.h"
+#include "save_editor.h"
 #include "structs.h"
 #include "world_editor.h"
 
@@ -674,8 +675,14 @@ void e_LevelZHeightCheck( WorldPosition_t* pos )
   {
     app.keyboard[SDL_SCANCODE_RETURN] = 0;
 
-    if ( pos->level >= 0 && pos->level < LOCAL_LEVEL )
+    if ( pos->level >= WORLD_LEVEL && pos->level < LOCAL_LEVEL )
     {
+      if ( map[pos->world_index].regions == NULL )
+      {
+        printf("change level\n");
+        LoadPartialRegion( pos, map, "resources/world/map.dat" );
+
+      }
       pos->level++;
     }
 
@@ -685,7 +692,7 @@ void e_LevelZHeightCheck( WorldPosition_t* pos )
   {
     app.keyboard[SDL_SCANCODE_BACKSPACE] = 0;
 
-    if ( pos->level > 0 && pos->level <= LOCAL_LEVEL )
+    if ( pos->level > WORLD_LEVEL && pos->level <= LOCAL_LEVEL )
     {
       pos->level--;
     }
