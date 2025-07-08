@@ -23,7 +23,7 @@ enum
 
 enum
 {
-  WORLD_LEVEL = 0,
+  REALM_LEVEL = 0,
   REGION_LEVEL,
   LOCAL_LEVEL
 
@@ -74,19 +74,25 @@ typedef struct
 {
   RegionCell_t* regions;
   GameTile_t tile;
-
-  uint8_t world_width;
-  uint8_t world_height;
-  uint8_t region_width;
-  uint8_t region_height;
-  uint8_t local_width;
-  uint8_t local_height;
-  uint8_t z_height;
   
   // floats (1 is 100%, 0.5 is 50%, etc.)
   float temperature_factor; // every region in this world cell
   float elevation_factor; // every region in this world cell
   
+} Realm_t;
+
+typedef struct
+{
+  Realm_t* realms;
+
+  uint8_t realm_width;
+  uint8_t realm_height;
+  uint8_t region_width;
+  uint8_t region_height;
+  uint8_t local_width;
+  uint8_t local_height;
+  uint8_t z_height;
+ 
 } World_t;
 
 typedef struct
@@ -94,6 +100,7 @@ typedef struct
   char magic[8];
   uint16_t version;
   uint8_t world_width, world_height;
+  uint8_t realm_width, realm_height;
   uint8_t region_width, region_height;
   uint8_t local_width, local_height;
   uint8_t z_height;
@@ -104,12 +111,13 @@ typedef struct
 typedef struct // World_Position_t
 {
   // refer to in game tiles as 'world-index:region-index:z'
-  uint8_t world_index;
-  uint8_t region_index;
+  uint8_t  world_index;
+  uint8_t  realm_index;
+  uint8_t  region_index;
   uint16_t local_index;
-  uint8_t local_z;
-  uint8_t x, y;
-  uint8_t level;  //TODO: needs moved out of here and put into RenderWorldBuffer_t once created
+  uint8_t  local_z;
+  uint8_t  x, y;
+  uint8_t  level;  //TODO: needs moved out of here and put into RenderWorldBuffer_t once created
 
 } WorldPosition_t;
 

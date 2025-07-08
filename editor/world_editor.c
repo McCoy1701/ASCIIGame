@@ -40,11 +40,12 @@ void e_InitWorldEditor( void )
 
   pos_text = malloc( sizeof(char) * 50 );
 
-  current_pos = (WorldPosition_t){ .world_index = 0, .region_index = 0,
-    .local_index = 0, .level = 0, .local_z = 0 };
-  snprintf(pos_text, 50, "%d,%d,%d,%d,%d\n", current_pos.world_index,
-           current_pos.region_index, current_pos.local_index, current_pos.level,
-           current_pos.local_z );
+  current_pos = ( WorldPosition_t ){ .world_index = 0, .realm_index = 0,
+    .region_index = 0, .local_index = 0, .level = 0, .local_z = 0 };
+
+  snprintf(pos_text, 50, "%d,%d,%d,%d,%d,%d\n", current_pos.world_index,
+           current_pos.realm_index, current_pos.region_index,
+           current_pos.local_index, current_pos.level, current_pos.local_z );
 
   a_InitWidgets( "resources/widgets/editor/world.json" );
 
@@ -191,8 +192,16 @@ static void e_WorldEditorDraw( float dt )
     int draw_size = 0;
     switch ( current_pos.level )
     {
-      case WORLD_LEVEL:
-        draw_size = map->world_width * map->world_height;
+      case REALM_LEVEL:
+        for ( int i = 0; i < ( WORLD_WIDTH* WORLD_HEIGHT ); i++ )
+        {
+          draw_size = map->realm_width * map->realm_height;
+          for( int j = 0; j < draw_size; j++ )
+          {
+            we_DrawWorldCell( j, map, current_pos, highlighted_pos );
+          }
+
+        }
         break;
 
       case REGION_LEVEL:
