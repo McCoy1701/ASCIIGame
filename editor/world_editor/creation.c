@@ -15,6 +15,7 @@ static void we_CreationLogic( float );
 static void we_CreationDraw( float );
 
 int world_size_index    = 0;
+int realm_size_index    = 0;
 int region_size_index   = 0;
 int local_size_index    = 0;
 int z_height_size_index = 0;
@@ -67,8 +68,8 @@ static void we_CreationDraw( float dt )
 
 void wec_GenerateWorld( void )
 {
-  int new_world_width   = 0;
-  int new_world_height  = 0;
+  int new_realm_width   = 0;
+  int new_realm_height  = 0;
   int new_region_width  = 0;
   int new_region_height = 0;
   int new_local_width   = 0;
@@ -82,10 +83,10 @@ void wec_GenerateWorld( void )
   {
     aWidget_t* current = &container->components[i];
 
-    if ( strcmp( current->name, "world_size" ) == 0 )
+    if ( strcmp( current->name, "realm_size" ) == 0 )
     {
-      aSelectWidget_t* world_size = ( aSelectWidget_t* )current->data;
-      world_size_index = world_size->value;
+      aSelectWidget_t* realm_size = ( aSelectWidget_t* )current->data;
+      realm_size_index = realm_size->value;
     }
 
     if ( strcmp( current->name, "region_size" ) == 0 )
@@ -107,21 +108,21 @@ void wec_GenerateWorld( void )
     }
   }
 
-  switch ( world_size_index ) {
+  switch ( realm_size_index ) {
 
     case 0: //small
-      new_world_width  = WORLD_WIDTH_SMALL;
-      new_world_height = WORLD_HEIGHT_SMALL;
+      new_realm_width  = REALM_WIDTH_SMALL;
+      new_realm_height = REALM_HEIGHT_SMALL;
     break;
 
     case 1: //medium
-      new_world_width  = WORLD_WIDTH_MEDIUM;
-      new_world_height = WORLD_HEIGHT_MEDIUM;
+      new_realm_width  = REALM_WIDTH_MEDIUM;
+      new_realm_height = REALM_HEIGHT_MEDIUM;
     break;
 
     case 2: //large
-      new_world_width  = WORLD_WIDTH_LARGE;
-      new_world_height = WORLD_HEIGHT_LARGE;
+      new_realm_width  = REALM_WIDTH_LARGE;
+      new_realm_height = REALM_HEIGHT_LARGE;
     break;
 
     default:
@@ -190,11 +191,12 @@ void wec_GenerateWorld( void )
 
   if ( map != NULL )
   {
-    free_world( map, ( map->world_width * map->world_height ),
-                     ( map->region_width * map->region_height ) );
+    free_world( map, ( WORLD_WIDTH * WORLD_HEIGHT ),
+              ( map->realm_width * map->realm_height ),
+              ( map->region_width * map->region_height ) );
   }
 
-  map = init_world( new_world_width,  new_world_height, new_region_width,
+  map = init_world( new_realm_width,  new_realm_height, new_region_width,
                     new_region_height, new_local_width, new_local_height,
                     new_z_height );
 

@@ -59,10 +59,11 @@ void we_Edit( void )
   
   pos_text = malloc( sizeof(char) * 50 );
 
-  selected_pos = (WorldPosition_t){ .world_index = 0, .region_index = 0,
+  selected_pos = (WorldPosition_t){ .world_index = 0, .realm_index = 0, .region_index = 0,
     .local_index = 0, .level = 0, .local_z = 0 };
-  snprintf(pos_text, 50, "%d,%d,%d,%d,%d\n", selected_pos.world_index,
-           selected_pos.region_index, selected_pos.local_index, selected_pos.level,
+  snprintf(pos_text, 50, "%d,%d,%d,%d,%d,%d\n", selected_pos.world_index,
+           selected_pos.realm_index, selected_pos.region_index,
+           selected_pos.local_index, selected_pos.level,
            selected_pos.local_z );
 
 }
@@ -83,6 +84,7 @@ static void we_EditLogic( float dt )
     {
       e_MapMouseCheck( &selected_pos );
       highlighted_pos.world_index = selected_pos.world_index;
+      highlighted_pos.realm_index = selected_pos.realm_index;
       highlighted_pos.region_index = selected_pos.region_index;
       highlighted_pos.local_index = selected_pos.local_index;
 
@@ -101,35 +103,46 @@ static void we_EditLogic( float dt )
       if ( editor_mode == WEM_NONE )
       {
         switch ( selected_pos.level ) {
-          case WORLD_LEVEL:
-            map[selected_pos.world_index].tile.glyph = glyph_index;
+          case REALM_LEVEL:
+            map[selected_pos.world_index].
+              realms[selected_pos.realm_index].tile.glyph = glyph_index;
 
-            map[selected_pos.world_index].tile.bg = bg_index;
+            map[selected_pos.world_index].
+              realms[selected_pos.realm_index].tile.bg = bg_index;
 
-            map[selected_pos.world_index].tile.fg = fg_index;
-
+            map[selected_pos.world_index].
+              realms[selected_pos.realm_index].tile.fg = fg_index;
             break;
 
           case REGION_LEVEL:
-            map[selected_pos.world_index].regions[selected_pos.region_index].
-              tile.glyph = glyph_index;
+            map[selected_pos.world_index].
+              realms[selected_pos.realm_index].
+              regions[selected_pos.region_index].tile.glyph = glyph_index;
 
-            map[selected_pos.world_index].regions[selected_pos.region_index].
-              tile.bg = bg_index;
+            map[selected_pos.world_index].
+              realms[selected_pos.realm_index].
+              regions[selected_pos.region_index].tile.bg = bg_index;
 
-            map[selected_pos.world_index].regions[selected_pos.region_index].
-              tile.fg = fg_index;
+            map[selected_pos.world_index].
+              realms[selected_pos.realm_index].
+              regions[selected_pos.region_index].tile.fg = fg_index;
 
             break;
 
           case LOCAL_LEVEL:
-            map[selected_pos.world_index].regions[selected_pos.region_index].
+            map[selected_pos.world_index].
+              realms[selected_pos.realm_index].
+              regions[selected_pos.region_index].
               tiles[selected_pos.local_index].glyph = glyph_index;
             
-            map[selected_pos.world_index].regions[selected_pos.region_index].
+            map[selected_pos.world_index].
+              realms[selected_pos.realm_index].
+              regions[selected_pos.region_index].
               tiles[selected_pos.local_index].bg = bg_index;
 
-            map[selected_pos.world_index].regions[selected_pos.region_index].
+            map[selected_pos.world_index].
+              realms[selected_pos.realm_index].
+              regions[selected_pos.region_index].
               tiles[selected_pos.local_index].fg = fg_index;
 
             break;
@@ -259,8 +272,8 @@ static void we_EditDraw( float dt )
     int draw_size = 0;
     switch ( selected_pos.level )
     {
-      case WORLD_LEVEL:
-        draw_size = map->world_width * map->world_height;         
+      case REALM_LEVEL:
+        draw_size = WORLD_WIDTH * WORLD_HEIGHT;         
         break;
 
       case REGION_LEVEL:

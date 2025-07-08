@@ -128,27 +128,6 @@ static void e_WorldEditorLogic( float dt )
   if ( map!= NULL )
   {
     e_MapMouseCheck( &highlighted_pos );
-    
-    if ( ( current_pos.world_index % map->world_width ) == 0 )
-    {
-      //printf( "top\n" );
-    }
-    
-    else if ( ( ( current_pos.world_index + 1 ) % map->world_width ) == 0 )
-    {
-      //printf( "bottom\n" );
-    }
-    
-    else if ( current_pos.world_index < map->world_width )
-    {
-      //printf( "left\n" );
-    }
-    
-    else if ( current_pos.world_index >= 
-      ( ( map->world_width * map->world_width ) - map->world_width ) )
-    {
-      //printf( "right\n" );
-    }
 
   }
   
@@ -193,7 +172,7 @@ static void e_WorldEditorDraw( float dt )
     switch ( current_pos.level )
     {
       case REALM_LEVEL:
-        for ( int i = 0; i < ( WORLD_WIDTH* WORLD_HEIGHT ); i++ )
+        for ( int i = 0; i < ( WORLD_WIDTH * WORLD_HEIGHT ); i++ )
         {
           draw_size = map->realm_width * map->realm_height;
           for( int j = 0; j < draw_size; j++ )
@@ -219,9 +198,11 @@ static void e_WorldEditorDraw( float dt )
     }
 
 
-    snprintf( pos_text, 50, "%d,%d,%d,%d,%d\n", current_pos.world_index,
-              current_pos.region_index, current_pos.local_index,
-              current_pos.level, current_pos.local_z );
+    snprintf( pos_text, 50, "%d,%d,%d,%d,%d,%d\n", current_pos.world_index,
+              current_pos.realm_index, current_pos.region_index,
+              current_pos.local_index, current_pos.level,
+              current_pos.local_z );
+
     a_DrawText( pos_text, 750, 10, 255, 255, 255, app.font_type,
                 TEXT_ALIGN_CENTER, 0 );
 
@@ -235,8 +216,9 @@ static void e_WorldEditorDraw( float dt )
 
 void e_DestroyWorldEditor( void )
 {
-  free_world( map, ( map->world_width * map->world_height ),
-                   ( map->region_width * map->region_height ) );
+  free_world( map, ( WORLD_WIDTH * WORLD_HEIGHT ),
+              ( map->realm_width * map->realm_height ),
+              ( map->region_width * map->region_height ) );
   map = NULL;
   free( pos_text );
   pos_text = NULL;
