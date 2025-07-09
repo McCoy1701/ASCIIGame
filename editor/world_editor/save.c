@@ -71,7 +71,7 @@ void wes_SaveYes( void )
 {
   if ( map != NULL )
   {
-    SaveWorld( map, "resources/world/map.dat" );
+    //SaveWorld( map, "resources/world/map.dat" );
   }
 
   e_InitEditor();

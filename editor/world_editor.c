@@ -117,7 +117,7 @@ void we_Load( void )
 {
   if ( map == NULL ) 
   {
-    map = LoadPartialWorld( "resources/world/map.dat" );
+    //map = LoadPartialWorld( "resources/world/map.dat" );
   }
 }
 
@@ -127,7 +127,7 @@ static void e_WorldEditorLogic( float dt )
   
   if ( map!= NULL )
   {
-    e_MapMouseCheck( &highlighted_pos );
+    //e_MapMouseCheck( &highlighted_pos );
 
   }
   
@@ -169,15 +169,46 @@ static void e_WorldEditorDraw( float dt )
   if ( map != NULL )
   {
     int draw_size = 0;
+    int x = 0, y = 0, w = 0, h = 0;
+    uint32_t i = 0;
+    uint16_t current_index = 0;
+    uint16_t highlight_index = 0;
+    int current_glyph = 0;
+    int current_bg = 0;
+    int current_fg = 0;
+
     switch ( current_pos.level )
     {
       case REALM_LEVEL:
         for ( int i = 0; i < ( WORLD_WIDTH * WORLD_HEIGHT ); i++ )
         {
-          draw_size = map->realm_width * map->realm_height;
-          for( int j = 0; j < draw_size; j++ )
+          int realm_x = 0, realm_y = 0;
+          realm_x = i / WORLD_HEIGHT; 
+          realm_y = i % WORLD_HEIGHT;
+
+          for( int j = 0; j < ( map->realm_width * map->realm_height ); j++ )
           {
-            we_DrawWorldCell( j, map, current_pos, highlighted_pos );
+            if ( ( x + w ) > map->realm_width )
+            {
+              x = 0;
+              y += GLYPH_HEIGHT;
+            }
+
+            e_GetCellSize( j, map->realm_width, map->realm_height,
+                          &x, &y, &w, &h );
+            
+            current_index   = current_pos.realm_index;
+            highlight_index = highlighted_pos.realm_index;
+            current_glyph   = map[i].realms[j].tile.glyph;
+            current_bg      = map[i].realms[j].tile.bg;
+            current_fg      = map[i].realms[j].tile.fg;
+
+            we_newDrawWorldCell( j, current_index, current_glyph, current_bg,
+                    current_fg, highlight_index,
+                    ( x + ( realm_x * map->realm_width * CELL_WIDTH ) -
+                                ( map->realm_width * CELL_WIDTH ) ),
+                    ( y + ( realm_y * map->realm_height * CELL_HEIGHT) -
+                                ( map->realm_height * CELL_HEIGHT ) ), w, h );
           }
 
         }
@@ -185,17 +216,52 @@ static void e_WorldEditorDraw( float dt )
 
       case REGION_LEVEL:
         draw_size = map->region_width * map->region_height;
+        for ( uint8_t i = 0; i < draw_size; i++ )
+        {
+          e_GetCellSize( i, map->region_width, map->region_height,
+                        &x, &y, &w, &h );
+
+          current_index   = current_pos.region_index;
+          highlight_index = highlighted_pos.region_index;
+          current_glyph   = map[current_pos.world_index].
+            realms[current_pos.realm_index].regions[i].tile.glyph;
+          
+          current_bg      = map[current_pos.world_index].
+            realms[current_pos.realm_index].regions[i].tile.bg;
+          
+          current_fg      = map[current_pos.world_index].
+            realms[current_pos.realm_index].regions[i].tile.fg;
+
+          we_newDrawWorldCell( i, current_index, current_glyph, current_bg,
+                               current_fg, highlight_index, x, y, w, h );
+        }
         break;
 
       case LOCAL_LEVEL:
         draw_size = map->local_width * map->local_height;
+        for ( uint16_t i = 0; i < draw_size; i++ )
+        {
+          e_GetCellSize( i, map->local_width, map->local_height,
+                        &x, &y, &w, &h );
+
+          int index = ( ( current_pos.local_z * ( map->local_width * map->local_height ) 
+            + i ) );
+
+          current_index   = current_pos.local_index;
+          highlight_index = highlighted_pos.local_index;
+          current_glyph   = map[current_pos.world_index].realms[current_pos.realm_index].
+            regions[current_pos.region_index].tiles[i].glyph;
+          current_bg      = map[current_pos.world_index].realms[current_pos.realm_index].
+            regions[current_pos.region_index].tiles[i].bg;
+          current_fg      = map[current_pos.world_index].realms[current_pos.realm_index].
+            regions[current_pos.region_index].tiles[i].fg;
+
+          we_newDrawWorldCell( index, current_index, current_glyph, current_bg,
+                               current_fg, highlight_index, x, y, w, h );
+        }
         break;
     }
 
-    for ( uint16_t i = 0; i < draw_size; i++ )
-    {
-      we_DrawWorldCell( i, map, current_pos, highlighted_pos );
-    }
 
 
     snprintf( pos_text, 50, "%d,%d,%d,%d,%d,%d\n", current_pos.world_index,
@@ -208,7 +274,7 @@ static void e_WorldEditorDraw( float dt )
 
   }
 
-  a_DrawFilledRect( 100, 100, 32, 32, 255, 0, 255, 255 );
+  a_DrawRect( 451, 120, 378, 480, 255, 0, 255, 255 );
   a_DrawFilledRect( 300, 300, 32, 32, 0, 255, 255, 255 );
 
   a_DrawWidgets();

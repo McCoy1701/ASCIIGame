@@ -17,6 +17,46 @@
 #include "structs.h"
 #include "world_editor.h"
 
+void we_newDrawWorldCell( int i, int current_glyph, int current_bg,
+                          int current_fg, WorldPosition_t selected_index,
+                          WorldPosition_t highlight_index, int x, int y, int w, int h )
+{
+  if ( i == selected_index )
+  {
+    a_DrawFilledRect( x, y, game_glyphs->rects[current_glyph].w * 2,
+                      game_glyphs->rects[current_glyph].h * 2, 
+                      255, 255, 0, 255 );
+
+    a_BlitTextureRect( game_glyphs->texture, game_glyphs->rects[current_glyph],
+                      x, y, 2, master_colors[APOLLO_PALETE][current_fg] );
+  } 
+
+  else
+  {
+    a_DrawFilledRect( x, y, game_glyphs->rects[current_glyph].w * 2,
+                      game_glyphs->rects[current_glyph].h * 2,
+                      master_colors[APOLLO_PALETE][current_bg].r, 
+                      master_colors[APOLLO_PALETE][current_bg].g,
+                      master_colors[APOLLO_PALETE][current_bg].b, 255 );
+    
+    a_BlitTextureRect( game_glyphs->texture, game_glyphs->rects[current_glyph],
+                      x, y, 2, master_colors[APOLLO_PALETE][current_fg] );
+
+  }
+  
+  if( i == highlight_index )
+  {
+    a_DrawFilledRect( x, y, game_glyphs->rects[current_glyph].w * 2,
+                     game_glyphs->rects[current_glyph].h * 2, 
+                     255, 0, 255, 255 );
+
+    a_BlitTextureRect( game_glyphs->texture, game_glyphs->rects[current_glyph],
+                      x, y, 2, master_colors[APOLLO_PALETE][current_fg] );
+
+  }
+
+}
+
 void we_DrawWorldCell( int index, World_t* map, WorldPosition_t pos, WorldPosition_t highlight )
 {
   int x, y, w, h;
@@ -141,8 +181,6 @@ void e_DrawSelectGrid( World_t* map, WorldPosition_t pos,
   int current_width = 0, current_height = 0;
   int current_fg    = 0;
   
-  int k = 0;
-
   for ( int i = 0; i < grid_w + 1; i++ )
   {
     for ( int j = 0; j < grid_h + 1; j++ )
@@ -485,13 +523,30 @@ void e_GetCellAtMouse( int width, int height, int originx, int originy,
 
 void e_MapMouseCheck( WorldPosition_t* pos )
 {
-  switch (pos->level) {
-    case REALM_LEVEL: 
-      e_GetCellAtMouse( map->realm_width, map->realm_height,
-                       SCREEN_ORIGIN_X, SCREEN_ORIGIN_Y, CELL_WIDTH,
-                       CELL_HEIGHT, &pos->x, &pos->y, 1 );
+  int originx = 0;
+  int originy = 0;
+  
+  switch ( pos->level ) {
+    case REALM_LEVEL:
+      originx = ( SCREEN_ORIGIN_X ) - ( ( map->realm_width 
+        * CELL_WIDTH ) / 2 ) - ( map->realm_width * CELL_WIDTH );
 
-      pos->world_index = INDEX_2( pos->x, pos->y, map->realm_height );
+      originy = ( SCREEN_ORIGIN_Y ) - ( ( map->realm_height 
+        * CELL_HEIGHT ) / 2 ) - ( map->realm_height * CELL_HEIGHT );
+
+      e_GetCellAtMouse( WORLD_WIDTH, WORLD_HEIGHT, originx, originy,
+                      ( map->realm_width * CELL_WIDTH ), 
+                      ( map->realm_height * CELL_HEIGHT ), &pos->x, &pos->y, 0 );
+      
+      pos->world_index = INDEX_2( pos->x, pos->y, WORLD_HEIGHT );
+      
+      e_GetCellAtMouse( map->realm_width, map->realm_height,
+                        originx + ( pos->x * map->realm_width * CELL_WIDTH ),
+                        originy + ( pos->y * map->realm_height * CELL_HEIGHT ), CELL_WIDTH,
+                        CELL_HEIGHT, &pos->x, &pos->y, 0 );
+
+      pos->realm_index = INDEX_2( pos->x, pos->y, map->realm_height );
+
       break;
 
     case REGION_LEVEL:
@@ -546,7 +601,7 @@ void e_LevelZHeightCheck( WorldPosition_t* pos )
       if ( map[pos->world_index].realms[pos->realm_index].regions == NULL )
       {
         printf("change level\n");
-        LoadPartialRegion( pos, map, "resources/world/map.dat" );
+        //LoadPartialRegion( pos, map, "resources/world/map.dat" );
 
       }
       pos->level++;

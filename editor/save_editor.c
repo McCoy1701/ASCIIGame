@@ -13,7 +13,7 @@
 #include "init_editor.h"
 #include "defs.h"
 
-int SaveWorld( World_t* world, const char* filename )
+/*int SaveWorld( World_t* world, const char* filename )
 {
   FILE* file;
   file = fopen( filename, "wb" );
@@ -163,9 +163,9 @@ World_t* LoadWorld( const char* filename )
   fclose( file );
 
   return new_world;
-}
+}*/
 
-World_t* LoadPartialWorld( const char* filename )
+/*World_t* LoadPartialWorld( const char* filename )
 {
   FILE* file;
   int world_width = 0, world_height = 0, region_width = 0, region_height = 0,
@@ -331,4 +331,4 @@ int LoadPartialRegion( WorldPosition_t* pos, World_t* world, const char* filenam
   fclose( file );
 
   return 0;
-}
+}*/
