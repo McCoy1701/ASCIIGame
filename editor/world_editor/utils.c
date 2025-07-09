@@ -140,21 +140,6 @@ void e_DrawSelectGrid( World_t* map, WorldPosition_t pos,
   int current_glyph = 0;
   int current_width = 0, current_height = 0;
   int current_fg    = 0;
-
-  switch ( pos.level )
-  {
-    case REALM_LEVEL:
-      break;
-    
-    case REGION_LEVEL:
-      break;
-    
-    case LOCAL_LEVEL:
-      break;
-
-    default:
-      break;
-  }
   
   int k = 0;
 
@@ -186,7 +171,6 @@ void e_DrawSelectGrid( World_t* map, WorldPosition_t pos,
           
           current_fg = map[pos.world_index].realms[pos.realm_index].
             regions[current_index].tile.fg;
-          
 
           break;
 
@@ -206,8 +190,6 @@ void e_DrawSelectGrid( World_t* map, WorldPosition_t pos,
 
           break;
 
-        default:
-          break;
       }
 
       e_GetCellSize( current_index, current_width, current_height,
