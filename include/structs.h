@@ -132,7 +132,7 @@ typedef struct // WorldObject_t
 
 typedef struct
 {
-  int* data;
+  GameTile_t* data;
   int count;
   uint8_t w, h;
   uint8_t world_index;

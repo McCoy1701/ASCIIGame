@@ -28,17 +28,17 @@ void we_DrawWorldCell( int index, World_t* map, WorldPosition_t pos, WorldPositi
   int current_fg = 0;
 
   switch ( pos.level ) {
-    case WORLD_LEVEL:
-      e_GetCellSize( index, map->world_width, map->world_height,
+    case REALM_LEVEL:
+      e_GetCellSize( index, map->realm_width, map->realm_height,
                      &x, &y, &w, &h );
 
       i = index;
 
       current_index   = pos.world_index;
       highlight_index = highlight.world_index;
-      current_glyph   = map[i].tile.glyph;
-      current_bg      = map[i].tile.bg;
-      current_fg      = map[i].tile.fg;
+      current_glyph   = map[pos.world_index].realms[i].tile.glyph;
+      current_bg      = map[pos.world_index].realms[i].tile.bg;
+      current_fg      = map[pos.world_index].realms[i].tile.fg;
       break;
 
     case REGION_LEVEL:
@@ -49,9 +49,9 @@ void we_DrawWorldCell( int index, World_t* map, WorldPosition_t pos, WorldPositi
 
       current_index   = pos.region_index;
       highlight_index = highlight.region_index;
-      current_glyph   = map[pos.world_index].regions[i].tile.glyph;
-      current_bg      = map[pos.world_index].regions[i].tile.bg;
-      current_fg      = map[pos.world_index].regions[i].tile.fg;
+      current_glyph   = map[pos.world_index].realms[pos.realm_index].regions[i].tile.glyph;
+      current_bg      = map[pos.world_index].realms[pos.realm_index].regions[i].tile.bg;
+      current_fg      = map[pos.world_index].realms[pos.realm_index].regions[i].tile.fg;
       break;
 
     case LOCAL_LEVEL:
@@ -63,12 +63,12 @@ void we_DrawWorldCell( int index, World_t* map, WorldPosition_t pos, WorldPositi
 
       current_index   = pos.local_index;
       highlight_index = highlight.local_index;
-      current_glyph   = map[pos.world_index].regions[pos.region_index].
-        tiles[i].glyph;
-      current_bg      = map[pos.world_index].regions[pos.region_index].tiles[i]
-        .bg;
-      current_fg      = map[pos.world_index].regions[pos.region_index].tiles[i]
-        .fg;
+      current_glyph   = map[pos.world_index].realms[pos.realm_index].
+        regions[pos.region_index].tiles[i].glyph;
+      current_bg      = map[pos.world_index].realms[pos.realm_index].
+        regions[pos.region_index].tiles[i].bg;
+      current_fg      = map[pos.world_index].realms[pos.realm_index].
+        regions[pos.region_index].tiles[i].fg;
 
       break;
 
@@ -143,19 +143,13 @@ void e_DrawSelectGrid( World_t* map, WorldPosition_t pos,
 
   switch ( pos.level )
   {
-    case WORLD_LEVEL:
-      current_width  = map->world_width;
-      current_height = map->world_height;
+    case REALM_LEVEL:
       break;
     
     case REGION_LEVEL:
-      current_width  = map->region_width;
-      current_height = map->region_height;
       break;
     
     case LOCAL_LEVEL:
-      current_width  = map->local_width;
-      current_height = map->local_height;
       break;
 
     default:
@@ -170,37 +164,43 @@ void e_DrawSelectGrid( World_t* map, WorldPosition_t pos,
     {
       switch ( pos.level )
       {
-        case WORLD_LEVEL:
+        case REALM_LEVEL:
+          current_width  = map->realm_width;
+          current_height = map->realm_height;
           current_index = INDEX_2( ( current_x + i ), ( current_y + j ),
                                   current_height );
 
-          current_glyph = map[current_index].tile.glyph;
-          current_fg = map[current_index].tile.fg;
+          current_glyph = map[pos.world_index].realms[current_index].tile.glyph;
+          current_fg = map[pos.world_index].realms[current_index].tile.fg;
           
           break;
 
         case REGION_LEVEL:
+          current_width  = map->region_width;
+          current_height = map->region_height;
           current_index = INDEX_2( ( current_x + i ), ( current_y + j ),
                                   current_height );
 
-          current_glyph = map[pos.world_index].regions[current_index].
-            tile.glyph;
+          current_glyph = map[pos.world_index].realms[pos.realm_index].
+            regions[current_index].tile.glyph;
           
-          current_fg = map[pos.world_index].regions[current_index].
-            tile.fg;
+          current_fg = map[pos.world_index].realms[pos.realm_index].
+            regions[current_index].tile.fg;
           
 
           break;
 
         case LOCAL_LEVEL:
+          current_width  = map->local_width;
+          current_height = map->local_height;
           current_index = INDEX_3( ( current_y + j ), ( current_x + i ),
                                      current_z, current_width, current_height );
           
-          current_fg = map[pos.world_index].regions[pos.region_index].
-            tiles[current_index].fg;
+          current_fg = map[pos.world_index].realms[pos.realm_index].
+            regions[pos.region_index].tiles[current_index].fg;
 
-          current_glyph = map[pos.world_index].regions[pos.region_index].
-            tiles[current_index].glyph;
+          current_glyph = map[pos.world_index].realms[pos.realm_index].
+            regions[pos.region_index].tiles[current_index].glyph;
 
           current_index -= ( map->local_width * map->local_height * pos.local_z );
 
@@ -263,7 +263,7 @@ GameTileArray_t* e_GetSelectGrid( World_t* map, WorldPosition_t pos,
   new_game_tile_array->region_index = pos.region_index;
   new_game_tile_array->local_index  = pos.local_index;
 
-  new_game_tile_array->data = ( int* )malloc( sizeof( int ) *
+  new_game_tile_array->data = ( GameTile_t* )malloc( sizeof( GameTile_t ) *
                                             ( grid_w + 1 ) * ( grid_h + 1 ) *
                                               map->z_height );
 
@@ -277,18 +277,19 @@ GameTileArray_t* e_GetSelectGrid( World_t* map, WorldPosition_t pos,
     {
       switch ( pos.level )
       {
-        case WORLD_LEVEL:
+        case REALM_LEVEL:
           current_index = INDEX_2( ( current_x + i ), ( current_y + j ),
-                                  map->world_height );
+                                  map->realm_height );
 
-          new_game_tile_array->data[k++] = current_index;
+          new_game_tile_array->data[k++] = map[pos.world_index].realms[current_index].tile;
           break;
 
         case REGION_LEVEL:
           current_index = INDEX_2( ( current_x + i ), ( current_y + j ),
                                   map->region_height );
 
-          new_game_tile_array->data[k++] = current_index;
+          new_game_tile_array->data[k++] = map[pos.world_index].
+            realms[pos.realm_index].regions[current_index].tile;
 
           break;
 
@@ -297,7 +298,8 @@ GameTileArray_t* e_GetSelectGrid( World_t* map, WorldPosition_t pos,
                                      current_z, map->local_width,
                                      map->local_height );
           
-          new_game_tile_array->data[k++] = current_index;
+          new_game_tile_array->data[k++] = map[pos.world_index].
+            realms[pos.realm_index].regions[pos.region_index].tiles[current_index];
           break;
       }
     }
@@ -312,41 +314,14 @@ void e_ChangeGameTile( World_t* map, WorldPosition_t pos,
                             GameTileArray_t* tile_array, int glyph_index,
                             int bg_index, int fg_index )
 {
-  int index = 0;
+  GameTile_t index = {0};
 
   for ( int i = 0; i < tile_array->count; i++ )
   {
     index = tile_array->data[i];
-    switch (pos.level)
-    {
-      case WORLD_LEVEL:
-        map[index].tile.glyph = glyph_index;
-       
-        map[index].tile.bg    = bg_index;
-       
-        map[index].tile.fg    = fg_index;
-        break;
-
-      case REGION_LEVEL:
-        map[pos.world_index].regions[index].tile.glyph = glyph_index;
-        
-        map[pos.world_index].regions[index].tile.bg    = bg_index;
-        
-        map[pos.world_index].regions[index].tile.fg    = fg_index;
-        break;
-
-      case LOCAL_LEVEL:
-        map[pos.world_index].regions[pos.region_index].
-          tiles[index].glyph = glyph_index;
-        
-        map[pos.world_index].regions[pos.region_index].
-          tiles[index].bg = bg_index;
-        
-        map[pos.world_index].regions[pos.region_index].
-          tiles[index].fg = fg_index;
-
-        break;
-    }
+    index.glyph = glyph_index;
+    index.bg    = bg_index;
+    index.fg    = fg_index;
   }
 
   free( tile_array );
@@ -356,11 +331,11 @@ void e_ChangeGameTile( World_t* map, WorldPosition_t pos,
 void e_PasteGameTile( World_t* map, WorldPosition_t pos,
                        GameTileArray_t* tile_array )
 {
-  int index = 0;
+  GameTile_t index  = {0};
   int current_index = 0;
-  int current_x = pos.x;
-  int current_y = pos.y;
-  int k = 0;
+  int current_x     = pos.x;
+  int current_y     = pos.y;
+  int k             = 0;
   
   for ( int i = 0; i < tile_array->w; i++ )
   {
@@ -369,75 +344,30 @@ void e_PasteGameTile( World_t* map, WorldPosition_t pos,
       index = tile_array->data[k];
       switch (pos.level)
       {
-        case WORLD_LEVEL:
+        case REALM_LEVEL:
           current_index = INDEX_2( ( current_x + i ), ( current_y + j ),
-                                  map->world_height );
+                                  map->realm_height );
 
-          switch ( tile_array->level ) 
-          {
-            case WORLD_LEVEL:
-              map[current_index].tile = map[index].tile;
-              break;
-
-            case REGION_LEVEL:
-              map[current_index].tile = 
-                map[tile_array->world_index].regions[index].tile;
-              break;
-
-            case LOCAL_LEVEL:
-              map[current_index].tile = map[tile_array->world_index].
-                regions[tile_array->region_index].tiles[index];
-              break;
-          }
+          map[pos.world_index].realms[current_index].tile = index;
           break;
 
         case REGION_LEVEL:
           current_index = INDEX_2( ( current_x + i ), ( current_y + j ),
                                   map->region_height );
-          
-          switch ( tile_array->level ) 
-          {
-            case WORLD_LEVEL:
-              map[pos.world_index].regions[current_index].tile = 
-                map[index].tile;
-              break;
 
-            case REGION_LEVEL:
-              map[pos.world_index].regions[current_index].tile = 
-                map[tile_array->world_index].regions[index].tile;
-              break;
-
-            case LOCAL_LEVEL:
-              map[pos.world_index].regions[current_index].tile =
-                map[tile_array->world_index].regions[tile_array->region_index].tiles[index];
-              break;
-          }
+          map[pos.world_index].realms[pos.realm_index].regions[current_index].
+            tile = index;
           break;
+          
 
         case LOCAL_LEVEL:
           current_index = INDEX_3( ( current_y + j ), ( current_x + i ),
                                      pos.local_z, map->local_width,
                                      map->local_height );
           
-          switch ( tile_array->level ) 
-          {
-            case WORLD_LEVEL:
-              map[pos.world_index].regions[pos.region_index]
-                .tiles[current_index] = map[index].tile;
-              break;
+          map[pos.world_index].realms[pos.realm_index].
+            regions[pos.region_index].tiles[current_index] = index;
 
-            case REGION_LEVEL:
-              map[pos.world_index].regions[pos.region_index]
-                .tiles[current_index] = map[pos.world_index]
-                .regions[index].tile;
-              break;
-
-            case LOCAL_LEVEL:
-              map[pos.world_index].regions[pos.region_index]
-                .tiles[current_index] = map[pos.world_index]
-                .regions[pos.region_index].tiles[index];
-              break;
-          }
           break;
       }
       
@@ -454,10 +384,10 @@ void e_PasteGameTile( World_t* map, WorldPosition_t pos,
 void e_DrawPastePreview( World_t* map, WorldPosition_t pos,
                        GameTileArray_t* tile_array )
 {
-  int index = 0;
+  GameTile_t index  = {0};
   int current_index = 0;
-  int current_x = pos.x;
-  int current_y = pos.y;
+  int current_x     = pos.x;
+  int current_y     = pos.y;
   int x = 0, y = 0, w = 0, h = 0;
   int current_width = 0, current_height = 0;
   GameTile_t current_tile = {0};
@@ -470,59 +400,28 @@ void e_DrawPastePreview( World_t* map, WorldPosition_t pos,
       index = tile_array->data[k];
       switch (pos.level)
       {
-        case WORLD_LEVEL:
-          current_index = INDEX_2( ( current_x + i ), ( current_y + j ),
-                                  map->world_height );
+        case REALM_LEVEL:
+          current_index  = INDEX_2( ( current_x + i ), ( current_y + j ),
+                                  map->realm_height );
           
-          current_width  = map->world_width;
-          current_height = map->world_height;
+          current_width  = map->realm_width;
+          current_height = map->realm_height;
+          current_tile   = index;
 
-          switch ( tile_array->level ) 
-          {
-            case WORLD_LEVEL:
-              current_tile = map[index].tile;
-              break;
-
-            case REGION_LEVEL:
-              current_tile = 
-                map[tile_array->world_index].regions[index].tile;
-              break;
-
-            case LOCAL_LEVEL:
-              current_tile = map[tile_array->world_index].
-                regions[tile_array->region_index].tiles[index];
-              break;
-          }
           break;
 
         case REGION_LEVEL:
-          current_index = INDEX_2( ( current_x + i ), ( current_y + j ),
+          current_index  = INDEX_2( ( current_x + i ), ( current_y + j ),
                                   map->region_height );
           
           current_width  = map->region_width;
           current_height = map->region_height;
+          current_tile   = index;
 
-          switch ( tile_array->level ) 
-          {
-            case WORLD_LEVEL:
-              current_tile = 
-                map[index].tile;
-              break;
-
-            case REGION_LEVEL:
-              current_tile =
-                map[tile_array->world_index].regions[index].tile;
-              break;
-
-            case LOCAL_LEVEL:
-              current_tile =
-                map[tile_array->world_index].regions[tile_array->region_index].tiles[index];
-              break;
-          }
           break;
 
         case LOCAL_LEVEL:
-          current_index = INDEX_3( ( current_y + j ), ( current_x + i ),
+          current_index  = INDEX_3( ( current_y + j ), ( current_x + i ),
                                      pos.local_z, map->local_width,
                                      map->local_height );
           
@@ -530,23 +429,8 @@ void e_DrawPastePreview( World_t* map, WorldPosition_t pos,
           
           current_width  = map->local_width;
           current_height = map->local_height;
+          current_tile   = index;
           
-          switch ( tile_array->level ) 
-          {
-            case WORLD_LEVEL:
-              current_tile = map[index].tile;
-              break;
-
-            case REGION_LEVEL:
-              current_tile = map[tile_array->world_index]
-                .regions[index].tile;
-              break;
-
-            case LOCAL_LEVEL:
-              current_tile = map[tile_array->world_index]
-                .regions[tile_array->region_index].tiles[index];
-              break;
-          }
           break;
       }
       
@@ -620,12 +504,12 @@ void e_GetCellAtMouse( int width, int height, int originx, int originy,
 void e_MapMouseCheck( WorldPosition_t* pos )
 {
   switch (pos->level) {
-    case WORLD_LEVEL: 
-      e_GetCellAtMouse( map->world_width, map->world_height,
+    case REALM_LEVEL: 
+      e_GetCellAtMouse( map->realm_width, map->realm_height,
                        SCREEN_ORIGIN_X, SCREEN_ORIGIN_Y, CELL_WIDTH,
                        CELL_HEIGHT, &pos->x, &pos->y, 1 );
 
-      pos->world_index = INDEX_2( pos->x, pos->y, map->world_height );
+      pos->world_index = INDEX_2( pos->x, pos->y, map->realm_height );
       break;
 
     case REGION_LEVEL:
@@ -675,9 +559,9 @@ void e_LevelZHeightCheck( WorldPosition_t* pos )
   {
     app.keyboard[SDL_SCANCODE_RETURN] = 0;
 
-    if ( pos->level >= WORLD_LEVEL && pos->level < LOCAL_LEVEL )
+    if ( pos->level >= REALM_LEVEL && pos->level < LOCAL_LEVEL )
     {
-      if ( map[pos->world_index].regions == NULL )
+      if ( map[pos->world_index].realms[pos->realm_index].regions == NULL )
       {
         printf("change level\n");
         LoadPartialRegion( pos, map, "resources/world/map.dat" );
@@ -692,7 +576,7 @@ void e_LevelZHeightCheck( WorldPosition_t* pos )
   {
     app.keyboard[SDL_SCANCODE_BACKSPACE] = 0;
 
-    if ( pos->level > WORLD_LEVEL && pos->level <= LOCAL_LEVEL )
+    if ( pos->level > REALM_LEVEL && pos->level <= LOCAL_LEVEL )
     {
       pos->level--;
     }
