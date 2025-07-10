@@ -40,13 +40,13 @@ World_t* init_world( const int realm_width, const int realm_height,
       return NULL;
     }
 
-    new_world->realm_width   = realm_width;
-    new_world->realm_height  = realm_height;
-    new_world->region_width  = region_width;
-    new_world->region_height = region_height;
-    new_world->local_width   = local_width;
-    new_world->local_height  = local_height;
-    new_world->z_height      = z_height;
+    new_world[i].realm_width   = realm_width;
+    new_world[i].realm_height  = realm_height;
+    new_world[i].region_width  = region_width;
+    new_world[i].region_height = region_height;
+    new_world[i].local_width   = local_width;
+    new_world[i].local_height  = local_height;
+    new_world[i].z_height      = z_height;
     
     for ( int j = 0; j < ( realm_width * realm_height ); j++ )
     {

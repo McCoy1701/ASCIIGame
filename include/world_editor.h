@@ -100,8 +100,10 @@ void we_Load( void );
 void we_DrawWorldCell( int index, World_t* map, WorldPosition_t pos,
     WorldPosition_t highlight );
 
-void we_newDrawWorldCell( int i, int current_index, int current_glyph,
-                          int current_bg, int current_fg, int highlight_index,
+void we_newDrawWorldCell( int i, int j,
+                          int current_glyph, int current_bg, int current_fg,
+                          int selected_index, int highlight_index,
+                          int selected_world_index, int highlight_world_index,
                           int x, int y, int w, int h );
 
 void we_DrawEditorHotKeys( int x, int y, int key, int abbv0, int abbv1,
