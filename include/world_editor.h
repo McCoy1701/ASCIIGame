@@ -97,11 +97,11 @@ void we_Save( void );
  */
 void we_Load( void );
 
-void we_DrawWorldCell( int index, World_t* map, WorldPosition_t pos,
-    WorldPosition_t highlight );
+void we_DrawWorld( World_t* world, WorldPosition_t selected_pos,
+                   WorldPosition_t highlighted_pos );
 
-void we_newDrawWorldCell( int i, int j,
-                          int current_glyph, int current_bg, int current_fg,
+void we_DrawWorldCell( int i, int j,
+                          GameTile_t* current_tile,
                           int selected_index, int highlight_index,
                           int selected_world_index, int highlight_world_index,
                           int x, int y, int w, int h );

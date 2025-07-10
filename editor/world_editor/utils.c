@@ -17,138 +17,141 @@
 #include "structs.h"
 #include "world_editor.h"
 
-void we_newDrawWorldCell( int i, int j,
-                          int current_glyph, int current_bg, int current_fg,
+void we_DrawWorld( World_t* world, WorldPosition_t selected_pos,
+                   WorldPosition_t highlighted_pos )
+{
+  int draw_size = 0;
+  int x = 0, y = 0, w = 0, h = 0;
+  uint8_t selected_world_index = 0;
+  uint8_t hightlight_world_index = 0;
+  uint16_t selected_index = 0;
+  uint16_t highlight_index = 0;
+  GameTile_t current_tile = {0};
+
+  switch ( selected_pos.level )
+  {
+    case REALM_LEVEL:
+      for ( int i = 0; i < ( WORLD_WIDTH * WORLD_HEIGHT ); i++ )
+      {
+        int realm_x = 0, realm_y = 0;
+        realm_x = i / WORLD_HEIGHT; 
+        realm_y = i % WORLD_HEIGHT;
+
+        for( int j = 0; j < ( world->realm_width * world->realm_height ); j++ )
+        {
+          e_GetCellSize( j, world->realm_width, world->realm_height,
+                        &x, &y, &w, &h );
+
+          selected_index         = selected_pos.realm_index;
+          selected_world_index   = selected_pos.world_index;
+          highlight_index        = highlighted_pos.realm_index;
+          hightlight_world_index = highlighted_pos.world_index;
+          current_tile = world[i].realms[j].tile;
+
+          we_DrawWorldCell( j, i, &current_tile,
+                              selected_index, highlight_index,
+                              selected_world_index, hightlight_world_index,
+                         ( x + ( realm_x * world->realm_width * CELL_WIDTH ) -
+                         ( world->realm_width * CELL_WIDTH ) ),
+                         ( y + ( realm_y * world->realm_height * CELL_HEIGHT) -
+                         ( world->realm_height * CELL_HEIGHT ) ), w, h );
+        }
+
+      }
+      break;
+
+    case REGION_LEVEL:
+      draw_size = world->region_width * world->region_height;
+      for ( uint8_t i = 0; i < draw_size; i++ )
+      {
+        e_GetCellSize( i, world->region_width, world->region_height,
+                      &x, &y, &w, &h );
+
+        selected_index         = selected_pos.region_index;
+        highlight_index        = highlighted_pos.region_index;
+        selected_world_index   = selected_pos.world_index;
+        hightlight_world_index = highlighted_pos.world_index;
+
+        current_tile   = world[selected_pos.world_index].
+          realms[selected_pos.realm_index].regions[i].tile;
+
+        we_DrawWorldCell( i, selected_pos.world_index, 
+                            &current_tile,
+                            selected_index, highlight_index,
+                            selected_world_index, hightlight_world_index, 
+                            x, y, w, h );
+      }
+      break;
+
+    case LOCAL_LEVEL:
+      for ( uint16_t i = 0; i < world->local_width * world->local_height; i++ )
+      {
+        e_GetCellSize( i, world->local_width, world->local_height,
+                      &x, &y, &w, &h );
+
+        int index = ( ( selected_pos.local_z * 
+          ( world->local_width * world->local_height ) + i ) );
+
+        selected_index         = selected_pos.local_index;
+        highlight_index        = highlighted_pos.local_index;
+        selected_world_index   = selected_pos.world_index;
+        hightlight_world_index = highlighted_pos.world_index;
+
+        current_tile = world[selected_pos.world_index].
+          realms[selected_pos.realm_index].regions[selected_pos.region_index].
+          tiles[i];
+
+        we_DrawWorldCell( index, selected_pos.world_index,
+                            &current_tile,
+                            selected_index, highlight_index,
+                            selected_world_index, hightlight_world_index,
+                            x, y, w, h );
+      }
+      break;
+  }
+
+}
+
+void we_DrawWorldCell( int i, int j,
+                          GameTile_t* current_tile,
                           int selected_index, int highlight_index,
                           int selected_world_index, int highlight_world_index,
                           int x, int y, int w, int h )
 {
   if ( i == selected_index && j == selected_world_index )
   {
-    a_DrawFilledRect( x, y, game_glyphs->rects[current_glyph].w * 2,
-                      game_glyphs->rects[current_glyph].h * 2, 
+    a_DrawFilledRect( x, y, game_glyphs->rects[current_tile->glyph].w * 2,
+                      game_glyphs->rects[current_tile->glyph].h * 2, 
                       255, 255, 0, 255 );
 
-    a_BlitTextureRect( game_glyphs->texture, game_glyphs->rects[current_glyph],
-                      x, y, 2, master_colors[APOLLO_PALETE][current_fg] );
+    a_BlitTextureRect( game_glyphs->texture, 
+                       game_glyphs->rects[current_tile->glyph],
+                    x, y, 2, master_colors[APOLLO_PALETE][current_tile->fg] );
   } 
 
   else
   {
-    a_DrawFilledRect( x, y, game_glyphs->rects[current_glyph].w * 2,
-                     game_glyphs->rects[current_glyph].h * 2,
-                     master_colors[APOLLO_PALETE][current_bg].r, 
-                     master_colors[APOLLO_PALETE][current_bg].g,
-                     master_colors[APOLLO_PALETE][current_bg].b, 255 );
+    a_DrawFilledRect( x, y, game_glyphs->rects[current_tile->glyph].w * 2,
+                     game_glyphs->rects[current_tile->glyph].h * 2,
+                     master_colors[APOLLO_PALETE][current_tile->bg].r, 
+                     master_colors[APOLLO_PALETE][current_tile->bg].g,
+                     master_colors[APOLLO_PALETE][current_tile->bg].b, 255 );
 
-    a_BlitTextureRect( game_glyphs->texture, game_glyphs->rects[current_glyph],
-                      x, y, 2, master_colors[APOLLO_PALETE][current_fg] );
+    a_BlitTextureRect( game_glyphs->texture,
+                       game_glyphs->rects[current_tile->glyph],
+                    x, y, 2, master_colors[APOLLO_PALETE][current_tile->fg] );
 
   }
   
   if( i == highlight_index && j == highlight_world_index )
   {
-    a_DrawFilledRect( x, y, game_glyphs->rects[current_glyph].w * 2,
-                     game_glyphs->rects[current_glyph].h * 2, 
+    a_DrawFilledRect( x, y, game_glyphs->rects[current_tile->glyph].w * 2,
+                     game_glyphs->rects[current_tile->glyph].h * 2, 
                      255, 0, 255, 255 );
 
-    a_BlitTextureRect( game_glyphs->texture, game_glyphs->rects[current_glyph],
-                      x, y, 2, master_colors[APOLLO_PALETE][current_fg] );
-
-  }
-
-}
-
-void we_DrawWorldCell( int index, World_t* map, WorldPosition_t pos, WorldPosition_t highlight )
-{
-  int x, y, w, h;
-  uint32_t i = 0;
-  uint16_t current_index = 0;
-  uint16_t highlight_index = 0;
-  int current_glyph = 0;
-  int current_bg = 0;
-  int current_fg = 0;
-
-  switch ( pos.level ) {
-    case REALM_LEVEL:
-      e_GetCellSize( index, map->realm_width, map->realm_height,
-                     &x, &y, &w, &h );
-
-      i = index;
-
-      current_index   = pos.world_index;
-      highlight_index = highlight.world_index;
-      current_glyph   = map[pos.world_index].realms[i].tile.glyph;
-      current_bg      = map[pos.world_index].realms[i].tile.bg;
-      current_fg      = map[pos.world_index].realms[i].tile.fg;
-      break;
-
-    case REGION_LEVEL:
-      e_GetCellSize( index, map->region_width, map->region_height,
-                     &x, &y, &w, &h );
-
-      i = index;
-
-      current_index   = pos.region_index;
-      highlight_index = highlight.region_index;
-      current_glyph   = map[pos.world_index].realms[pos.realm_index].regions[i].tile.glyph;
-      current_bg      = map[pos.world_index].realms[pos.realm_index].regions[i].tile.bg;
-      current_fg      = map[pos.world_index].realms[pos.realm_index].regions[i].tile.fg;
-      break;
-
-    case LOCAL_LEVEL:
-      e_GetCellSize( index, map->local_width, map->local_height,
-                     &x, &y, &w, &h );
-
-      i = ( ( pos.local_z * ( map->local_width * map->local_height ) 
-        + index ) );
-
-      current_index   = pos.local_index;
-      highlight_index = highlight.local_index;
-      current_glyph   = map[pos.world_index].realms[pos.realm_index].
-        regions[pos.region_index].tiles[i].glyph;
-      current_bg      = map[pos.world_index].realms[pos.realm_index].
-        regions[pos.region_index].tiles[i].bg;
-      current_fg      = map[pos.world_index].realms[pos.realm_index].
-        regions[pos.region_index].tiles[i].fg;
-
-      break;
-
-    default:
-      break;
-  }
-
-  if ( i == current_index )
-  {
-    a_DrawFilledRect( x, y, game_glyphs->rects[current_glyph].w * 2,
-                      game_glyphs->rects[current_glyph].h * 2, 
-                      255, 255, 0, 255 );
-
-    a_BlitTextureRect( game_glyphs->texture, game_glyphs->rects[current_glyph],
-                      x, y, 2, master_colors[APOLLO_PALETE][current_fg] );
-  } 
-
-  else
-  {
-    a_DrawFilledRect( x, y, game_glyphs->rects[current_glyph].w * 2,
-                      game_glyphs->rects[current_glyph].h * 2,
-                      master_colors[APOLLO_PALETE][current_bg].r, 
-                      master_colors[APOLLO_PALETE][current_bg].g,
-                      master_colors[APOLLO_PALETE][current_bg].b, 255 );
-    
-    a_BlitTextureRect( game_glyphs->texture, game_glyphs->rects[current_glyph],
-                      x, y, 2, master_colors[APOLLO_PALETE][current_fg] );
-
-  }
-  
-  if( i == highlight_index )
-  {
-    a_DrawFilledRect( x, y, game_glyphs->rects[current_glyph].w * 2,
-                     game_glyphs->rects[current_glyph].h * 2, 
-                     255, 0, 255, 255 );
-
-    a_BlitTextureRect( game_glyphs->texture, game_glyphs->rects[current_glyph],
-                      x, y, 2, master_colors[APOLLO_PALETE][current_fg] );
+    a_BlitTextureRect( game_glyphs->texture,
+                       game_glyphs->rects[current_tile->glyph],
+                    x, y, 2, master_colors[APOLLO_PALETE][current_tile->fg] );
 
   }
 

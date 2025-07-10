@@ -269,26 +269,7 @@ static void we_EditDraw( float dt )
 {
   if ( map != NULL )
   {
-    int draw_size = 0;
-    switch ( selected_pos.level )
-    {
-      case REALM_LEVEL:
-        draw_size = WORLD_WIDTH * WORLD_HEIGHT;         
-        break;
-
-      case REGION_LEVEL:
-        draw_size = map->region_width * map->region_height;
-        break;
-
-      case LOCAL_LEVEL:
-        draw_size = map->local_width * map->local_height;                      
-        break;
-    }
-
-    for ( uint16_t i = 0; i < draw_size; i++ )
-    {
-      we_DrawWorldCell( i, map, selected_pos, highlighted_pos );
-    }
+    we_DrawWorld( map, selected_pos, highlighted_pos );
 
     if ( editor_mode == WEM_SELECT || editor_mode == WEM_COPY ||
       editor_mode == WEM_MASS_CHANGE )

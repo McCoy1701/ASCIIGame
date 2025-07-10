@@ -170,123 +170,13 @@ static void e_WorldEditorDraw( float dt )
 {
   if ( map != NULL )
   {
-    int draw_size = 0;
-    int x = 0, y = 0, w = 0, h = 0;
-    uint8_t selected_world_index = 0;
-    uint8_t hightlight_world_index = 0;
-    uint16_t selected_index = 0;
-    uint16_t highlight_index = 0;
-    int current_glyph = 0;
-    int current_bg = 0;
-    int current_fg = 0;
+    originx = ( SCREEN_ORIGIN_X ) - ( ( map->realm_width 
+      * CELL_WIDTH ) / 2 ) - ( map->realm_width * CELL_WIDTH );
 
-    switch ( selected_pos.level )
-    {
-      case REALM_LEVEL:
-        originx = ( SCREEN_ORIGIN_X ) - ( ( map->realm_width 
-          * CELL_WIDTH ) / 2 ) - ( map->realm_width * CELL_WIDTH );
-
-        originy = ( SCREEN_ORIGIN_Y ) - ( ( map->realm_height 
-          * CELL_HEIGHT ) / 2 ) - ( map->realm_height * CELL_HEIGHT );
-        
-        for ( int i = 0; i < ( WORLD_WIDTH * WORLD_HEIGHT ); i++ )
-        {
-          int realm_x = 0, realm_y = 0;
-          realm_x = i / WORLD_HEIGHT; 
-          realm_y = i % WORLD_HEIGHT;
-
-          for( int j = 0; j < ( map->realm_width * map->realm_height ); j++ )
-          {
-            e_GetCellSize( j, map->realm_width, map->realm_height,
-                          &x, &y, &w, &h );
-            
-            selected_index         = selected_pos.realm_index;
-            selected_world_index   = selected_pos.world_index;
-            highlight_index        = highlighted_pos.realm_index;
-            hightlight_world_index = selected_pos.world_index;
-            current_glyph          = map[i].realms[j].tile.glyph;
-            current_bg             = map[i].realms[j].tile.bg;
-            current_fg             = map[i].realms[j].tile.fg;
-
-            we_newDrawWorldCell( j, i, 
-                                current_glyph, current_bg, current_fg,
-                                selected_index, highlight_index,
-                                selected_world_index, hightlight_world_index,
-                    ( x + ( realm_x * map->realm_width * CELL_WIDTH ) -
-                                ( map->realm_width * CELL_WIDTH ) ),
-                    ( y + ( realm_y * map->realm_height * CELL_HEIGHT) -
-                                ( map->realm_height * CELL_HEIGHT ) ), w, h );
-          }
-
-        }
-        break;
-
-      case REGION_LEVEL:
-        draw_size = map->region_width * map->region_height;
-        for ( uint8_t i = 0; i < draw_size; i++ )
-        {
-          e_GetCellSize( i, map->region_width, map->region_height,
-                        &x, &y, &w, &h );
-
-          selected_index         = selected_pos.region_index;
-          highlight_index        = highlighted_pos.region_index;
-          selected_world_index   = selected_pos.world_index;
-          hightlight_world_index = highlighted_pos.world_index;
-
-          current_glyph   = map[selected_pos.world_index].
-            realms[selected_pos.realm_index].regions[i].tile.glyph;
-          
-          current_bg      = map[selected_pos.world_index].
-            realms[selected_pos.realm_index].regions[i].tile.bg;
-          
-          current_fg      = map[selected_pos.world_index].
-            realms[selected_pos.realm_index].regions[i].tile.fg;
-
-          we_newDrawWorldCell( i, selected_pos.world_index, 
-                               current_glyph, current_bg, current_fg, 
-                               selected_index, highlight_index,
-                               selected_world_index, hightlight_world_index, 
-                               x, y, w, h );
-        }
-        break;
-
-      case LOCAL_LEVEL:
-        draw_size = map->local_width * map->local_height;
-        for ( uint16_t i = 0; i < draw_size; i++ )
-        {
-          e_GetCellSize( i, map->local_width, map->local_height,
-                        &x, &y, &w, &h );
-
-          int index = ( ( selected_pos.local_z * 
-            ( map->local_width * map->local_height ) + i ) );
-
-          selected_index         = selected_pos.local_index;
-          highlight_index        = highlighted_pos.local_index;
-          selected_world_index   = selected_pos.world_index;
-          hightlight_world_index = highlighted_pos.world_index;
-          
-          current_glyph   = map[selected_pos.world_index].
-            realms[selected_pos.realm_index].regions[selected_pos.region_index].
-            tiles[i].glyph;
-          
-          current_bg = map[selected_pos.world_index].
-            realms[selected_pos.realm_index].regions[selected_pos.region_index].
-            tiles[i].bg;
-          
-          current_fg = map[selected_pos.world_index].
-            realms[selected_pos.realm_index].regions[selected_pos.region_index].
-            tiles[i].fg;
-
-          we_newDrawWorldCell( index, selected_pos.world_index,
-                              current_glyph, current_bg, current_fg, 
-                              selected_index, highlight_index,
-                              selected_world_index, hightlight_world_index,
-                              x, y, w, h );
-        }
-        break;
-    }
-
-
+    originy = ( SCREEN_ORIGIN_Y ) - ( ( map->realm_height 
+      * CELL_HEIGHT ) / 2 ) - ( map->realm_height * CELL_HEIGHT );
+    
+    we_DrawWorld( map, selected_pos, highlighted_pos );
 
     snprintf( pos_text, 50, "%d,%d,%d,%d,%d,%d\n", selected_pos.world_index,
              selected_pos.realm_index, selected_pos.region_index,
