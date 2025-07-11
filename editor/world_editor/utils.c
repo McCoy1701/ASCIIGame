@@ -181,10 +181,11 @@ void e_DrawSelectGrid( World_t* map, WorldPosition_t pos,
 
   int x, y, w, h;
 
-  int current_index = 0;
-  int current_glyph = 0;
+  int current_index       = 0;
+  int current_world_index = 0;
+  GameTile_t current_tile = {0};
+  int test_x = 0, text_y = 0;
   int current_width = 0, current_height = 0;
-  int current_fg    = 0;
   
   for ( int i = 0; i < grid_w + 1; i++ )
   {
@@ -193,13 +194,18 @@ void e_DrawSelectGrid( World_t* map, WorldPosition_t pos,
       switch ( pos.level )
       {
         case REALM_LEVEL:
+          current_world_index = pos.world_index;
           current_width  = map->realm_width;
           current_height = map->realm_height;
           current_index = INDEX_2( ( current_x + i ), ( current_y + j ),
                                   current_height );
 
-          current_glyph = map[pos.world_index].realms[current_index].tile.glyph;
-          current_fg = map[pos.world_index].realms[current_index].tile.fg;
+          if ( current_index > ( ( map->realm_width * map->realm_height ) - 1 ) )
+          {
+            current_world_index ++;
+          }
+
+          current_tile = map[current_world_index].realms[current_index].tile;
           
           break;
 
@@ -209,12 +215,9 @@ void e_DrawSelectGrid( World_t* map, WorldPosition_t pos,
           current_index = INDEX_2( ( current_x + i ), ( current_y + j ),
                                   current_height );
 
-          current_glyph = map[pos.world_index].realms[pos.realm_index].
-            regions[current_index].tile.glyph;
+          current_tile = map[pos.world_index].realms[pos.realm_index].
+            regions[current_index].tile;
           
-          current_fg = map[pos.world_index].realms[pos.realm_index].
-            regions[current_index].tile.fg;
-
           break;
 
         case LOCAL_LEVEL:
@@ -223,11 +226,8 @@ void e_DrawSelectGrid( World_t* map, WorldPosition_t pos,
           current_index = INDEX_3( ( current_y + j ), ( current_x + i ),
                                      current_z, current_width, current_height );
           
-          current_fg = map[pos.world_index].realms[pos.realm_index].
-            regions[pos.region_index].tiles[current_index].fg;
-
-          current_glyph = map[pos.world_index].realms[pos.realm_index].
-            regions[pos.region_index].tiles[current_index].glyph;
+          current_tile = map[pos.world_index].realms[pos.realm_index].
+            regions[pos.region_index].tiles[current_index];
 
           current_index -= ( map->local_width * map->local_height * pos.local_z );
 
@@ -238,16 +238,15 @@ void e_DrawSelectGrid( World_t* map, WorldPosition_t pos,
       e_GetCellSize( current_index, current_width, current_height,
                      &x, &y, &w, &h );
 
-      a_DrawFilledRect( x, y, game_glyphs->rects[current_glyph].w * 2,
-                       game_glyphs->rects[current_glyph].h * 2, 
+      a_DrawFilledRect( x, y, game_glyphs->rects[current_tile.glyph].w * 2,
+                       game_glyphs->rects[current_tile.glyph].h * 2, 
                        255, 0, 255, 255 );
 
-      a_BlitTextureRect( game_glyphs->texture, game_glyphs->rects[current_glyph],
-                        x, y, 2, master_colors[APOLLO_PALETE][current_fg] );
+      a_BlitTextureRect( game_glyphs->texture, game_glyphs->rects[current_tile.glyph],
+                        x, y, 2, master_colors[APOLLO_PALETE][current_tile.fg] );
       
     }
   }
-
 }
 
 GameTileArray_t* e_GetSelectGrid( World_t* map, WorldPosition_t pos,
@@ -292,7 +291,8 @@ GameTileArray_t* e_GetSelectGrid( World_t* map, WorldPosition_t pos,
                                             ( grid_w + 1 ) * ( grid_h + 1 ) *
                                               map->z_height );
 
-  int current_index = 0;
+  int current_index       = 0;
+  int current_world_index = 0;
   
   int k = 0;
 
@@ -303,10 +303,12 @@ GameTileArray_t* e_GetSelectGrid( World_t* map, WorldPosition_t pos,
       switch ( pos.level )
       {
         case REALM_LEVEL:
+          current_world_index = INDEX_2( current_x, current_y, WORLD_HEIGHT );
           current_index = INDEX_2( ( current_x + i ), ( current_y + j ),
                                   map->realm_height );
 
-          new_game_tile_array->data[k++] = map[pos.world_index].realms[current_index].tile;
+          new_game_tile_array->data[k++] = map[current_world_index].
+            realms[current_index].tile;
           break;
 
         case REGION_LEVEL:
