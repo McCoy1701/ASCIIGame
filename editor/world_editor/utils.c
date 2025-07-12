@@ -252,24 +252,76 @@ void e_DrawSelectGrid( World_t* map, WorldPosition_t pos,
 GameTileArray_t* e_GetSelectGrid( World_t* map, WorldPosition_t pos,
                                    WorldPosition_t highlight )
 {
-  int grid_w    = ( highlight.x - pos.x );
-  int grid_h    = ( highlight.y - pos.y );
-  int current_x = pos.x, current_y  = pos.y;
-  int current_z = pos.local_z;
-
-  if ( grid_w < 0 )
+  int grid_w    = 0;
+  int grid_h    = 0;
+  int current_x = 0, current_y = 0;
+  int current_z = 0; 
+  uint8_t world_x = 0;
+  uint8_t world_y = 0;
+  
+  if ( pos.level == REALM_LEVEL )
   {
-    grid_w = ( pos.x - highlight.x );
-    current_x = highlight.x;
+    printf("yes\n");
+    int pos_world_x = pos.world_index / WORLD_HEIGHT;
+    int pos_world_y = pos.world_index % WORLD_HEIGHT;
+    printf("WP: %d, %d\n", pos_world_x, pos_world_y );
+    int global_pos_x = ( pos_world_x * map->realm_width )  + pos.x;
+    int global_pos_y = ( pos_world_y * map->realm_height ) + pos.y;
+    printf("GP: %d, %d\n", global_pos_x, global_pos_y );
+    int highlight_world_x = highlight.world_index / WORLD_HEIGHT;
+    int highlight_world_y = highlight.world_index % WORLD_HEIGHT;
+    printf("HP: %d, %d\n", highlight_world_x, highlight_world_y );
+    int global_highlight_x = ( highlight_world_x * map->realm_width )  + highlight.x;
+    int global_highlight_y = ( highlight_world_y * map->realm_height ) + highlight.y;
+    printf("GH: %d, %d\n", global_highlight_x, global_highlight_y );
+
+    current_x = pos.x;
+    current_y = pos.y;
+    world_x   = pos_world_x;
+    world_y   = pos_world_y;
+    
+    grid_w = ( global_highlight_x - global_pos_x );
+    grid_h = ( global_highlight_y - global_pos_y );
+
+    if ( grid_w < 0 )
+    {
+      grid_w = ( global_pos_x - global_highlight_x );
+      current_x = highlight.x;
+      world_x   = highlight_world_x;
+    }
+
+    if ( grid_h < 0 )
+    {
+      grid_h = ( global_pos_y - global_highlight_y );
+      current_y = highlight.y;
+      world_y   = highlight_world_y;
+    }
 
   }
-
-  if ( grid_h < 0 )
+  
+  else
   {
-    grid_h = ( pos.y - highlight.y );
-    current_y = highlight.y;
+    grid_w    = ( highlight.x - pos.x );
+    grid_h    = ( highlight.y - pos.y );
+    current_x = pos.x;
+    current_y = pos.y;
+    current_z = pos.local_z;
 
+    if ( grid_w < 0 )
+    {
+      grid_w = ( pos.x - highlight.x );
+      current_x = highlight.x;
+
+    }
+
+    if ( grid_h < 0 )
+    {
+      grid_h = ( pos.y - highlight.y );
+      current_y = highlight.y;
+
+    }
   }
+  printf( "wh: %d, %d\n", grid_w, grid_h );
 
   GameTileArray_t* new_game_tile_array = ( GameTileArray_t* )malloc(
     sizeof( GameTileArray_t ) );
@@ -293,6 +345,8 @@ GameTileArray_t* e_GetSelectGrid( World_t* map, WorldPosition_t pos,
 
   int current_index       = 0;
   int current_world_index = 0;
+  int new_x = 0;
+  int new_y = 0;
   
   int k = 0;
 
@@ -303,9 +357,28 @@ GameTileArray_t* e_GetSelectGrid( World_t* map, WorldPosition_t pos,
       switch ( pos.level )
       {
         case REALM_LEVEL:
-          current_world_index = INDEX_2( current_x, current_y, WORLD_HEIGHT );
-          current_index = INDEX_2( ( current_x + i ), ( current_y + j ),
-                                  map->realm_height );
+          new_x = current_x + i;
+          new_y = current_y + j;
+
+          if ( new_x > map->realm_width )
+          {
+            world_x++;
+            printf("WX %d\n", world_x);
+          }
+          
+          if ( new_y > map->realm_height )
+          {
+            world_y++;
+            printf("WY %d\n", world_y);
+          }
+
+          if ( world_x >= 0 && world_x < WORLD_WIDTH
+            && world_y >= 0 && world_y < WORLD_HEIGHT )
+          {
+            current_world_index = INDEX_2( world_x, world_y, WORLD_HEIGHT );
+          }
+
+          current_index = INDEX_2( new_x, new_y, map->realm_height );
 
           new_game_tile_array->data[k++] = map[current_world_index].
             realms[current_index].tile;
@@ -516,11 +589,12 @@ void e_GetCellAtMouse( int width, int height, int originx, int originy,
 
   }
 
-  if ( app.mouse.x > edge_x && app.mouse.x <= edge_x + ( width * cell_width ) &&
-       app.mouse.y > edge_y && app.mouse.y <= edge_y + ( height* cell_height ) )
+  if ( app.mouse.x > edge_x && app.mouse.x <= ( edge_x + ( width  * cell_width ) ) &&
+       app.mouse.y > edge_y && app.mouse.y <= ( edge_y + ( height * cell_height ) ) )
   {
     int mousex = ( ( app.mouse.x - edge_x ) / cell_width  );
     int mousey = ( ( app.mouse.y - edge_y ) / cell_height );
+    
     *grid_x = mousex;
     *grid_y = mousey;
 
@@ -532,6 +606,8 @@ void e_MapMouseCheck( WorldPosition_t* pos )
 {
   int originx = 0;
   int originy = 0;
+  uint8_t world_x = 0, world_y = 0;
+  uint8_t realm_x = 0, realm_y = 0;
   
   switch ( pos->level ) {
     case REALM_LEVEL:
@@ -544,16 +620,29 @@ void e_MapMouseCheck( WorldPosition_t* pos )
       e_GetCellAtMouse( WORLD_WIDTH, WORLD_HEIGHT, originx, originy,
                       ( map->realm_width * CELL_WIDTH ), 
                       ( map->realm_height * CELL_HEIGHT ),
-                      &pos->x, &pos->y, 0 );
+                        &world_x, &world_y, 0 );
       
-      pos->world_index = INDEX_2( pos->x, pos->y, WORLD_HEIGHT );
-      
-      e_GetCellAtMouse( map->realm_width, map->realm_height,
-                        originx + ( pos->x * map->realm_width * CELL_WIDTH ),
-                        originy + ( pos->y * map->realm_height * CELL_HEIGHT ),
-                        CELL_WIDTH, CELL_HEIGHT, &pos->x, &pos->y, 0 );
+      pos->world_index = INDEX_2( world_x, world_y, WORLD_HEIGHT );
+ 
+      if ( app.mouse.x > originx && app.mouse.x <= originx + 
+           ( WORLD_WIDTH * map->realm_width * CELL_WIDTH ) && 
+           app.mouse.y > originy && app.mouse.y <= originy + 
+           ( WORLD_HEIGHT * map->realm_height * CELL_HEIGHT ) )
+      {
+        int mousex = ( ( app.mouse.x - ( originx + ( world_x * map->realm_width
+          * CELL_WIDTH ) ) ) / CELL_WIDTH );
 
-      pos->realm_index = INDEX_2( pos->x, pos->y, map->realm_height );
+        int mousey = ( ( app.mouse.y - ( originy + ( world_y * map->realm_height
+          * CELL_HEIGHT ) ) ) / CELL_HEIGHT );
+
+        pos->x = ( mousex < 0 ) ? 0 : ( mousex > ( map->realm_width )
+          ? ( map->realm_width  - 1 ) : mousex );
+
+        pos->y = ( mousey < 0 ) ? 0 : ( mousey > ( map->realm_height )
+          ? ( map->realm_height - 1 ) : mousey );
+
+        pos->realm_index = INDEX_2( pos->x, pos->y, map->realm_height );
+      }
 
       break;
 

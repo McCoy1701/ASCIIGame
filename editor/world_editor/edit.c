@@ -394,9 +394,9 @@ static void we_EditDraw( float dt )
                GLYPH_WIDTH * 6, GLYPH_HEIGHT, 255, 255, 0, 0 );
   }
 
-  snprintf(pos_text, 50, "%d,%d,%d,%d,%d\n", selected_pos.world_index,
-           selected_pos.region_index, selected_pos.local_index, selected_pos.level,
-           selected_pos.local_z );
+  snprintf(pos_text, 50, "%d,%d,%d,%d,%d,%d\n", selected_pos.world_index,
+           selected_pos.realm_index, selected_pos.region_index, 
+           selected_pos.local_index, selected_pos.level, selected_pos.local_z );
   
   a_DrawText( pos_text, 1170, 680, 255, 255, 255, app.font_type,
              TEXT_ALIGN_CENTER, 0 );

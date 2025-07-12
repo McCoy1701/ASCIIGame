@@ -29,6 +29,10 @@ World_t* map = NULL;
 
 static WorldPosition_t selected_pos;
 static WorldPosition_t highlighted_pos;
+uint8_t selected_world_x = 0, selected_world_y = 0;
+uint8_t selected_realm_x = 0, selected_realm_y = 0;
+uint8_t highlighted_world_x = 0, highlighted_world_y = 0;
+uint8_t highlighted_realm_x = 0, highlighted_realm_y = 0;
 char* pos_text;
 
 static int originx = 0;
@@ -190,15 +194,18 @@ static void e_WorldEditorDraw( float dt )
     realm_x = selected_pos.world_index / WORLD_HEIGHT; 
     realm_y = selected_pos.world_index % WORLD_HEIGHT;
 
-    a_DrawRect( originx + ( realm_x * map->realm_width * CELL_WIDTH ),
-               originy + ( realm_y * map->realm_height * CELL_HEIGHT ),
-               ( map->realm_width * CELL_WIDTH ), 
-               ( map->realm_height * CELL_HEIGHT ),
-               255, 255, 0, 255 );
+    if ( realm_x >= 0 && realm_x < WORLD_WIDTH &&
+         realm_y >= 0 && realm_y < WORLD_HEIGHT )
+    {
+      a_DrawRect( originx + ( realm_x * map->realm_width * CELL_WIDTH ),
+                 originy + ( realm_y * map->realm_height * CELL_HEIGHT ),
+                 ( map->realm_width * CELL_WIDTH ), 
+                 ( map->realm_height * CELL_HEIGHT ),
+                 255, 255, 0, 255 );
+    }
+
   }
   
-
-
   a_DrawRect( 451, 120, 378, 480, 255, 0, 255, 255 );
   a_DrawFilledRect( 300, 300, 32, 32, 0, 255, 255, 255 );
 
