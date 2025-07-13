@@ -347,6 +347,8 @@ GameTileArray_t* e_GetSelectGrid( World_t* map, WorldPosition_t pos,
   int current_world_index = 0;
   int new_x = 0;
   int new_y = 0;
+  int offset_x = 0;
+  int offset_y = 0;
   
   int k = 0;
 
@@ -357,20 +359,28 @@ GameTileArray_t* e_GetSelectGrid( World_t* map, WorldPosition_t pos,
       switch ( pos.level )
       {
         case REALM_LEVEL:
-          new_x = current_x + i;
-          new_y = current_y + j;
-
-          if ( new_x > map->realm_width )
+          if ( new_x > map->realm_width - 1 )
           {
+            current_x = 0;
+            offset_x  = i;
+            new_x     = 0;
             world_x++;
             printf("WX %d\n", world_x);
           }
           
-          if ( new_y > map->realm_height )
+          if ( new_y > map->realm_height - 1)
           {
+            current_y = 0;
+            offset_y  = j;
+            new_y     = 0;
             world_y++;
             printf("WY %d\n", world_y);
           }
+          printf("NXY: %d, %d\n", new_x, new_y );
+          printf("WXY: %d, %d\n", world_x, world_y );
+
+          new_x = current_x + ( i - offset_x );
+          new_y = current_y + ( j - offset_y );
 
           if ( world_x >= 0 && world_x < WORLD_WIDTH
             && world_y >= 0 && world_y < WORLD_HEIGHT )
