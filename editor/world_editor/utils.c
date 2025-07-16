@@ -168,9 +168,8 @@ void we_DrawWorldCell( int i, int j, GameTile_t* current_tile,
 void e_DrawSelectGrid( World_t* world, WorldPosition_t pos,
                                    WorldPosition_t highlight )
 {
-  int grid_w    = 0;
-  int grid_h    = 0;
-  int current_x = 0, current_y  = 0, current_z = 0;
+  int grid_w = 0, grid_h = 0;
+  int current_x = 0, current_y = 0, current_z = 0;
 
   GetSelectGridSize( pos, highlight, &grid_w, &grid_h,
                      &current_x, &current_y, &current_z );
@@ -191,23 +190,29 @@ void e_DrawSelectGrid( World_t* world, WorldPosition_t pos,
       
       if ( pos.level == REALM_LEVEL )
       {
-        int world_x = current_x / world->realm_width;
-        int world_y = current_y / world->realm_width;
-        
+        int world_x = ( current_x + i ) / world->realm_width;
+        int world_y = ( current_y + j ) / world->realm_height;
+        int realm_x = ( current_x + i ) % world->realm_width;
+        int realm_y = ( current_y + j ) % world->realm_height;
+        current_width = world->realm_width;
+        current_height = world->realm_height;
 
-        e_GetCellSize( current_index, current_width, current_height,
-                      &x, &y, &w, &h );
+        x = ( ( SCREEN_WIDTH / 2 )  - ( ( world->realm_width  * CELL_WIDTH ) / 2 ) )
+          + ( realm_x * CELL_WIDTH );
+        y = ( ( SCREEN_HEIGHT / 2 ) - ( ( world->realm_height * CELL_HEIGHT ) / 2 ) )
+          + ( realm_y * CELL_HEIGHT );
+  
+        x = ( x + ( world_x * world->realm_width * CELL_WIDTH ) -
+          ( world->realm_width * CELL_WIDTH ) );
 
-        x = x + ( world_x * world->realm_width * CELL_WIDTH ) - ( world->realm_width * CELL_WIDTH );
-        y = y + ( world_y * world->realm_height * CELL_HEIGHT ) - ( world->realm_height * CELL_HEIGHT );
-
+        y = ( y + ( world_y * world->realm_height * CELL_HEIGHT ) -
+          ( world->realm_height * CELL_HEIGHT ) );
       }
       
       else
       {
         e_GetCellSize( current_index, current_width, current_height,
                       &x, &y, &w, &h );
-
       }
       
       a_DrawFilledRect( x, y, game_glyphs->rects[current_tile.glyph].w * 2,
@@ -290,14 +295,21 @@ void e_ChangeGameTile( World_t* map, WorldPosition_t pos,
 
 }
 
-void e_PasteGameTile( World_t* map, WorldPosition_t pos,
+void e_PasteGameTile( World_t* world, WorldPosition_t pos,
                        GameTileArray_t* tile_array )
 {
   GameTile_t index  = {0};
   int current_index = 0;
-  int current_x     = pos.x;
-  int current_y     = pos.y;
-  int k             = 0;
+  int current_world_index = 0;
+  int world_x = 0, world_y = 0;
+  int new_x = 0, new_y = 0;
+  int k = 0;
+ 
+  int pos_world_x = pos.world_index / WORLD_HEIGHT;
+  int pos_world_y = pos.world_index % WORLD_HEIGHT;
+  int global_pos_x = ( pos_world_x * map->realm_width )  + pos.x;
+  int global_pos_y = ( pos_world_y * map->realm_height ) + pos.y;
+  int current_x = global_pos_x, current_y = global_pos_y;
   
   for ( int i = 0; i < tile_array->w; i++ )
   {
@@ -307,10 +319,16 @@ void e_PasteGameTile( World_t* map, WorldPosition_t pos,
       switch (pos.level)
       {
         case REALM_LEVEL:
-          current_index = INDEX_2( ( current_x + i ), ( current_y + j ),
-                                  map->realm_height );
+          world_x = ( current_x + i ) / world->realm_width;
+          world_y = ( current_y + j ) / world->realm_height;
+          new_x   = ( current_x + i ) % world->realm_width;
+          new_y   = ( current_y + j ) % world->realm_height;
 
-          map[pos.world_index].realms[current_index].tile = index;
+          current_world_index = INDEX_2( world_x, world_y, WORLD_HEIGHT );
+
+          current_index = INDEX_2( new_x, new_y, world->realm_height );
+
+          world[current_world_index].realms[current_index].tile = index;
           break;
 
         case REGION_LEVEL:
@@ -343,17 +361,23 @@ void e_PasteGameTile( World_t* map, WorldPosition_t pos,
 
 }
 
-void e_DrawPastePreview( World_t* map, WorldPosition_t pos,
+void e_DrawPastePreview( World_t* world, WorldPosition_t pos,
                        GameTileArray_t* tile_array )
 {
   GameTile_t index  = {0};
   int current_index = 0;
-  int current_x     = pos.x;
-  int current_y     = pos.y;
   int x = 0, y = 0, w = 0, h = 0;
   int current_width = 0, current_height = 0;
   GameTile_t current_tile = {0};
+  int world_x = 0, world_y = 0;
+  int realm_x = 0, realm_y = 0;
   int k = 0;
+  
+  int pos_world_x = pos.world_index / WORLD_HEIGHT;
+  int pos_world_y = pos.world_index % WORLD_HEIGHT;
+  int global_pos_x = ( pos_world_x * map->realm_width )  + pos.x;
+  int global_pos_y = ( pos_world_y * map->realm_height ) + pos.y;
+  int current_x = global_pos_x, current_y = global_pos_y;
   
   for ( int i = 0; i < tile_array->w; i++ )
   {
@@ -363,11 +387,24 @@ void e_DrawPastePreview( World_t* map, WorldPosition_t pos,
       switch (pos.level)
       {
         case REALM_LEVEL:
-          current_index  = INDEX_2( ( current_x + i ), ( current_y + j ),
-                                  map->realm_height );
+          world_x = ( current_x + i ) / world->realm_width;
+          world_y = ( current_y + j ) / world->realm_height;
+          realm_x = ( current_x + i ) % world->realm_width;
+          realm_y = ( current_y + j ) % world->realm_height;
+
+          x = ( ( SCREEN_WIDTH / 2 )  - ( ( world->realm_width  * CELL_WIDTH ) / 2 ) )
+            + ( realm_x * CELL_WIDTH );
+          y = ( ( SCREEN_HEIGHT / 2 ) - ( ( world->realm_height * CELL_HEIGHT ) / 2 ) )
+            + ( realm_y * CELL_HEIGHT );
+
+          x = ( x + ( world_x * world->realm_width * CELL_WIDTH ) -
+            ( world->realm_width * CELL_WIDTH ) );
+
+          y = ( y + ( world_y * world->realm_height * CELL_HEIGHT ) -
+            ( world->realm_height * CELL_HEIGHT ) );
           
-          current_width  = map->realm_width;
-          current_height = map->realm_height;
+          current_width  = world->realm_width;
+          current_height = world->realm_height;
           current_tile   = index;
 
           break;
@@ -379,6 +416,9 @@ void e_DrawPastePreview( World_t* map, WorldPosition_t pos,
           current_width  = map->region_width;
           current_height = map->region_height;
           current_tile   = index;
+          
+          e_GetCellSize( current_index, current_width, current_height,
+                        &x, &y, &w, &h );
 
           break;
 
@@ -393,11 +433,12 @@ void e_DrawPastePreview( World_t* map, WorldPosition_t pos,
           current_height = map->local_height;
           current_tile   = index;
           
+          e_GetCellSize( current_index, current_width, current_height,
+                        &x, &y, &w, &h );
+          
           break;
       }
       
-      e_GetCellSize( current_index, current_width, current_height,
-                     &x, &y, &w, &h );
 
       a_DrawFilledRect( x, y, game_glyphs->rects[current_tile.glyph].w * 2,
                        game_glyphs->rects[current_tile.glyph].h * 2, 
