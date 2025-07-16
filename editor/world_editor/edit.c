@@ -222,7 +222,7 @@ static void we_EditLogic( float dt )
   
   e_LevelZHeightCheck( &selected_pos );
   highlighted_pos.local_z = selected_pos.local_z;
-  highlighted_pos.level = selected_pos.level;
+  highlighted_pos.level   = selected_pos.level;
   
   if ( app.keyboard[ SDL_SCANCODE_ESCAPE ] == 1 )
   {
@@ -281,7 +281,7 @@ static void we_EditDraw( float dt )
     {
       if ( clipboard != NULL )
       {
-        e_DrawPastePreview(map, highlighted_pos, clipboard );
+        e_DrawPastePreview( map, highlighted_pos, clipboard );
 
       }
     }

@@ -76,13 +76,13 @@ void we_DrawWorld( World_t* world, WorldPosition_t selected_pos,
         e_GetCellSize( i, world->region_width, world->region_height,
                       &x, &y, &w, &h );
 
+        current_tile   = world[selected_pos.world_index].
+          realms[selected_pos.realm_index].regions[i].tile;
+
         selected_index         = selected_pos.region_index;
         highlight_index        = highlighted_pos.region_index;
         selected_world_index   = selected_pos.world_index;
         hightlight_world_index = highlighted_pos.world_index;
-
-        current_tile   = world[selected_pos.world_index].
-          realms[selected_pos.realm_index].regions[i].tile;
 
         we_DrawWorldCell( i, selected_pos.world_index, 
                             &current_tile,
@@ -101,14 +101,14 @@ void we_DrawWorld( World_t* world, WorldPosition_t selected_pos,
         int index = ( ( selected_pos.local_z * 
           ( world->local_width * world->local_height ) + i ) );
 
+        current_tile = world[selected_pos.world_index].
+          realms[selected_pos.realm_index].regions[selected_pos.region_index].
+          tiles[index];
+
         selected_index         = selected_pos.local_index;
         highlight_index        = highlighted_pos.local_index;
         selected_world_index   = selected_pos.world_index;
         hightlight_world_index = highlighted_pos.world_index;
-
-        current_tile = world[selected_pos.world_index].
-          realms[selected_pos.realm_index].regions[selected_pos.region_index].
-          tiles[i];
 
         we_DrawWorldCell( index, selected_pos.world_index,
                             &current_tile,
@@ -301,22 +301,33 @@ void e_PasteGameTile( World_t* world, WorldPosition_t pos,
   GameTile_t index  = {0};
   int current_index = 0;
   int current_world_index = 0;
+  int current_x = 0, current_y = 0;
   int world_x = 0, world_y = 0;
   int new_x = 0, new_y = 0;
   int k = 0;
- 
-  int pos_world_x = pos.world_index / WORLD_HEIGHT;
-  int pos_world_y = pos.world_index % WORLD_HEIGHT;
-  int global_pos_x = ( pos_world_x * map->realm_width )  + pos.x;
-  int global_pos_y = ( pos_world_y * map->realm_height ) + pos.y;
-  int current_x = global_pos_x, current_y = global_pos_y;
+  
+  if ( pos.level == REALM_LEVEL )
+  {
+    int pos_world_x = pos.world_index / WORLD_HEIGHT;
+    int pos_world_y = pos.world_index % WORLD_HEIGHT;
+    int global_pos_x = ( pos_world_x * map->realm_width )  + pos.x;
+    int global_pos_y = ( pos_world_y * map->realm_height ) + pos.y;
+    current_x = global_pos_x, current_y = global_pos_y;
+  }
+  
+  else
+  {
+    current_x = pos.x;
+    current_y = pos.y;
+    printf("Z: %d\n", pos.local_z );
+  }
   
   for ( int i = 0; i < tile_array->w; i++ )
   {
     for ( int j = 0; j < tile_array->h; j++ )
     {
       index = tile_array->data[k];
-      switch (pos.level)
+      switch ( pos.level )
       {
         case REALM_LEVEL:
           world_x = ( current_x + i ) / world->realm_width;
@@ -367,17 +378,28 @@ void e_DrawPastePreview( World_t* world, WorldPosition_t pos,
   GameTile_t index  = {0};
   int current_index = 0;
   int x = 0, y = 0, w = 0, h = 0;
+  int current_x = 0, current_y = 0;
   int current_width = 0, current_height = 0;
   GameTile_t current_tile = {0};
   int world_x = 0, world_y = 0;
   int realm_x = 0, realm_y = 0;
   int k = 0;
   
-  int pos_world_x = pos.world_index / WORLD_HEIGHT;
-  int pos_world_y = pos.world_index % WORLD_HEIGHT;
-  int global_pos_x = ( pos_world_x * map->realm_width )  + pos.x;
-  int global_pos_y = ( pos_world_y * map->realm_height ) + pos.y;
-  int current_x = global_pos_x, current_y = global_pos_y;
+  if ( pos.level == REALM_LEVEL )
+  {
+    int pos_world_x = pos.world_index / WORLD_HEIGHT;
+    int pos_world_y = pos.world_index % WORLD_HEIGHT;
+    int global_pos_x = ( pos_world_x * map->realm_width )  + pos.x;
+    int global_pos_y = ( pos_world_y * map->realm_height ) + pos.y;
+    current_x = global_pos_x, current_y = global_pos_y;
+
+  }
+  
+  else
+  {
+    current_x = pos.x;
+    current_y = pos.y;
+  }
   
   for ( int i = 0; i < tile_array->w; i++ )
   {
