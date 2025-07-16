@@ -17,6 +17,15 @@
 #include "structs.h"
 #include "world_editor.h"
 
+static void GetSelectGridSize( WorldPosition_t pos, WorldPosition_t highlight,
+                               int* grid_w, int* grid_h, int* current_x,
+                               int* current_y, int* current_z );
+
+static GameTile_t GetTileAtPos( World_t* world, WorldPosition_t pos, int i, int j,
+                                int current_x, int current_y, int current_z,
+                                int* current_index, int* current_width,
+                                int* current_height );
+
 void we_DrawWorld( World_t* world, WorldPosition_t selected_pos,
                    WorldPosition_t highlighted_pos )
 {
@@ -46,7 +55,7 @@ void we_DrawWorld( World_t* world, WorldPosition_t selected_pos,
           selected_world_index   = selected_pos.world_index;
           highlight_index        = highlighted_pos.realm_index;
           hightlight_world_index = highlighted_pos.world_index;
-          current_tile = world[i].realms[j].tile;
+          current_tile           = world[i].realms[j].tile;
 
           we_DrawWorldCell( j, i, &current_tile,
                               selected_index, highlight_index,
@@ -112,11 +121,10 @@ void we_DrawWorld( World_t* world, WorldPosition_t selected_pos,
 
 }
 
-void we_DrawWorldCell( int i, int j,
-                          GameTile_t* current_tile,
-                          int selected_index, int highlight_index,
-                          int selected_world_index, int highlight_world_index,
-                          int x, int y, int w, int h )
+void we_DrawWorldCell( int i, int j, GameTile_t* current_tile,
+                       int selected_index, int highlight_index,
+                       int selected_world_index, int highlight_world_index,
+                       int x, int y, int w, int h )
 {
   if ( i == selected_index && j == selected_world_index )
   {
@@ -157,87 +165,51 @@ void we_DrawWorldCell( int i, int j,
 
 }
 
-void e_DrawSelectGrid( World_t* map, WorldPosition_t pos,
+void e_DrawSelectGrid( World_t* world, WorldPosition_t pos,
                                    WorldPosition_t highlight )
 {
-  int grid_w    = ( highlight.x - pos.x );
-  int grid_h    = ( highlight.y - pos.y );
-  int current_x = pos.x, current_y  = pos.y;
-  int current_z = pos.local_z;
+  int grid_w    = 0;
+  int grid_h    = 0;
+  int current_x = 0, current_y  = 0, current_z = 0;
 
-  if ( grid_w < 0 )
-  {
-    grid_w = ( pos.x - highlight.x );
-    current_x = highlight.x;
-
-  }
-
-  if ( grid_h < 0 )
-  {
-    grid_h = ( pos.y - highlight.y );
-    current_y = highlight.y;
-
-  }
+  GetSelectGridSize( pos, highlight, &grid_w, &grid_h,
+                     &current_x, &current_y, &current_z );
 
   int x, y, w, h;
 
-  int current_index       = 0;
-  int current_world_index = 0;
   GameTile_t current_tile = {0};
-  int test_x = 0, text_y = 0;
-  int current_width = 0, current_height = 0;
+  int current_index = 0, current_width = 0, current_height = 0;
   
   for ( int i = 0; i < grid_w + 1; i++ )
   {
     for ( int j = 0; j < grid_h + 1; j++ )
     {
-      switch ( pos.level )
+      current_tile = GetTileAtPos( world, pos, i, j,
+                                   current_x, current_y, current_z,
+                                   &current_index, &current_width,
+                                   &current_height );
+      
+      if ( pos.level == REALM_LEVEL )
       {
-        case REALM_LEVEL:
-          current_world_index = pos.world_index;
-          current_width  = map->realm_width;
-          current_height = map->realm_height;
-          current_index = INDEX_2( ( current_x + i ), ( current_y + j ),
-                                  current_height );
+        int world_x = current_x / world->realm_width;
+        int world_y = current_y / world->realm_width;
+        
 
-          if ( current_index > ( ( map->realm_width * map->realm_height ) - 1 ) )
-          {
-            current_world_index ++;
-          }
+        e_GetCellSize( current_index, current_width, current_height,
+                      &x, &y, &w, &h );
 
-          current_tile = map[current_world_index].realms[current_index].tile;
-          
-          break;
-
-        case REGION_LEVEL:
-          current_width  = map->region_width;
-          current_height = map->region_height;
-          current_index = INDEX_2( ( current_x + i ), ( current_y + j ),
-                                  current_height );
-
-          current_tile = map[pos.world_index].realms[pos.realm_index].
-            regions[current_index].tile;
-          
-          break;
-
-        case LOCAL_LEVEL:
-          current_width  = map->local_width;
-          current_height = map->local_height;
-          current_index = INDEX_3( ( current_y + j ), ( current_x + i ),
-                                     current_z, current_width, current_height );
-          
-          current_tile = map[pos.world_index].realms[pos.realm_index].
-            regions[pos.region_index].tiles[current_index];
-
-          current_index -= ( map->local_width * map->local_height * pos.local_z );
-
-          break;
+        x = x + ( world_x * world->realm_width * CELL_WIDTH ) - ( world->realm_width * CELL_WIDTH );
+        y = y + ( world_y * world->realm_height * CELL_HEIGHT ) - ( world->realm_height * CELL_HEIGHT );
 
       }
+      
+      else
+      {
+        e_GetCellSize( current_index, current_width, current_height,
+                      &x, &y, &w, &h );
 
-      e_GetCellSize( current_index, current_width, current_height,
-                     &x, &y, &w, &h );
-
+      }
+      
       a_DrawFilledRect( x, y, game_glyphs->rects[current_tile.glyph].w * 2,
                        game_glyphs->rects[current_tile.glyph].h * 2, 
                        255, 0, 255, 255 );
@@ -254,75 +226,11 @@ GameTileArray_t* e_GetSelectGrid( World_t* map, WorldPosition_t pos,
 {
   int grid_w    = 0;
   int grid_h    = 0;
-  int current_x = 0, current_y = 0;
-  int current_z = 0; 
-  uint8_t world_x = 0;
-  uint8_t world_y = 0;
+  int current_x = 0, current_y = 0, current_z = 0;
   
-  if ( pos.level == REALM_LEVEL )
-  {
-    printf("yes\n");
-    int pos_world_x = pos.world_index / WORLD_HEIGHT;
-    int pos_world_y = pos.world_index % WORLD_HEIGHT;
-    printf("WP: %d, %d\n", pos_world_x, pos_world_y );
-    int global_pos_x = ( pos_world_x * map->realm_width )  + pos.x;
-    int global_pos_y = ( pos_world_y * map->realm_height ) + pos.y;
-    printf("GP: %d, %d\n", global_pos_x, global_pos_y );
-    int highlight_world_x = highlight.world_index / WORLD_HEIGHT;
-    int highlight_world_y = highlight.world_index % WORLD_HEIGHT;
-    printf("HP: %d, %d\n", highlight_world_x, highlight_world_y );
-    int global_highlight_x = ( highlight_world_x * map->realm_width )  + highlight.x;
-    int global_highlight_y = ( highlight_world_y * map->realm_height ) + highlight.y;
-    printf("GH: %d, %d\n", global_highlight_x, global_highlight_y );
-
-    current_x = pos.x;
-    current_y = pos.y;
-    world_x   = pos_world_x;
-    world_y   = pos_world_y;
-    
-    grid_w = ( global_highlight_x - global_pos_x );
-    grid_h = ( global_highlight_y - global_pos_y );
-
-    if ( grid_w < 0 )
-    {
-      grid_w = ( global_pos_x - global_highlight_x );
-      current_x = highlight.x;
-      world_x   = highlight_world_x;
-    }
-
-    if ( grid_h < 0 )
-    {
-      grid_h = ( global_pos_y - global_highlight_y );
-      current_y = highlight.y;
-      world_y   = highlight_world_y;
-    }
-
-  }
+  GetSelectGridSize( pos, highlight, &grid_w, &grid_h,
+                     &current_x, &current_y, &current_z );
   
-  else
-  {
-    grid_w    = ( highlight.x - pos.x );
-    grid_h    = ( highlight.y - pos.y );
-    current_x = pos.x;
-    current_y = pos.y;
-    current_z = pos.local_z;
-
-    if ( grid_w < 0 )
-    {
-      grid_w = ( pos.x - highlight.x );
-      current_x = highlight.x;
-
-    }
-
-    if ( grid_h < 0 )
-    {
-      grid_h = ( pos.y - highlight.y );
-      current_y = highlight.y;
-
-    }
-  }
-  printf( "wh: %d, %d\n", grid_w, grid_h );
-
   GameTileArray_t* new_game_tile_array = ( GameTileArray_t* )malloc(
     sizeof( GameTileArray_t ) );
 
@@ -342,76 +250,20 @@ GameTileArray_t* e_GetSelectGrid( World_t* map, WorldPosition_t pos,
   new_game_tile_array->data = ( GameTile_t* )malloc( sizeof( GameTile_t ) *
                                             ( grid_w + 1 ) * ( grid_h + 1 ) *
                                               map->z_height );
-
-  int current_index       = 0;
-  int current_world_index = 0;
-  int new_x = 0;
-  int new_y = 0;
-  int offset_x = 0;
-  int offset_y = 0;
-  
+  GameTile_t current_tile = {0};
+  int current_index = 0, current_width = 0, current_height = 0;
   int k = 0;
 
   for ( int i = 0; i < grid_w + 1; i++ )
   {
     for ( int j = 0; j < grid_h + 1; j++ )
     {
-      switch ( pos.level )
-      {
-        case REALM_LEVEL:
-          if ( new_x > map->realm_width - 1 )
-          {
-            current_x = 0;
-            offset_x  = i;
-            new_x     = 0;
-            world_x++;
-            printf("WX %d\n", world_x);
-          }
-          
-          if ( new_y > map->realm_height - 1)
-          {
-            current_y = 0;
-            offset_y  = j;
-            new_y     = 0;
-            world_y++;
-            printf("WY %d\n", world_y);
-          }
-          printf("NXY: %d, %d\n", new_x, new_y );
-          printf("WXY: %d, %d\n", world_x, world_y );
+      current_tile = GetTileAtPos( map, pos, i, j,
+                                   current_x, current_y, current_z,
+                                   &current_index, &current_width,
+                                   &current_height );
 
-          new_x = current_x + ( i - offset_x );
-          new_y = current_y + ( j - offset_y );
-
-          if ( world_x >= 0 && world_x < WORLD_WIDTH
-            && world_y >= 0 && world_y < WORLD_HEIGHT )
-          {
-            current_world_index = INDEX_2( world_x, world_y, WORLD_HEIGHT );
-          }
-
-          current_index = INDEX_2( new_x, new_y, map->realm_height );
-
-          new_game_tile_array->data[k++] = map[current_world_index].
-            realms[current_index].tile;
-          break;
-
-        case REGION_LEVEL:
-          current_index = INDEX_2( ( current_x + i ), ( current_y + j ),
-                                  map->region_height );
-
-          new_game_tile_array->data[k++] = map[pos.world_index].
-            realms[pos.realm_index].regions[current_index].tile;
-
-          break;
-
-        case LOCAL_LEVEL:
-          current_index = INDEX_3( ( current_y + j ), ( current_x + i ),
-                                     current_z, map->local_width,
-                                     map->local_height );
-          
-          new_game_tile_array->data[k++] = map[pos.world_index].
-            realms[pos.realm_index].regions[pos.region_index].tiles[current_index];
-          break;
-      }
+      new_game_tile_array->data[k++] = current_tile;
     }
   }
 
@@ -616,7 +468,7 @@ void e_MapMouseCheck( WorldPosition_t* pos )
 {
   int originx = 0;
   int originy = 0;
-  uint8_t world_x = 0, world_y = 0;
+  uint8_t world_x = pos->world_index / WORLD_HEIGHT, world_y = pos->world_index % WORLD_HEIGHT;
   uint8_t realm_x = 0, realm_y = 0;
   
   switch ( pos->level ) {
@@ -811,5 +663,127 @@ void we_DrawEditorHotKeys( int x, int y, int key, int abbv0, int abbv1,
   a_BlitTextureRect( game_glyphs->texture, game_glyphs->rects[abbv3],
                     x + 42, y, 1, master_colors[APOLLO_PALETE][10] );
 
+}
+
+static void GetSelectGridSize( WorldPosition_t pos, WorldPosition_t highlight,
+                               int* grid_w, int* grid_h, int* current_x,
+                               int* current_y, int* current_z )
+{
+  if ( pos.level == REALM_LEVEL )
+  {
+    int pos_world_x = pos.world_index / WORLD_HEIGHT;
+    int pos_world_y = pos.world_index % WORLD_HEIGHT;
+    int global_pos_x = ( pos_world_x * map->realm_width )  + pos.x;
+    int global_pos_y = ( pos_world_y * map->realm_height ) + pos.y;
+    int highlight_world_x = highlight.world_index / WORLD_HEIGHT;
+    int highlight_world_y = highlight.world_index % WORLD_HEIGHT;
+    int global_highlight_x = ( highlight_world_x * map->realm_width )  + highlight.x;
+    int global_highlight_y = ( highlight_world_y * map->realm_height ) + highlight.y;
+
+    *current_x = global_pos_x;
+    *current_y = global_pos_y;
+    *current_z = pos.local_z;
+    
+    *grid_w = ( global_highlight_x - global_pos_x );
+    *grid_h = ( global_highlight_y - global_pos_y );
+
+    if ( *grid_w < 0 )
+    {
+      *grid_w = ( global_pos_x - global_highlight_x );
+      *current_x = global_highlight_x;
+    }
+
+    if ( *grid_h < 0 )
+    {
+      *grid_h = ( global_pos_y - global_highlight_y );
+      *current_y = global_highlight_y;
+    }
+
+  }
+  
+  else
+  {
+    *grid_w    = ( highlight.x - pos.x );
+    *grid_h    = ( highlight.y - pos.y );
+    *current_x = pos.x;
+    *current_y = pos.y;
+    *current_z = pos.local_z;
+
+    if ( *grid_w < 0 )
+    {
+      *grid_w = ( pos.x - highlight.x );
+      *current_x = highlight.x;
+
+    }
+
+    if ( *grid_h < 0 )
+    {
+      *grid_h = ( pos.y - highlight.y );
+      *current_y = highlight.y;
+
+    }
+  }
+
+}
+
+static GameTile_t GetTileAtPos( World_t* world, WorldPosition_t pos, 
+                                int i, int j, int current_x, int current_y,
+                                int current_z, int* current_index,
+                                int* current_width, int* current_height )
+{
+  int current_world_index = 0;
+  int new_x = 0;
+  int new_y = 0;
+  uint8_t world_x = 0;
+  uint8_t world_y = 0;
+
+  GameTile_t return_tile;
+  
+  switch ( pos.level )
+  {
+    case REALM_LEVEL:
+      *current_width = world->realm_width;
+      *current_height = world->realm_height;
+      world_x = ( current_x + i ) / world->realm_width;
+      world_y = ( current_y + j ) / world->realm_height;
+      new_x   = ( current_x + i ) % world->realm_width;
+      new_y   = ( current_y + j ) % world->realm_height;
+
+      current_world_index = INDEX_2( world_x, world_y, WORLD_HEIGHT );
+
+      *current_index = INDEX_2( new_x, new_y, world->realm_height );
+
+      return_tile = world[current_world_index].
+        realms[*current_index].tile;
+
+      break;
+
+    case REGION_LEVEL:
+      *current_width  = map->region_width;
+      *current_height = map->region_height;
+      *current_index = INDEX_2( ( current_x + i ), ( current_y + j ),
+                              *current_height );
+
+      return_tile = map[pos.world_index].realms[pos.realm_index].
+        regions[*current_index].tile;
+
+      break;
+
+    case LOCAL_LEVEL:
+      *current_width  = map->local_width;
+      *current_height = map->local_height;
+      *current_index = INDEX_3( ( current_y + j ), ( current_x + i ),
+                              current_z, *current_width, *current_height );
+
+      return_tile = map[pos.world_index].realms[pos.realm_index].
+        regions[pos.region_index].tiles[*current_index];
+
+      *current_index -= ( map->local_width * map->local_height * pos.local_z );
+
+      break;
+
+  }
+
+  return return_tile;
 }
 
