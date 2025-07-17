@@ -21,10 +21,20 @@ static void GetSelectGridSize( WorldPosition_t pos, WorldPosition_t highlight,
                                int* grid_w, int* grid_h, int* current_x,
                                int* current_y, int* current_z );
 
-static GameTile_t GetTileAtPos( World_t* world, WorldPosition_t pos, int i, int j,
-                                int current_x, int current_y, int current_z,
-                                int* current_index, int* current_width,
-                                int* current_height );
+static GameTile_t GetTileAtPos( World_t* world, WorldPosition_t pos,
+                                int current_x, int current_y,
+                                int* current_index,
+                                int* current_width, int* current_height );
+
+static void GetOrigin( World_t* world, int* originx, int* originy );
+static void GetCurrentPos( World_t* world, WorldPosition_t pos,
+                           int* current_x, int* current_y );
+
+static void GetScreenPosFromGlobalPos( World_t* world, int current_x,
+                                       int current_y, int* x, int* y );
+
+static void DrawGlyph( int x, int y, GameTile_t current_tile, int scale );
+static void DrawCustomGlyph( int x, int y, int glyph, int bg, int fg, int scale );
 
 void we_DrawWorld( World_t* world, WorldPosition_t selected_pos,
                    WorldPosition_t highlighted_pos )
@@ -128,39 +138,19 @@ void we_DrawWorldCell( int i, int j, GameTile_t* current_tile,
 {
   if ( i == selected_index && j == selected_world_index )
   {
-    a_DrawFilledRect( x, y, game_glyphs->rects[current_tile->glyph].w * 2,
-                      game_glyphs->rects[current_tile->glyph].h * 2, 
-                      255, 255, 0, 255 );
-
-    a_BlitTextureRect( game_glyphs->texture, 
-                       game_glyphs->rects[current_tile->glyph],
-                       x, y, 2, master_colors[APOLLO_PALETE][current_tile->fg] );
+    int green_bg = 9;
+    DrawCustomGlyph( x, y, current_tile->glyph, green_bg, current_tile->fg, 2 );
   } 
 
   else
   {
-    a_DrawFilledRect( x, y, game_glyphs->rects[current_tile->glyph].w * 2,
-                      game_glyphs->rects[current_tile->glyph].h * 2,
-                      master_colors[APOLLO_PALETE][current_tile->bg].r, 
-                      master_colors[APOLLO_PALETE][current_tile->bg].g,
-                      master_colors[APOLLO_PALETE][current_tile->bg].b, 255 );
-
-    a_BlitTextureRect( game_glyphs->texture,
-                       game_glyphs->rects[current_tile->glyph],
-                       x, y, 2, master_colors[APOLLO_PALETE][current_tile->fg] );
-
+    DrawGlyph( x, y, *current_tile, 2 );
   }
   
   if( i == highlight_index && j == highlight_world_index )
   {
-    a_DrawFilledRect( x, y, game_glyphs->rects[current_tile->glyph].w * 2,
-                     game_glyphs->rects[current_tile->glyph].h * 2,
-                     255, 0, 255, 255 );
-
-    a_BlitTextureRect( game_glyphs->texture,
-                       game_glyphs->rects[current_tile->glyph],
-                    x, y, 2, master_colors[APOLLO_PALETE][current_tile->fg] );
-
+    int red_bg = 28;
+    DrawCustomGlyph( x, y, current_tile->glyph, red_bg, current_tile->fg, 2 );
   }
 
 }
@@ -183,30 +173,16 @@ void e_DrawSelectGrid( World_t* world, WorldPosition_t pos,
   {
     for ( int j = 0; j < grid_h + 1; j++ )
     {
-      current_tile = GetTileAtPos( world, pos, i, j,
-                                   current_x, current_y, current_z,
-                                   &current_index, &current_width,
-                                   &current_height );
+      current_tile = GetTileAtPos( world, pos,
+                                   current_x + i, current_y + j,
+                                   &current_index,
+                                   &current_width, &current_height );
       
       if ( pos.level == REALM_LEVEL )
       {
-        int world_x = ( current_x + i ) / world->realm_width;
-        int world_y = ( current_y + j ) / world->realm_height;
-        int realm_x = ( current_x + i ) % world->realm_width;
-        int realm_y = ( current_y + j ) % world->realm_height;
-        current_width = world->realm_width;
+        current_width  = world->realm_width;
         current_height = world->realm_height;
-
-        x = ( ( SCREEN_WIDTH / 2 )  - ( ( world->realm_width  * CELL_WIDTH ) / 2 ) )
-          + ( realm_x * CELL_WIDTH );
-        y = ( ( SCREEN_HEIGHT / 2 ) - ( ( world->realm_height * CELL_HEIGHT ) / 2 ) )
-          + ( realm_y * CELL_HEIGHT );
-  
-        x = ( x + ( world_x * world->realm_width * CELL_WIDTH ) -
-          ( world->realm_width * CELL_WIDTH ) );
-
-        y = ( y + ( world_y * world->realm_height * CELL_HEIGHT ) -
-          ( world->realm_height * CELL_HEIGHT ) );
+        GetScreenPosFromGlobalPos( world, current_x + i, current_y + j, &x, &y );
       }
       
       else
@@ -214,13 +190,9 @@ void e_DrawSelectGrid( World_t* world, WorldPosition_t pos,
         e_GetCellSize( current_index, current_width, current_height,
                       &x, &y, &w, &h );
       }
-      
-      a_DrawFilledRect( x, y, game_glyphs->rects[current_tile.glyph].w * 2,
-                       game_glyphs->rects[current_tile.glyph].h * 2, 
-                       255, 0, 255, 255 );
-
-      a_BlitTextureRect( game_glyphs->texture, game_glyphs->rects[current_tile.glyph],
-                        x, y, 2, master_colors[APOLLO_PALETE][current_tile.fg] );
+    
+      int red_bg = 28;
+      DrawCustomGlyph( x, y, current_tile.glyph, red_bg, current_tile.fg, 2 );
       
     }
   }
@@ -263,10 +235,10 @@ GameTileArray_t* e_GetSelectGrid( World_t* world, WorldPosition_t pos,
   {
     for ( int j = 0; j < grid_h + 1; j++ )
     {
-      current_tile = GetTileAtPos( world, pos, i, j,
-                                   current_x, current_y, current_z,
-                                   &current_index, &current_width,
-                                   &current_height );
+      current_tile = GetTileAtPos( world, pos,
+                                   current_x, current_y,
+                                   &current_index,
+                                   &current_width, &current_height );
 
       new_game_tile_array->data[k++] = current_tile;
     }
@@ -306,21 +278,7 @@ void e_PasteGameTile( World_t* world, WorldPosition_t pos,
   int new_x = 0, new_y = 0;
   int k = 0;
   
-  if ( pos.level == REALM_LEVEL )
-  {
-    int pos_world_x = pos.world_index / WORLD_HEIGHT;
-    int pos_world_y = pos.world_index % WORLD_HEIGHT;
-    int global_pos_x = ( pos_world_x * world->realm_width )  + pos.x;
-    int global_pos_y = ( pos_world_y * world->realm_height ) + pos.y;
-    current_x = global_pos_x, current_y = global_pos_y;
-  }
-  
-  else
-  {
-    current_x = pos.x;
-    current_y = pos.y;
-    printf("Z: %d\n", pos.local_z );
-  }
+  GetCurrentPos( world, pos, &current_x, &current_y );
   
   for ( int i = 0; i < tile_array->w; i++ )
   {
@@ -381,25 +339,9 @@ void e_DrawPastePreview( World_t* world, WorldPosition_t pos,
   int current_x = 0, current_y = 0;
   int current_width = 0, current_height = 0;
   GameTile_t current_tile = {0};
-  int world_x = 0, world_y = 0;
-  int realm_x = 0, realm_y = 0;
   int k = 0;
   
-  if ( pos.level == REALM_LEVEL )
-  {
-    int pos_world_x = pos.world_index / WORLD_HEIGHT;
-    int pos_world_y = pos.world_index % WORLD_HEIGHT;
-    int global_pos_x = ( pos_world_x * world->realm_width )  + pos.x;
-    int global_pos_y = ( pos_world_y * world->realm_height ) + pos.y;
-    current_x = global_pos_x, current_y = global_pos_y;
-
-  }
-  
-  else
-  {
-    current_x = pos.x;
-    current_y = pos.y;
-  }
+  GetCurrentPos( world, pos, &current_x, &current_y );
   
   for ( int i = 0; i < tile_array->w; i++ )
   {
@@ -409,21 +351,7 @@ void e_DrawPastePreview( World_t* world, WorldPosition_t pos,
       switch (pos.level)
       {
         case REALM_LEVEL:
-          world_x = ( current_x + i ) / world->realm_width;
-          world_y = ( current_y + j ) / world->realm_height;
-          realm_x = ( current_x + i ) % world->realm_width;
-          realm_y = ( current_y + j ) % world->realm_height;
-
-          x = ( ( SCREEN_WIDTH / 2 )  - ( ( world->realm_width  * CELL_WIDTH ) / 2 ) )
-            + ( realm_x * CELL_WIDTH );
-          y = ( ( SCREEN_HEIGHT / 2 ) - ( ( world->realm_height * CELL_HEIGHT ) / 2 ) )
-            + ( realm_y * CELL_HEIGHT );
-
-          x = ( x + ( world_x * world->realm_width * CELL_WIDTH ) -
-            ( world->realm_width * CELL_WIDTH ) );
-
-          y = ( y + ( world_y * world->realm_height * CELL_HEIGHT ) -
-            ( world->realm_height * CELL_HEIGHT ) );
+          GetScreenPosFromGlobalPos( world, current_x + i, current_y + j, &x, &y );
           
           current_width  = world->realm_width;
           current_height = world->realm_height;
@@ -461,14 +389,8 @@ void e_DrawPastePreview( World_t* world, WorldPosition_t pos,
           break;
       }
       
-
-      a_DrawFilledRect( x, y, game_glyphs->rects[current_tile.glyph].w * 2,
-                       game_glyphs->rects[current_tile.glyph].h * 2, 
-                       255, 0, 255, 255 );
-
-      a_BlitTextureRect( game_glyphs->texture, game_glyphs->rects[current_tile.glyph],
-                        x, y, 2, master_colors[APOLLO_PALETE][current_tile.fg] );
-      
+      int red_bg = 28;
+      DrawCustomGlyph( x, y, current_tile.glyph, red_bg, current_tile.fg, 2 );
       
       if ( k < tile_array->count )
       {
@@ -532,15 +454,10 @@ void e_MapMouseCheck( WorldPosition_t* pos )
   int originx = 0;
   int originy = 0;
   uint8_t world_x = pos->world_index / WORLD_HEIGHT, world_y = pos->world_index % WORLD_HEIGHT;
-  uint8_t realm_x = 0, realm_y = 0;
   
   switch ( pos->level ) {
     case REALM_LEVEL:
-      originx = ( SCREEN_ORIGIN_X ) - ( ( map->realm_width 
-        * CELL_WIDTH ) / 2 ) - ( map->realm_width * CELL_WIDTH );
-
-      originy = ( SCREEN_ORIGIN_Y ) - ( ( map->realm_height 
-        * CELL_HEIGHT ) / 2 ) - ( map->realm_height * CELL_HEIGHT );
+      GetOrigin( map, &originx, &originy);
 
       e_GetCellAtMouse( WORLD_WIDTH, WORLD_HEIGHT, originx, originy,
                       ( map->realm_width * CELL_WIDTH ), 
@@ -595,20 +512,35 @@ void e_MapMouseCheck( WorldPosition_t* pos )
 void e_GlyphMouseCheck( int* index, uint8_t* grid_x, uint8_t* grid_y )
 {
 
-  e_GetCellAtMouse( 17, 17, 1125, 245, GLYPH_WIDTH, GLYPH_HEIGHT,
-                    grid_x, grid_y, 0 );
+  int glyph_grid_w       = 16;
+  int glyph_grid_h       = 16;
+  int glyph_grid_originx = 1125;
+  int glyph_grid_originy = 245;
+  int centered           = 0;
 
-  *index = INDEX_2( *grid_y, *grid_x, 16 );
+  e_GetCellAtMouse( glyph_grid_w, glyph_grid_h,
+                    glyph_grid_originx, glyph_grid_originy,
+                    GLYPH_WIDTH, GLYPH_HEIGHT,
+                    grid_x, grid_y, centered );
+
+  *index = INDEX_2( *grid_y, *grid_x, glyph_grid_w );
 
 }
 
 void e_ColorMouseCheck( int* index, uint8_t* grid_x, uint8_t* grid_y )
 {
+  int color_grid_w       = 6;
+  int color_grid_h       = 8;
+  int color_grid_originx = 1152;
+  int color_grid_originy = 100;
+  int centered           = 0;
 
-  e_GetCellAtMouse( 7, 9, 1152, 100, GLYPH_WIDTH, GLYPH_HEIGHT,
-                    grid_x, grid_y, 0 );
+  e_GetCellAtMouse( color_grid_w, color_grid_h,
+                    color_grid_originx, color_grid_originy,
+                    GLYPH_WIDTH, GLYPH_HEIGHT,
+                    grid_x, grid_y, centered );
 
-  *index = INDEX_2( *grid_y, *grid_x, 6 );
+  *index = INDEX_2( *grid_y, *grid_x, color_grid_w );
 
 }
 
@@ -728,6 +660,79 @@ void we_DrawEditorHotKeys( int x, int y, int key, int abbv0, int abbv1,
 
 }
 
+static void DrawCustomGlyph( int x, int y, int glyph, int bg, int fg, int scale )
+{
+  a_DrawFilledRect( x, y, game_glyphs->rects[glyph].w * scale,
+                    game_glyphs->rects[glyph].h * scale,
+                    master_colors[APOLLO_PALETE][bg].r,
+                    master_colors[APOLLO_PALETE][bg].g,
+                    master_colors[APOLLO_PALETE][bg].b,
+                    master_colors[APOLLO_PALETE][bg].a );
+
+  a_BlitTextureRect( game_glyphs->texture, game_glyphs->rects[glyph],
+                    x, y, scale, master_colors[APOLLO_PALETE][fg] );
+}
+
+static void DrawGlyph( int x, int y, GameTile_t current_tile, int scale )
+{
+  a_DrawFilledRect( x, y, game_glyphs->rects[current_tile.glyph].w * scale,
+                    game_glyphs->rects[current_tile.glyph].h * scale,
+                    master_colors[APOLLO_PALETE][current_tile.bg].r,
+                    master_colors[APOLLO_PALETE][current_tile.bg].g,
+                    master_colors[APOLLO_PALETE][current_tile.bg].b,
+                    master_colors[APOLLO_PALETE][current_tile.bg].a );
+
+  a_BlitTextureRect( game_glyphs->texture, game_glyphs->rects[current_tile.glyph],
+                     x, y, scale, master_colors[APOLLO_PALETE][current_tile.fg] );
+}
+
+static void GetScreenPosFromGlobalPos( World_t* world, int current_x, int current_y, int* x, int* y )
+{
+  int world_x = ( current_x ) / world->realm_width;
+  int world_y = ( current_y ) / world->realm_height;
+  int realm_x = ( current_x ) % world->realm_width;
+  int realm_y = ( current_y ) % world->realm_height;
+
+  int new_x = ( ( SCREEN_WIDTH / 2 )  - ( ( world->realm_width  * CELL_WIDTH ) / 2 ) )
+    + ( realm_x * CELL_WIDTH );
+  int new_y = ( ( SCREEN_HEIGHT / 2 ) - ( ( world->realm_height * CELL_HEIGHT ) / 2 ) )
+    + ( realm_y * CELL_HEIGHT );
+
+  *x = ( new_x + ( world_x * world->realm_width * CELL_WIDTH ) -
+    ( world->realm_width * CELL_WIDTH ) );
+
+  *y = ( new_y + ( world_y * world->realm_height * CELL_HEIGHT ) -
+    ( world->realm_height * CELL_HEIGHT ) );
+}
+
+static void GetCurrentPos( World_t* world, WorldPosition_t pos, int* current_x, int* current_y )
+{
+  if ( pos.level == REALM_LEVEL )
+  {
+    int pos_world_x = pos.world_index / WORLD_HEIGHT;
+    int pos_world_y = pos.world_index % WORLD_HEIGHT;
+    int global_pos_x = ( pos_world_x * world->realm_width )  + pos.x;
+    int global_pos_y = ( pos_world_y * world->realm_height ) + pos.y;
+    *current_x = global_pos_x; 
+    *current_y = global_pos_y;
+  }
+  
+  else
+  {
+    *current_x = pos.x;
+    *current_y = pos.y;
+  }
+}
+
+static void GetOrigin( World_t* world, int* originx, int* originy )
+{
+  *originx = ( SCREEN_ORIGIN_X ) - ( ( world->realm_width 
+    * CELL_WIDTH ) / 2 ) - ( world->realm_width * CELL_WIDTH );
+
+  *originy = ( SCREEN_ORIGIN_Y ) - ( ( world->realm_height 
+    * CELL_HEIGHT ) / 2 ) - ( world->realm_height * CELL_HEIGHT );
+}
+
 static void GetSelectGridSize( WorldPosition_t pos, WorldPosition_t highlight,
                                int* grid_w, int* grid_h, int* current_x,
                                int* current_y, int* current_z )
@@ -761,7 +766,6 @@ static void GetSelectGridSize( WorldPosition_t pos, WorldPosition_t highlight,
       *grid_h = ( global_pos_y - global_highlight_y );
       *current_y = global_highlight_y;
     }
-
   }
   
   else
@@ -776,22 +780,19 @@ static void GetSelectGridSize( WorldPosition_t pos, WorldPosition_t highlight,
     {
       *grid_w = ( pos.x - highlight.x );
       *current_x = highlight.x;
-
     }
 
     if ( *grid_h < 0 )
     {
       *grid_h = ( pos.y - highlight.y );
       *current_y = highlight.y;
-
     }
   }
-
 }
 
 static GameTile_t GetTileAtPos( World_t* world, WorldPosition_t pos, 
-                                int i, int j, int current_x, int current_y,
-                                int current_z, int* current_index,
+                                int current_x, int current_y,
+                                int* current_index, 
                                 int* current_width, int* current_height )
 {
   int current_world_index = 0;
@@ -807,10 +808,10 @@ static GameTile_t GetTileAtPos( World_t* world, WorldPosition_t pos,
     case REALM_LEVEL:
       *current_width = world->realm_width;
       *current_height = world->realm_height;
-      world_x = ( current_x + i ) / world->realm_width;
-      world_y = ( current_y + j ) / world->realm_height;
-      new_x   = ( current_x + i ) % world->realm_width;
-      new_y   = ( current_y + j ) % world->realm_height;
+      world_x = ( current_x ) / world->realm_width;
+      world_y = ( current_y ) / world->realm_height;
+      new_x   = ( current_x ) % world->realm_width;
+      new_y   = ( current_y ) % world->realm_height;
 
       current_world_index = INDEX_2( world_x, world_y, WORLD_HEIGHT );
 
@@ -822,29 +823,28 @@ static GameTile_t GetTileAtPos( World_t* world, WorldPosition_t pos,
       break;
 
     case REGION_LEVEL:
-      *current_width  = map->region_width;
-      *current_height = map->region_height;
-      *current_index = INDEX_2( ( current_x + i ), ( current_y + j ),
+      *current_width  = world->region_width;
+      *current_height = world->region_height;
+      *current_index = INDEX_2( ( current_x ), ( current_y ),
                               *current_height );
 
-      return_tile = map[pos.world_index].realms[pos.realm_index].
+      return_tile = world[pos.world_index].realms[pos.realm_index].
         regions[*current_index].tile;
 
       break;
 
     case LOCAL_LEVEL:
-      *current_width  = map->local_width;
-      *current_height = map->local_height;
-      *current_index = INDEX_3( ( current_y + j ), ( current_x + i ),
-                              current_z, *current_width, *current_height );
+      *current_width  = world->local_width;
+      *current_height = world->local_height;
+      *current_index = INDEX_3( ( current_y ), ( current_x ),
+                              pos.local_z, *current_width, *current_height );
 
-      return_tile = map[pos.world_index].realms[pos.realm_index].
+      return_tile = world[pos.world_index].realms[pos.realm_index].
         regions[pos.region_index].tiles[*current_index];
 
-      *current_index -= ( map->local_width * map->local_height * pos.local_z );
+      *current_index -= ( world->local_width * world->local_height * pos.local_z );
 
       break;
-
   }
 
   return return_tile;
