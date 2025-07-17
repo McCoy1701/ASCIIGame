@@ -160,6 +160,12 @@ void e_DrawSelectGrid( World_t* world, WorldPosition_t pos,
 {
   int grid_w = 0, grid_h = 0;
   int current_x = 0, current_y = 0, current_z = 0;
+  int originx = 0, originy = 0;
+  int edgex = 0, edgey = 0;
+
+  GetOrigin(world, &originx, &originy);
+  edgex = originx + ( WORLD_WIDTH  * world->realm_width  * CELL_WIDTH );
+  edgey = originy + ( WORLD_HEIGHT * world->realm_height * CELL_HEIGHT );
 
   GetSelectGridSize( pos, highlight, &grid_w, &grid_h,
                      &current_x, &current_y, &current_z );
@@ -190,10 +196,12 @@ void e_DrawSelectGrid( World_t* world, WorldPosition_t pos,
         e_GetCellSize( current_index, current_width, current_height,
                       &x, &y, &w, &h );
       }
-    
-      int red_bg = 28;
-      DrawCustomGlyph( x, y, current_tile.glyph, red_bg, current_tile.fg, 2 );
-      
+
+      if ( x > originx && x < edgex && y > originy && y < edgey )
+      {
+        int red_bg = 28;
+        DrawCustomGlyph( x, y, current_tile.glyph, red_bg, current_tile.fg, 2 );
+      }
     }
   }
 }
@@ -236,7 +244,7 @@ GameTileArray_t* e_GetSelectGrid( World_t* world, WorldPosition_t pos,
     for ( int j = 0; j < grid_h + 1; j++ )
     {
       current_tile = GetTileAtPos( world, pos,
-                                   current_x, current_y,
+                                   current_x + i, current_y + j,
                                    &current_index,
                                    &current_width, &current_height );
 
@@ -293,29 +301,50 @@ void e_PasteGameTile( World_t* world, WorldPosition_t pos,
           new_x   = ( current_x + i ) % world->realm_width;
           new_y   = ( current_y + j ) % world->realm_height;
 
-          current_world_index = INDEX_2( world_x, world_y, WORLD_HEIGHT );
+          if ( world_x >= 0 && world_x < WORLD_WIDTH && world_y >= 0 && world_y < WORLD_HEIGHT
+               && new_x >= 0 && new_x < ( WORLD_WIDTH * world->realm_width )
+               && new_y >= 0 && new_y < ( WORLD_HEIGHT * world->realm_height ) )
+          {
+            current_world_index = INDEX_2( world_x, world_y, WORLD_HEIGHT );
 
-          current_index = INDEX_2( new_x, new_y, world->realm_height );
+            current_index = INDEX_2( new_x, new_y, world->realm_height );
 
-          world[current_world_index].realms[current_index].tile = index;
+            world[current_world_index].realms[current_index].tile = index;
+          }
+
           break;
 
         case REGION_LEVEL:
-          current_index = INDEX_2( ( current_x + i ), ( current_y + j ),
-                                  world->region_height );
+          new_x = current_x + i;
+          new_y = current_y + j;
 
-          world[pos.world_index].realms[pos.realm_index].regions[current_index].
-            tile = index;
+          if ( new_x >= 0 && new_x < world->region_width && 
+               new_y >= 0 && new_y < world->region_height )
+          {
+            current_index = INDEX_2( ( current_x + i ), ( current_y + j ),
+                                    world->region_height );
+
+            world[pos.world_index].realms[pos.realm_index].regions[current_index].
+              tile = index;
+          }
+
           break;
           
 
         case LOCAL_LEVEL:
-          current_index = INDEX_3( ( current_y + j ), ( current_x + i ),
-                                     pos.local_z, world->local_width,
-                                     world->local_height );
-          
-          world[pos.world_index].realms[pos.realm_index].
-            regions[pos.region_index].tiles[current_index] = index;
+          new_x = current_x + i;
+          new_y = current_y + j;
+
+          if ( new_x >= 0 && new_x < world->local_width && 
+               new_y >= 0 && new_y < world->local_height )
+          {
+            current_index = INDEX_3( ( current_y + j ), ( current_x + i ),
+                                    pos.local_z, world->local_width,
+                                    world->local_height );
+
+            world[pos.world_index].realms[pos.realm_index].
+              regions[pos.region_index].tiles[current_index] = index;
+          }
 
           break;
       }
@@ -813,12 +842,22 @@ static GameTile_t GetTileAtPos( World_t* world, WorldPosition_t pos,
       new_x   = ( current_x ) % world->realm_width;
       new_y   = ( current_y ) % world->realm_height;
 
-      current_world_index = INDEX_2( world_x, world_y, WORLD_HEIGHT );
+      if ( world_x >= 0 && world_x < WORLD_WIDTH && world_y >= 0 && world_y < WORLD_HEIGHT
+        && new_x >= 0 && new_x < ( WORLD_WIDTH * world->realm_width )
+        && new_y >= 0 && new_y < ( WORLD_HEIGHT * world->realm_height ) )
+      {
+        current_world_index = INDEX_2( world_x, world_y, WORLD_HEIGHT );
 
-      *current_index = INDEX_2( new_x, new_y, world->realm_height );
+        *current_index = INDEX_2( new_x, new_y, world->realm_height );
 
-      return_tile = world[current_world_index].
-        realms[*current_index].tile;
+        return_tile = world[current_world_index].
+          realms[*current_index].tile;
+      }
+      
+      else
+      {
+        return ( GameTile_t ){0};
+      }
 
       break;
 
