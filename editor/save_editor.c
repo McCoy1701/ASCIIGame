@@ -12,8 +12,9 @@
 
 #include "init_editor.h"
 #include "defs.h"
+#include "structs.h"
 
-/*int SaveWorld( World_t* world, const char* filename )
+int SaveWorld( World_t* world, const char* filename )
 {
   FILE* file;
   file = fopen( filename, "wb" );
@@ -26,8 +27,8 @@
   FileHeader_t header;
   memcpy( header.magic, MAGIC_NUMBER, 8 );
   header.version       = FILE_VERSION;
-  header.world_width   = world->world_width;
-  header.world_height  = world->world_height;
+  header.realm_width   = world->realm_width;
+  header.realm_height  = world->realm_height;
   header.region_width  = world->region_width;
   header.region_height = world->region_height;
   header.local_width   = world->local_width;
@@ -36,21 +37,55 @@
 
   fwrite( &header, sizeof( FileHeader_t ), 1, file );
   
-  size_t num_of_world_tiles = world->world_width * world->world_height;
+  size_t num_of_world_tiles = WORLD_WIDTH * WORLD_HEIGHT;
   fwrite( world, sizeof( World_t ), num_of_world_tiles, file );
   
-  for ( int i = 0; i < ( world->world_width * world->world_height ); i++ )
+  for ( int i = 0; i < ( WORLD_WIDTH * WORLD_HEIGHT ); i++ )
+  {
+    size_t num_of_realm_tiles = world->realm_width * world->realm_height;
+    fwrite( world[i].realms, sizeof( RegionCell_t ), num_of_realm_tiles,
+           file );
+  }
+
+  fclose( file );
+
+  return 0;
+}
+
+int SaveRegion( World_t* world, const char* filename, const int realm_index )
+{
+  FILE* file;
+  file = fopen( filename, "wb" );
+  if ( file == NULL )
+  {
+    printf( "Failed to open %s\n", filename );
+    return 1;
+  }
+  
+  FileHeader_t header;
+  memcpy( header.magic, MAGIC_NUMBER, 8 );
+  header.version       = FILE_VERSION;
+  header.realm_width   = world->realm_width;
+  header.realm_height  = world->realm_height;
+  header.region_width  = world->region_width;
+  header.region_height = world->region_height;
+  header.local_width   = world->local_width;
+  header.local_height  = world->local_height;
+  header.z_height      = world->z_height;
+
+  fwrite( &header, sizeof( FileHeader_t ), 1, file );
+
+  for ( int i = 0; i < ( world->realm_width * world->realm_height ); i++ )
   {
     size_t num_of_region_tiles = world->region_width * world->region_height;
-    fwrite( world[i].regions, sizeof( RegionCell_t ), num_of_region_tiles,
+    fwrite( world[realm_index].realms[i].regions, sizeof( RegionCell_t ), num_of_region_tiles,
            file );
 
     for ( int j = 0; j < ( world->region_width * world->region_height ); j++ )
     {
-      size_t num_of_local_tiles = world->local_width * world->local_height *
-        world->z_height;
-      fwrite( world[i].regions[j].tiles, sizeof( GameTile_t ),
-             num_of_local_tiles, file );
+      size_t num_of_local_tiles = world->local_width * world->local_height * world->z_height;
+      fwrite( world[realm_index].realms[i].regions[j].tiles, sizeof( GameTile_t ), num_of_local_tiles,
+             file );
     }
   }
 
@@ -62,8 +97,7 @@
 World_t* LoadWorld( const char* filename )
 {
   FILE* file;
-  int where = 0;
-  int world_width = 0, world_height = 0, region_width = 0, region_height = 0,
+  int realm_width = 0, realm_height = 0, region_width = 0, region_height = 0,
       local_width = 0, local_height = 0, z_height = 0;
 
   file = fopen( filename, "rb");
@@ -74,9 +108,6 @@ World_t* LoadWorld( const char* filename )
   }
 
   FileHeader_t header;
-  
-  where = ftell( file );
-  printf( "H: %d\n", where );
 
   fread( &header, sizeof( FileHeader_t ), 1, file );
 
@@ -98,72 +129,95 @@ World_t* LoadWorld( const char* filename )
     return NULL;
   }
   
-  world_width   = header.world_width;
-  world_height  = header.world_height;
+  realm_width   = header.realm_width;
+  realm_height  = header.realm_height;
   region_width  = header.region_width;
   region_height = header.region_height;
   local_width   = header.local_width;
   local_height  = header.local_height;
   z_height      = header.z_height;
   
-  World_t* new_world = ( World_t* )malloc( sizeof( World_t ) * ( world_width *
-                                          world_height ) );
+  World_t* new_world = ( World_t* )malloc( sizeof( World_t ) * ( WORLD_WIDTH *
+                                          WORLD_HEIGHT ) );
   if ( new_world == NULL )
   {
     printf("Failed to allocate memory for world\n");
     return NULL;
   }
 
-  size_t num_of_world_tiles = world_width * world_height;
-  
-  where = ftell( file );
-  printf( "W: %d\n", where );
+  new_world->realm_width   = header.realm_width;
+  new_world->realm_height  = header.realm_height;
+  new_world->region_width  = header.region_width;
+  new_world->region_height = header.region_height;
+  new_world->local_width   = header.local_width;
+  new_world->local_height  = header.local_height;
+  new_world->z_height      = header.z_height;
 
-
+  size_t num_of_world_tiles = WORLD_WIDTH * WORLD_HEIGHT;
   fread( new_world, sizeof( World_t ), num_of_world_tiles, file );
 
-  for ( int i = 0; i < ( world_width * world_height ); i++ )
+  for ( int i = 0; i < ( WORLD_WIDTH * WORLD_HEIGHT ); i++ )
   {
-    new_world[i].regions = ( RegionCell_t* )malloc( sizeof( RegionCell_t ) *
-                                                region_width * region_height );
-    if ( new_world[i].regions == NULL )
-    {
-      free_world( new_world, i, 0 );
-      return NULL;
-    }
-
-    size_t num_of_region_tiles = region_width * region_height;
-  
-    where = ftell( file );
-    printf( "R: %d\n", where );
-
-    fread( new_world[i].regions, sizeof( RegionCell_t ), num_of_region_tiles,
-          file );
-
-    for ( int j = 0; j < ( region_width * region_height ); j++ )
-    {
-      new_world[i].regions[j].tiles = ( GameTile_t* )malloc( sizeof( GameTile_t )
-                                      * local_width * local_height * z_height );
-      if ( new_world[i].regions[j].tiles == NULL )
-      {
-        free_world( new_world, i, j );
-        return NULL;
-      }
-
-      size_t num_of_local_tiles = local_width * local_height * z_height;
-
-      //where = ftell( file );
-      //printf( "local: %d\n", where );
-
-      fread( new_world[i].regions[j].tiles, sizeof( GameTile_t ),
-            num_of_local_tiles, file );
-    }
+    size_t num_of_realm_tiles = new_world->realm_width * new_world->realm_height;
+    fwrite( new_world[i].realms, sizeof( RegionCell_t ), num_of_realm_tiles,
+           file );
   }
 
   fclose( file );
 
   return new_world;
-}*/
+}
+
+int LoadRegion( World_t* world, const char* filename, const int realm_index )
+{
+  FILE* file;
+
+  file = fopen( filename, "rb");
+  if ( file == NULL )
+  {
+    printf( "Failed to read %s\n", filename );
+    return 1;
+  }
+
+  FileHeader_t header;
+  fread( &header, sizeof( FileHeader_t ), 1, file );
+
+  if ( memcmp( header.magic, MAGIC_NUMBER, 8 ) != 0 )
+  {
+    printf( "Invalid magic number got: %s, needed: %s\n", header.magic,
+           MAGIC_NUMBER );
+
+    fclose( file );
+    return 1;
+  }
+
+  if ( header.version > FILE_VERSION )
+  {
+    printf( "Current file version: %d outdates editor version: %d\n",
+           header.version, FILE_VERSION );
+
+    fclose( file );
+    return 1;
+  }
+  
+  for ( int i = 0; i < ( world->realm_width * world->realm_height ); i++ )
+  {
+    size_t num_of_region_tiles = world->region_width * world->region_height;
+    fread( world[realm_index].realms[i].regions, sizeof( RegionCell_t ), num_of_region_tiles,
+           file );
+
+    for ( int j = 0; j < ( world->region_width * world->region_height ); j++ )
+    {
+      size_t num_of_local_tiles = world->local_width * world->local_height * world->z_height;
+      fread( world[realm_index].realms[i].regions[j].tiles, sizeof( GameTile_t ), num_of_local_tiles,
+             file );
+    }
+  }
+
+  fclose( file );
+
+  return 0;
+}
 
 /*World_t* LoadPartialWorld( const char* filename )
 {

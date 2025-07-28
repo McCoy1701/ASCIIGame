@@ -12,7 +12,11 @@
 #include "structs.h"
 
 int SaveWorld( World_t* world, const char* filename );
+int SaveRealm( World_t* world, const char* filename, const int realm_index );
+
 World_t* LoadWorld( const char* filename );
+int LoadRealm( World_t* world, const char* filename, const int realm_index );
+
 World_t* LoadPartialWorld( const char* filename );
 int LoadPartialRegion( WorldPosition_t* pos, World_t* world, const char* filename );
 

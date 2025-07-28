@@ -197,7 +197,7 @@ void e_DrawSelectGrid( World_t* world, WorldPosition_t pos,
                       &x, &y, &w, &h );
       }
 
-      if ( x > originx && x < edgex && y > originy && y < edgey )
+      if ( x >= originx && x < edgex && y >= originy && y < edgey )
       {
         int red_bg = 28;
         DrawCustomGlyph( x, y, current_tile.glyph, red_bg, current_tile.fg, 2 );

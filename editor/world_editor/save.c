@@ -12,6 +12,7 @@
 #include "Archimedes.h"
 #include "editor.h"
 #include "save_editor.h"
+#include "structs.h"
 #include "world_editor.h"
 
 static void wes_SaveLogic( float dt );
@@ -71,7 +72,15 @@ void wes_SaveYes( void )
 {
   if ( map != NULL )
   {
-    //SaveWorld( map, "resources/world/map.dat" );
+    SaveWorld( map, "resources/world/world.dat" );
+
+    for ( int i = 0; i < WORLD_WIDTH * WORLD_HEIGHT; i++ )
+    {
+      char filename[MAX_FILENAME_LENGTH];
+      sprintf( filename, "resources/world/realm%d.dat", i );
+      
+      SaveRealm( map, filename, i );
+    }
   }
 
   e_InitEditor();
