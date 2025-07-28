@@ -123,7 +123,15 @@ void we_Load( void )
 {
   if ( map == NULL ) 
   {
-    //map = LoadPartialWorld( "resources/world/map.dat" );
+    map = LoadWorld( "resources/world/world.dat" );
+
+    for ( int i = 0; i < WORLD_WIDTH * WORLD_HEIGHT; i++ )
+    {
+      char filename[MAX_FILENAME_LENGTH];
+      sprintf( filename, "resources/world/realm%d.dat", i );
+      
+      LoadRegion( map, filename, i );
+    }
   }
 }
 

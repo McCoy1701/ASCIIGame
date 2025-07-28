@@ -79,7 +79,7 @@ void wes_SaveYes( void )
       char filename[MAX_FILENAME_LENGTH];
       sprintf( filename, "resources/world/realm%d.dat", i );
       
-      SaveRealm( map, filename, i );
+      SaveRegion( map, filename, i );
     }
   }
 

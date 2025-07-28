@@ -97,8 +97,6 @@ int SaveRegion( World_t* world, const char* filename, const int realm_index )
 World_t* LoadWorld( const char* filename )
 {
   FILE* file;
-  int realm_width = 0, realm_height = 0, region_width = 0, region_height = 0,
-      local_width = 0, local_height = 0, z_height = 0;
 
   file = fopen( filename, "rb");
   if ( file == NULL )
@@ -129,14 +127,6 @@ World_t* LoadWorld( const char* filename )
     return NULL;
   }
   
-  realm_width   = header.realm_width;
-  realm_height  = header.realm_height;
-  region_width  = header.region_width;
-  region_height = header.region_height;
-  local_width   = header.local_width;
-  local_height  = header.local_height;
-  z_height      = header.z_height;
-  
   World_t* new_world = ( World_t* )malloc( sizeof( World_t ) * ( WORLD_WIDTH *
                                           WORLD_HEIGHT ) );
   if ( new_world == NULL )
@@ -158,8 +148,17 @@ World_t* LoadWorld( const char* filename )
 
   for ( int i = 0; i < ( WORLD_WIDTH * WORLD_HEIGHT ); i++ )
   {
+    new_world[i].realms = ( Realm_t* )malloc( sizeof(Realm_t) *
+      new_world->realm_width * new_world->realm_height );
+
+    if ( new_world[i].realms == NULL )
+    {
+      free_world( new_world, i, 0, 0 );
+      return NULL;
+    }
+    
     size_t num_of_realm_tiles = new_world->realm_width * new_world->realm_height;
-    fwrite( new_world[i].realms, sizeof( RegionCell_t ), num_of_realm_tiles,
+    fread( new_world[i].realms, sizeof( Realm_t ), num_of_realm_tiles,
            file );
   }
 
@@ -202,12 +201,30 @@ int LoadRegion( World_t* world, const char* filename, const int realm_index )
   
   for ( int i = 0; i < ( world->realm_width * world->realm_height ); i++ )
   {
+    world[realm_index].realms[i].regions = ( RegionCell_t* )malloc( 
+      sizeof( RegionCell_t ) * world->region_width * world->region_height );
+
+    if ( world[realm_index].realms[i].regions == NULL )
+    {
+      free_world( world, realm_index, i, 0 );
+      return 1;
+    }
+
     size_t num_of_region_tiles = world->region_width * world->region_height;
     fread( world[realm_index].realms[i].regions, sizeof( RegionCell_t ), num_of_region_tiles,
            file );
 
     for ( int j = 0; j < ( world->region_width * world->region_height ); j++ )
     {
+      world[realm_index].realms[i].regions[j].tiles = ( GameTile_t* )malloc( 
+        sizeof( GameTile_t ) * world->local_width * world->local_height * world->z_height);
+
+      if ( world[realm_index].realms[i].regions[j].tiles == NULL )
+      {
+        free_world( world, realm_index, i, j );
+        return 0;
+      }
+
       size_t num_of_local_tiles = world->local_width * world->local_height * world->z_height;
       fread( world[realm_index].realms[i].regions[j].tiles, sizeof( GameTile_t ), num_of_local_tiles,
              file );
