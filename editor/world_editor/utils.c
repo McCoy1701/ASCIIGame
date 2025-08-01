@@ -155,7 +155,7 @@ void we_DrawWorldCell( int i, int j, GameTile_t* current_tile,
 
 }
 
-void e_DrawSelectGrid( World_t* world, WorldPosition_t pos,
+void we_DrawSelectGrid( World_t* world, WorldPosition_t pos,
                                    WorldPosition_t highlight )
 {
   int grid_w = 0, grid_h = 0;
@@ -206,7 +206,7 @@ void e_DrawSelectGrid( World_t* world, WorldPosition_t pos,
   }
 }
 
-GameTileArray_t* e_GetSelectGrid( World_t* world, WorldPosition_t pos,
+GameTileArray_t* we_GetSelectGrid( World_t* world, WorldPosition_t pos,
                                    WorldPosition_t highlight )
 {
   int grid_w    = 0;
@@ -257,7 +257,8 @@ GameTileArray_t* e_GetSelectGrid( World_t* world, WorldPosition_t pos,
   return new_game_tile_array;
 }
 
-void e_ChangeGameTile( World_t* world, WorldPosition_t pos,
+//TODO: Fix this function
+void we_ChangeGameTile( World_t* world, WorldPosition_t pos,
                             GameTileArray_t* tile_array, int glyph_index,
                             int bg_index, int fg_index )
 {
@@ -275,7 +276,7 @@ void e_ChangeGameTile( World_t* world, WorldPosition_t pos,
 
 }
 
-void e_PasteGameTile( World_t* world, WorldPosition_t pos,
+void we_PasteGameTile( World_t* world, WorldPosition_t pos,
                        GameTileArray_t* tile_array )
 {
   GameTile_t index  = {0};
@@ -359,7 +360,7 @@ void e_PasteGameTile( World_t* world, WorldPosition_t pos,
 
 }
 
-void e_DrawPastePreview( World_t* world, WorldPosition_t pos,
+void we_DrawPastePreview( World_t* world, WorldPosition_t pos,
                        GameTileArray_t* tile_array )
 {
   GameTile_t index  = {0};
@@ -431,54 +432,7 @@ void e_DrawPastePreview( World_t* world, WorldPosition_t pos,
 
 }
 
-void e_GetCellSize( int index, int width, int height,
-                    int* x, int* y, int* w, int* h )
-{
-  int row = ( index / height );
-  int col = ( index % height );
-  *x = ( ( SCREEN_WIDTH / 2 )  - ( ( width  * CELL_WIDTH ) / 2 ) )
-    + ( row * CELL_WIDTH );
-  *y = ( ( SCREEN_HEIGHT / 2 ) - ( ( height * CELL_HEIGHT ) / 2 ) )
-    + ( col * CELL_HEIGHT );
-  *w = CELL_WIDTH;
-  *h = CELL_HEIGHT;
-}
-
-void e_GetCellAtMouse( int width, int height, int originx, int originy,
-                       int cell_width, int cell_height, uint8_t* grid_x,
-                       uint8_t* grid_y, int centered )
-{
-  int edge_x = 0;
-  int edge_y = 0;
-
-  if ( centered == 1 )
-  {
-    edge_x = originx - ( ( width  * cell_width  ) / 2 );
-    edge_y = originy - ( ( height * cell_height ) / 2 );
-
-  }
-  
-  else
-  {
-    edge_x = originx;
-    edge_y = originy;
-
-  }
-
-  if ( app.mouse.x > edge_x && app.mouse.x <= ( edge_x + ( width  * cell_width ) ) &&
-       app.mouse.y > edge_y && app.mouse.y <= ( edge_y + ( height * cell_height ) ) )
-  {
-    int mousex = ( ( app.mouse.x - edge_x ) / cell_width  );
-    int mousey = ( ( app.mouse.y - edge_y ) / cell_height );
-    
-    *grid_x = mousex;
-    *grid_y = mousey;
-
-  }
-
-}
-
-void e_MapMouseCheck( WorldPosition_t* pos )
+void we_MapMouseCheck( WorldPosition_t* pos )
 {
   int originx = 0;
   int originy = 0;
@@ -538,42 +492,7 @@ void e_MapMouseCheck( WorldPosition_t* pos )
   }
 } 
 
-void e_GlyphMouseCheck( int* index, uint8_t* grid_x, uint8_t* grid_y )
-{
-
-  int glyph_grid_w       = 16;
-  int glyph_grid_h       = 16;
-  int glyph_grid_originx = 1125;
-  int glyph_grid_originy = 245;
-  int centered           = 0;
-
-  e_GetCellAtMouse( glyph_grid_w, glyph_grid_h,
-                    glyph_grid_originx, glyph_grid_originy,
-                    GLYPH_WIDTH, GLYPH_HEIGHT,
-                    grid_x, grid_y, centered );
-
-  *index = INDEX_2( *grid_y, *grid_x, glyph_grid_w );
-
-}
-
-void e_ColorMouseCheck( int* index, uint8_t* grid_x, uint8_t* grid_y )
-{
-  int color_grid_w       = 6;
-  int color_grid_h       = 8;
-  int color_grid_originx = 1152;
-  int color_grid_originy = 100;
-  int centered           = 0;
-
-  e_GetCellAtMouse( color_grid_w, color_grid_h,
-                    color_grid_originx, color_grid_originy,
-                    GLYPH_WIDTH, GLYPH_HEIGHT,
-                    grid_x, grid_y, centered );
-
-  *index = INDEX_2( *grid_y, *grid_x, color_grid_w );
-
-}
-
-void e_LevelZHeightCheck( WorldPosition_t* pos )
+void we_LevelZHeightCheck( WorldPosition_t* pos )
 {
   if ( app.keyboard[SDL_SCANCODE_RETURN] == 1 )
   {
@@ -622,46 +541,6 @@ void e_LevelZHeightCheck( WorldPosition_t* pos )
     }
 
   }
-
-}
-
-void e_LoadColorPalette( aColor_t palette[MAX_COLOR_GROUPS][MAX_COLOR_PALETTE],
-                       const char * filename )
-{
-  FILE* file;
-  char line[8];
-  unsigned int hex_value;
-  uint8_t r, g, b;
-  int i = 0;
-
-  file = fopen( filename, "rb" );
-  if ( file == NULL )
-  {
-    printf( "Failed to open file %s\n", filename );
-    return;
-  } 
-
-  while( fgets( line, sizeof( line ), file ) != NULL )
-  {
-    hex_value = ( unsigned int )strtol( line, NULL, 16 );
-    r = hex_value >> 16;
-    g = hex_value >> 8;
-    b = hex_value;
-    
-    if ( i >= 0 && i < MAX_COLOR_PALETTE )
-    {
-      palette[APOLLO_PALETE][i].r = r;
-      palette[APOLLO_PALETE][i].g = g;
-      palette[APOLLO_PALETE][i].b = b;
-      palette[APOLLO_PALETE][i].a = 255;
-
-    }
-
-    i++;
-
-  }
-
-  fclose( file );
 
 }
 

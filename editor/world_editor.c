@@ -141,7 +141,7 @@ static void e_WorldEditorLogic( float dt )
   
   if ( map!= NULL )
   {
-    e_MapMouseCheck( &highlighted_pos );
+    we_MapMouseCheck( &highlighted_pos );
 
   }
   
@@ -149,12 +149,12 @@ static void e_WorldEditorLogic( float dt )
   {
     if ( map != NULL )
     {
-      e_MapMouseCheck( &selected_pos );
+      we_MapMouseCheck( &selected_pos );
 
     }
   }
   
-  e_LevelZHeightCheck( &selected_pos );
+  we_LevelZHeightCheck( &selected_pos );
   highlighted_pos.level = selected_pos.level;
   highlighted_pos.local_z = selected_pos.local_z;
 

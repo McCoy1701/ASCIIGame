@@ -101,13 +101,32 @@ void we_DrawWorld( World_t* world, WorldPosition_t selected_pos,
                    WorldPosition_t highlighted_pos );
 
 void we_DrawWorldCell( int i, int j,
-                          GameTile_t* current_tile,
-                          int selected_index, int highlight_index,
-                          int selected_world_index, int highlight_world_index,
-                          int x, int y, int w, int h );
+                       GameTile_t* current_tile,
+                       int selected_index, int highlight_index,
+                       int selected_world_index, int highlight_world_index,
+                       int x, int y, int w, int h );
 
 void we_DrawEditorHotKeys( int x, int y, int key, int abbv0, int abbv1,
                            int abbv2, int abbv3 );
+
+void we_MapMouseCheck( WorldPosition_t* pos );
+void we_LevelZHeightCheck( WorldPosition_t* pos );
+
+GameTileArray_t* we_GetSelectGrid( World_t* map, WorldPosition_t pos,
+                                   WorldPosition_t highlight );
+
+void we_DrawSelectGrid( World_t* map, WorldPosition_t pos,
+                                   WorldPosition_t highlight );
+
+void we_ChangeGameTile( World_t* map, WorldPosition_t pos,
+                        GameTileArray_t* tile_array, int glyph_index,
+                        int bg_index, int fg_index );
+
+void we_PasteGameTile( World_t* map, WorldPosition_t pos,
+                       GameTileArray_t* tile_array );
+
+void we_DrawPastePreview( World_t* map, WorldPosition_t pos,
+                          GameTileArray_t* tile_array );
 
 void wec_GenerateWorld( void );
 

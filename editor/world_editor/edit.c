@@ -20,14 +20,14 @@ static void we_EditDraw( float dt );
 
 static WorldPosition_t selected_pos;
 static WorldPosition_t highlighted_pos;
-int glyph_index = 0;
-int fg_index = 0;
-int bg_index = 0;
-uint8_t selected_glyph_x = 0, selected_glyph_y = 0;
-uint8_t selected_fg_x = 0, selected_fg_y = 0;
-uint8_t selected_bg_x = 0, selected_bg_y = 0;
-int editor_mode = 0;
-GameTileArray_t* clipboard = NULL;
+static int glyph_index = 0;
+static int fg_index = 0;
+static int bg_index = 0;
+static uint8_t selected_glyph_x = 0, selected_glyph_y = 0;
+static uint8_t selected_fg_x = 0, selected_fg_y = 0;
+static uint8_t selected_bg_x = 0, selected_bg_y = 0;
+static int editor_mode = 0;
+static GameTileArray_t* clipboard = NULL;
 static char* pos_text;
 
 char* wem_strings[WEM_MAX+1] =
@@ -74,7 +74,7 @@ static void we_EditLogic( float dt )
 
   if ( map != NULL )
   {
-    e_MapMouseCheck( &highlighted_pos );
+    we_MapMouseCheck( &highlighted_pos );
     
   }
   
@@ -82,7 +82,7 @@ static void we_EditLogic( float dt )
   {
     if ( map != NULL )
     {
-      e_MapMouseCheck( &selected_pos );
+      we_MapMouseCheck( &selected_pos );
       highlighted_pos.world_index = selected_pos.world_index;
       highlighted_pos.realm_index = selected_pos.realm_index;
       highlighted_pos.region_index = selected_pos.region_index;
@@ -90,9 +90,11 @@ static void we_EditLogic( float dt )
 
     }
 
-    e_GlyphMouseCheck( &glyph_index, &selected_glyph_x, &selected_glyph_y );
-    e_ColorMouseCheck( &fg_index, &selected_fg_x, &selected_fg_y );
+    e_ColorMouseCheck( 1150, 100, &fg_index, &selected_fg_x, &selected_fg_y,
+                       0 );
 
+    e_GlyphMouseCheck( 1125, 245, &glyph_index, &selected_glyph_x,
+                       &selected_glyph_y, 0 );
   }
   
   if ( app.mouse.button == 2 )
@@ -151,7 +153,7 @@ static void we_EditLogic( float dt )
       
       if ( editor_mode == WEM_PASTE )
       {
-        e_PasteGameTile( map, highlighted_pos, clipboard );
+        we_PasteGameTile( map, highlighted_pos, clipboard );
         editor_mode = WEM_NONE;
 
       }
@@ -162,14 +164,15 @@ static void we_EditLogic( float dt )
   if ( app.mouse.button == 3 )
   {
     app.mouse.button = 0;
-    e_ColorMouseCheck( &bg_index, &selected_bg_x, &selected_bg_y );
+    e_ColorMouseCheck( 1150, 100, &bg_index, &selected_bg_x, &selected_bg_y,
+                       0 );
     
     if ( map != NULL )
     {
       if ( editor_mode == WEM_MASS_CHANGE )
       {
-        GameTileArray_t* temp = e_GetSelectGrid( map, selected_pos, highlighted_pos );
-        e_ChangeGameTile( map, selected_pos, temp, glyph_index,
+        GameTileArray_t* temp = we_GetSelectGrid( map, selected_pos, highlighted_pos );
+        we_ChangeGameTile( map, selected_pos, temp, glyph_index,
                                bg_index, fg_index );
 
         editor_mode = WEM_NONE;
@@ -177,7 +180,7 @@ static void we_EditLogic( float dt )
 
       if ( editor_mode == WEM_COPY )
       {
-        clipboard = e_GetSelectGrid( map, selected_pos, highlighted_pos );
+        clipboard = we_GetSelectGrid( map, selected_pos, highlighted_pos );
         editor_mode = WEM_PASTE;
       }
 
@@ -220,7 +223,7 @@ static void we_EditLogic( float dt )
     editor_mode = WEM_BRUSH;
   }
   
-  e_LevelZHeightCheck( &selected_pos );
+  we_LevelZHeightCheck( &selected_pos );
   highlighted_pos.local_z = selected_pos.local_z;
   highlighted_pos.level   = selected_pos.level;
   
@@ -274,14 +277,14 @@ static void we_EditDraw( float dt )
     if ( editor_mode == WEM_SELECT || editor_mode == WEM_COPY ||
       editor_mode == WEM_MASS_CHANGE )
     {
-      e_DrawSelectGrid( map, selected_pos, highlighted_pos );
+      we_DrawSelectGrid( map, selected_pos, highlighted_pos );
     }
 
     if ( editor_mode == WEM_PASTE )
     {
       if ( clipboard != NULL )
       {
-        e_DrawPastePreview( map, highlighted_pos, clipboard );
+        we_DrawPastePreview( map, highlighted_pos, clipboard );
 
       }
     }
@@ -290,78 +293,8 @@ static void we_EditDraw( float dt )
   
   a_DrawFilledRect( 1120, 95, 154, 442, 0, 0, 255, 255 ); //Glyph grid background
   
-  int cx = 0, cy = 0;
-  for ( int i = 0; i < MAX_COLOR_PALETTE; i++ )
-  {
-
-    if ( cx + GLYPH_WIDTH > ( 6 * GLYPH_WIDTH ) )
-    {
-      cx = 0;
-      cy += GLYPH_HEIGHT + 1;
-      if ( cy > ( 6 * GLYPH_HEIGHT ) )
-      {
-//        printf( "color grid is too large!\n" );
-//        return;
-      }
-
-    }
-    a_DrawFilledRect( cx + 1152, cy + 100, GLYPH_WIDTH, GLYPH_HEIGHT,
-                      master_colors[APOLLO_PALETE][i].r,
-                      master_colors[APOLLO_PALETE][i].g,
-                      master_colors[APOLLO_PALETE][i].b,
-                      master_colors[APOLLO_PALETE][i].a );
-
-    if ( i == fg_index )
-    {
-      a_DrawRect( cx + 1152, cy + 100,
-                  GLYPH_WIDTH, GLYPH_HEIGHT, 255, 0, 255, 255 );
-    }
-    
-    if ( i == bg_index )
-    {
-      a_DrawRect( cx + 1152, cy + 100,
-                  GLYPH_WIDTH, GLYPH_HEIGHT, 255, 255, 0, 255 );
-    }
-    
-    cx += GLYPH_WIDTH;
-
-  }
-  
-  int gx = 0, gy = 0;
-  for ( int i = 0; i < game_glyphs->count; i++ )
-  {
-    if ( gx + GLYPH_WIDTH > ( 16 * GLYPH_WIDTH ) )
-    {
-      gx = 0;
-      gy += GLYPH_HEIGHT + 1;
-      if ( gy > ( 20 * GLYPH_HEIGHT ) )
-      {
-//        printf( "color grid is too large!\n" );
-//        return;
-      }
-
-    }
-
-    a_DrawFilledRect( gx + 1125,
-                      gy + 245,
-                      game_glyphs->rects[i].w,
-                      game_glyphs->rects[i].h, 0, 0, 0, 255 );
-
-    a_BlitTextureRect( game_glyphs->texture, game_glyphs->rects[i],
-                       gx + 1125,
-                       gy + 245, 1, (aColor_t){.r = 255,
-                      .g = 255, . b = 255, .a = 255 } );
-    
-    if ( i == glyph_index )
-    {
-      a_DrawRect( gx + 1125,
-                  gy + 245,
-                  game_glyphs->rects[i].w,
-                  game_glyphs->rects[i].h, 255, 0, 255, 255 );
-    }
-
-    gx += GLYPH_WIDTH;
-  }
+  e_DrawColorPalette( 1152, 100, fg_index, bg_index );
+  e_DrawGlyphPalette( 1125, 245, glyph_index );
   
   a_DrawFilledRect( 1125, 100, game_glyphs->rects[glyph_index].w * 2,
                     game_glyphs->rects[glyph_index].h * 2, 
