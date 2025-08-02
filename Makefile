@@ -10,6 +10,7 @@ BIN_DIR=bin
 OBJ_DIR=obj
 EMS_DIR=ems_obj
 WEO_DIR=obj/world_editor
+EEO_DIR=obj/entity_editor
 LIB_DIR=lib
 INDEX_DIR=index
 EDITOR_DIR=editor
@@ -88,6 +89,9 @@ EDITOR_OBJS = \
 							$(OBJ_DIR)/world_editor/save.o\
 							$(OBJ_DIR)/world_editor/edit.o\
 							$(OBJ_DIR)/world_editor/utils.o\
+							$(OBJ_DIR)/entity_editor/creation.o\
+							$(OBJ_DIR)/entity_editor/edit.o\
+							$(OBJ_DIR)/entity_editor/utils.o\
 							$(OBJ_DIR)/color_editor.o\
 							$(OBJ_DIR)/editor.o\
 							$(OBJ_DIR)/entity_editor.o\
@@ -98,7 +102,7 @@ EDITOR_OBJS = \
 							$(OBJ_DIR)/utils_editor.o\
 							$(OBJ_DIR)/world_editor.o
 
-$(OBJ_DIR)/%.o: $(EDITOR_DIR)/%.c | $(OBJ_DIR) $(WEO_DIR)
+$(OBJ_DIR)/%.o: $(EDITOR_DIR)/%.c | $(OBJ_DIR) $(WEO_DIR) $(EEO_DIR)
 	$(CC) -c $< -o $@ -ggdb $(CFLAGS)
 
 $(BIN_DIR)/editor: $(EDITOR_OBJS) | $(BIN_DIR)
@@ -106,6 +110,9 @@ $(BIN_DIR)/editor: $(EDITOR_OBJS) | $(BIN_DIR)
 
 $(WEO_DIR):
 	mkdir -p $(WEO_DIR)
+
+$(EEO_DIR):
+	mkdir -p $(EEO_DIR)
 
 $(EMS_DIR):
 	mkdir -p $(EMS_DIR)

@@ -8,6 +8,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "Archimedes.h"
 #include "defs.h"
@@ -205,5 +206,24 @@ void e_LoadColorPalette( aColor_t palette[MAX_COLOR_GROUPS][MAX_COLOR_PALETTE],
 
   fclose( file );
 
+}
+
+void e_DrawGlyphText( const char* message, int x, int y, int bg, int fg,
+                      int align, int max_width )
+{
+  int message_size = strlen( message );
+
+  int x1 = 0;
+  
+  for ( int i = 0; i < ( message_size + 1 ); i++ )
+  {
+    int index = message[i] - 1;
+    
+    a_BlitTextureRect( game_glyphs->texture, game_glyphs->rects[index],
+                       100 + x1, 200, 1,
+                       (aColor_t){.r = 255, .g = 255, . b = 255, .a = 255 } );
+    x1 += 9;
+
+  }
 }
 

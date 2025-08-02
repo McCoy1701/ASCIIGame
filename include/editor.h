@@ -41,5 +41,8 @@ void e_GlyphMouseCheck( int originx, int originy, int* index, uint8_t* grid_x,
 void e_LoadColorPalette( aColor_t palette[MAX_COLOR_GROUPS][MAX_COLOR_PALETTE],
                        const char * filename );
 
+void e_DrawGlyphText( const char* message, int x, int y, int bg, int fg,
+                      int align, int max_width );
+
 #endif
 

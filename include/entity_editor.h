@@ -12,5 +12,17 @@
 void e_InitEntityEditor( void );
 void e_DestroyEntityEditor( void );
 
+void ee_Creation( void );
+void ee_Edit( void );
+
+/* UTILS */
+
+void ee_DrawAttributes( void );
+void ee_DrawSkills( void );
+void ee_DrawAdvantages( void );
+void ee_DrawDisadvantages( void );
+void ee_DrawVirtues( void );
+void ee_DrawVices( void );
+
 #endif
 
