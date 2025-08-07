@@ -1,4 +1,3 @@
-
 /*
  * entity_editor/utils.c:
  *

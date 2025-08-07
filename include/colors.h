@@ -1,0 +1,66 @@
+/*
+ * color_editor.h:
+ *
+ * Copyright (c) 2025 Jacob Kellum <jkellum819@gmail.com>
+ *                    Mathew Storm <smattymat@gmail.com>
+ ************************************************************************
+ */
+
+#ifndef __COLORS_H__
+#define __COLORS_H__
+
+enum
+{
+  APOLLO_WHITE,
+  APOLLO_BLACK,
+  APOLLO_DARK_GRAY_0,
+  APOLLO_DARK_GRAY_1,
+  APOLLO_DARK_GRAY_2,
+  APOLLO_DARK_GRAY_3,
+  APOLLO_LIGHT_GRAY_0,
+  APOLLO_LIGHT_GRAY_1,
+  APOLLO_LIGHT_GRAY_2,
+  APOLLO_LIGHT_GRAY_3,
+  APOLLO_LIGHT_GRAY_4,
+  APOLLO_LIGHT_GRAY_5,
+  APOLLO_BLUE_0,
+  APOLLO_BLUE_1,
+  APOLLO_BLUE_2,
+  APOLLO_BLUE_3,
+  APOLLO_BLUE_4,
+  APOLLO_BLUE_5,
+  APOLLO_GREEN_0,
+  APOLLO_GREEN_1,
+  APOLLO_GREEN_2,
+  APOLLO_GREEN_3,
+  APOLLO_GREEN_4,
+  APOLLO_GREEN_5,
+  APOLLO_TAN_0,
+  APOLLO_TAN_1,
+  APOLLO_TAN_2,
+  APOLLO_TAN_3,
+  APOLLO_TAN_4,
+  APOLLO_TAN_5,
+  APOLLO_ORANGE_0,
+  APOLLO_ORANGE_1,
+  APOLLO_ORANGE_2,
+  APOLLO_ORANGE_3,
+  APOLLO_ORANGE_4,
+  APOLLO_ORANGE_5,
+  APOLLO_RED_0,
+  APOLLO_RED_1,
+  APOLLO_RED_2,
+  APOLLO_RED_3,
+  APOLLO_RED_4,
+  APOLLO_RED_5,
+  APOLLO_PURPLE_0,
+  APOLLO_PURPLE_1,
+  APOLLO_PURPLE_2,
+  APOLLO_PURPLE_3,
+  APOLLO_PURPLE_4,
+  APOLLO_PURPLE_5,
+  APOLLO_MAX
+};
+
+#endif
+
