@@ -95,12 +95,15 @@ static void eLogic( float dt )
 
 static void eDraw( float dt )
 {
-  a_DrawFilledRect( 100, 100, 32, 32, 0, 0, 255, 255 );
-  a_DrawFilledRect( 300, 300, 32, 32, 255, 0, 0, 255 );
+  aRect_t test_rect_0 = (aRect_t){ .x = 100, .y = 100, .w = 32, .h = 32 };
+  a_DrawFilledRect( test_rect_0, blue );
+  aRect_t test_rect_1 = (aRect_t){ .x = 300, .y = 300, .w = 32, .h = 32 };
+  a_DrawFilledRect( test_rect_1, red );
   
-  a_DrawFilledRect( app.mouse.x, app.mouse.y,
-                   game_glyphs->rects[0].w * 4, game_glyphs->rects[0].h * 4,
-                   255, 0, 0, 0 );
+  aRect_t cursor_rect = (aRect_t){ .x = app.mouse.x, .y = app.mouse.y,
+  .w = ( game_glyphs->rects[0].w * 4 ),
+  .h = ( game_glyphs->rects[0].h * 4 ) };
+  a_DrawFilledRect( cursor_rect, red );
   
   a_BlitTextureRect( game_glyphs->texture, game_glyphs->rects[0], app.mouse.x,
                      app.mouse.y, 4, (aColor_t){.r = 255, .g = 255, .b = 255,

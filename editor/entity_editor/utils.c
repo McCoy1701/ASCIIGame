@@ -10,42 +10,55 @@
 #include <stdio.h>
 
 #include "Archimedes.h"
+#include "colors.h"
 #include "editor.h"
 #include "entity_editor.h"
 
 void ee_DrawAttributes( void )
 {
-  a_DrawFilledRect( 25, 110, 259, 527, 60, 94, 139, 255 ); //Attributes BG
+  aRect_t attributes_rect = (aRect_t){ .x = 25, .y = 110, .w = 259, .h = 527 };
+  a_DrawFilledRect( attributes_rect,
+                    master_colors[APOLLO_PALETE][APOLLO_BLUE_2] ); //Attributes BG
 
 }
 
 void ee_DrawSkills( void )
 {
-  a_DrawFilledRect( 290, 110, 255, 527, 23, 32, 56, 255 ); //Skills BG
+  aRect_t skills_rect = (aRect_t){ .x = 290, .y = 110, .w = 255, .h = 527 };
+  a_DrawFilledRect( skills_rect,
+                    master_colors[APOLLO_PALETE][APOLLO_BLUE_0] ); //Skills BG
 
 }
 
 void ee_DrawAdvantages( void )
 {
-  a_DrawFilledRect( 551, 110, 255, 260, 70, 130, 50, 255 ); //Advantages BG
+  aRect_t advantages_rect = (aRect_t){ .x = 551, .y = 110, .w = 255, .h = 260 };
+  a_DrawFilledRect( advantages_rect,
+                    master_colors[APOLLO_PALETE][APOLLO_GREEN_2] ); //Advantages BG
   
 }
 
 void ee_DrawDisadvantages( void )
 {
-  a_DrawFilledRect( 812, 110, 255, 260, 165, 48, 48, 255 ); //Disadvantages BG
-  
+  aRect_t disadvantages_rect = (aRect_t){ .x = 812, .y = 110, .w = 255, .h = 260 };
+  a_DrawFilledRect( disadvantages_rect,
+                    master_colors[APOLLO_PALETE][APOLLO_RED_3] ); //Disadvantages BG
+
 }
 
 void ee_DrawVirtues( void )
 {
-  a_DrawFilledRect( 551, 376, 255, 260, 222, 168, 65, 255 ); //Virtues BG
+  aRect_t virtues_rect = (aRect_t){ .x = 551, .y = 376, .w = 255, .h = 260 };
+  a_DrawFilledRect( virtues_rect,
+                    master_colors[APOLLO_PALETE][APOLLO_TAN_4] ); //Virtues BG
   
 }
 
 void ee_DrawVices( void )
 {
-  a_DrawFilledRect( 812, 376, 255, 260, 207, 87, 60, 255 ); //Vices BG
+  aRect_t vices_rect = (aRect_t){ .x = 812, .y = 376, .w = 255, .h = 260 };
+  a_DrawFilledRect( vices_rect,
+                    master_colors[APOLLO_PALETE][APOLLO_RED_4] ); //Vices BG
   
 }
 

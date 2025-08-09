@@ -69,8 +69,10 @@ static void e_ItemEditorLogic( float dt )
 
 static void e_ItemEditorDraw( float dt )
 {
-  a_DrawFilledRect( 100, 100, 32, 32, 0, 0, 255, 255 );
-  a_DrawFilledRect( 300, 300, 32, 32, 0, 255, 0, 255 );
+  aRect_t test_rect_0 = (aRect_t){ .x = 100, .y = 100, .w = 32, .h = 32 };
+  a_DrawFilledRect( test_rect_0, blue );
+  aRect_t test_rect_1 = (aRect_t){ .x = 300, .y = 300, .w = 32, .h = 32 };
+  a_DrawFilledRect( test_rect_1, green );
 
   a_DrawWidgets();
 }

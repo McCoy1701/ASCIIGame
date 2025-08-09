@@ -290,18 +290,16 @@ static void we_EditDraw( float dt )
     }
 
   }
-  
-  a_DrawFilledRect( 1120, 95, 154, 442, 0, 0, 255, 255 ); //Glyph grid background
+  aRect_t glyph_bg_rect = (aRect_t){ .x = 1120, .y = 95, .w = 154, .h = 442 };
+  a_DrawFilledRect( glyph_bg_rect, blue ); //Glyph grid background
   
   e_DrawColorPalette( 1152, 100, fg_index, bg_index );
   e_DrawGlyphPalette( 1125, 245, glyph_index );
   
-  a_DrawFilledRect( 1125, 100, game_glyphs->rects[glyph_index].w * 2,
-                    game_glyphs->rects[glyph_index].h * 2, 
-                    master_colors[APOLLO_PALETE][bg_index].r,
-                    master_colors[APOLLO_PALETE][bg_index].g,
-                    master_colors[APOLLO_PALETE][bg_index].b,
-                    master_colors[APOLLO_PALETE][bg_index].a );
+  aRect_t selected_glyph_rect = (aRect_t){ .x = 1125, .y = 100,
+    .w = ( game_glyphs->rects[glyph_index].w * 2 ),
+    .h = ( game_glyphs->rects[glyph_index].h * 2 ) };
+  a_DrawFilledRect( selected_glyph_rect, master_colors[APOLLO_PALETE][bg_index] );
 
   a_BlitTextureRect( game_glyphs->texture, game_glyphs->rects[glyph_index],
                      1125, 100, 2, master_colors[APOLLO_PALETE][fg_index] );
@@ -323,15 +321,18 @@ static void we_EditDraw( float dt )
   
   if ( editor_mode != WEM_NONE )
   {
-    a_DrawRect( 1215, 100 + ( GLYPH_HEIGHT * ( editor_mode - 1 ) ),
-               GLYPH_WIDTH * 6, GLYPH_HEIGHT, 255, 255, 0, 0 );
+    aRect_t editor_mode_select_rect = (aRect_t){ .x = 1215, 
+      .y = ( 100 + ( GLYPH_HEIGHT * ( editor_mode - 1 ) ) ),
+      .w = ( GLYPH_WIDTH * 6 ),
+      .h = GLYPH_HEIGHT };
+    a_DrawRect( editor_mode_select_rect, yellow );
   }
 
   snprintf(pos_text, 50, "%d,%d,%d,%d,%d,%d\n", selected_pos.world_index,
            selected_pos.realm_index, selected_pos.region_index, 
            selected_pos.local_index, selected_pos.level, selected_pos.local_z );
-  
-  a_DrawText( pos_text, 1170, 680, 255, 255, 255, app.font_type,
+ 
+  a_DrawText( pos_text, 1170, 680, black, white, app.font_type,
              TEXT_ALIGN_CENTER, 0 );
 
   a_DrawWidgets();

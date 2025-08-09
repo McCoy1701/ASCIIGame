@@ -122,8 +122,10 @@ static void e_UIEditorLogic( float dt )
 
 static void e_UIEditorDraw( float dt )
 {
-  a_DrawFilledRect( 100, 100, 32, 32, 0, 255, 0, 255 );
-  a_DrawFilledRect( 300, 300, 32, 32, 255, 255, 0, 255 );
+  aRect_t test_rect_0 = (aRect_t){ .x = 100, .y = 100, .w = 32, .h = 32 };
+  a_DrawFilledRect( test_rect_0, green );
+  aRect_t test_rect_1 = (aRect_t){ .x = 300, .y = 300, .w = 32, .h = 32 };
+  a_DrawFilledRect( test_rect_1, yellow );
 
   a_DrawWidgets();
 }

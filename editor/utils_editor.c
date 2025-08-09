@@ -11,6 +11,7 @@
 #include <string.h>
 
 #include "Archimedes.h"
+#include "colors.h"
 #include "defs.h"
 #include "editor.h"
 #include "structs.h"
@@ -79,22 +80,18 @@ void e_DrawColorPalette( int originx, int originy, int fg_index, int bg_index )
       }
 
     }
-    a_DrawFilledRect( cx + originx, cy + originy, GLYPH_WIDTH, GLYPH_HEIGHT,
-                     master_colors[APOLLO_PALETE][i].r,
-                     master_colors[APOLLO_PALETE][i].g,
-                     master_colors[APOLLO_PALETE][i].b,
-                     master_colors[APOLLO_PALETE][i].a );
+    aRect_t color_palette_rect = (aRect_t){ .x = ( cx + originx ), .y = ( cy + originy ),
+    .w = GLYPH_WIDTH, .h = GLYPH_HEIGHT };
+    a_DrawFilledRect( color_palette_rect, master_colors[APOLLO_PALETE][i] );
 
     if ( i == fg_index )
     {
-      a_DrawRect( cx + originx, cy + originy,
-                 GLYPH_WIDTH, GLYPH_HEIGHT, 255, 0, 255, 255 );
+      a_DrawRect( color_palette_rect, magenta );
     }
 
     if ( i == bg_index )
     {
-      a_DrawRect( cx + originx, cy + originy,
-                 GLYPH_WIDTH, GLYPH_HEIGHT, 255, 255, 0, 255 );
+      a_DrawRect( color_palette_rect, yellow );
     }
 
     cx += GLYPH_WIDTH;
@@ -119,19 +116,17 @@ void e_DrawGlyphPalette( int originx, int originy, int glyph_index )
 
     }
 
-    a_DrawFilledRect( gx + originx, gy + originy,
-                      game_glyphs->rects[i].w,
-                      game_glyphs->rects[i].h, 0, 0, 0, 255 );
+    aRect_t glyph_palette_rect = (aRect_t){ .x = ( gx + originx ), .y = ( gy + originy ),
+    .w = game_glyphs->rects[i].w, .h = game_glyphs->rects[i].h };
+    
+    a_DrawFilledRect( glyph_palette_rect, black );
 
     a_BlitTextureRect( game_glyphs->texture, game_glyphs->rects[i],
-                       gx + originx, gy + originy, 1,
-                       (aColor_t){.r = 255, .g = 255, . b = 255, .a = 255 } );
+                       gx + originx, gy + originy, 1, white );
 
     if ( i == glyph_index )
     {
-      a_DrawRect( gx + originx, gy + originy,
-                 game_glyphs->rects[i].w,
-                 game_glyphs->rects[i].h, 255, 0, 255, 255 );
+      a_DrawRect( glyph_palette_rect, magenta );
     }
 
     gx += GLYPH_WIDTH;

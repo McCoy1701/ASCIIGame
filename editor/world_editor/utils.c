@@ -10,6 +10,7 @@
 #include <stdlib.h>
 
 #include "Archimedes.h"
+#include "colors.h"
 #include "defs.h"
 #include "editor.h"
 #include "glyphs.h"
@@ -547,11 +548,11 @@ void we_LevelZHeightCheck( WorldPosition_t* pos )
 void we_DrawEditorHotKeys( int x, int y, int key, int abbv0, int abbv1,
                            int abbv2, int abbv3 )
 {
-  a_DrawFilledRect( x, y, GLYPH_WIDTH * 6, GLYPH_HEIGHT,
-                   master_colors[APOLLO_PALETE][36].r,
-                   master_colors[APOLLO_PALETE][36].g,
-                   master_colors[APOLLO_PALETE][36].b,
-                   master_colors[APOLLO_PALETE][36].a );
+  aRect_t editor_hotkey_rect = (aRect_t){ .x = x, .y = y,
+    .w = ( GLYPH_WIDTH * 6 ),
+    .h =GLYPH_HEIGHT };
+  a_DrawFilledRect( editor_hotkey_rect,
+                    master_colors[APOLLO_PALETE][APOLLO_RED_0] );
 
   a_BlitTextureRect( game_glyphs->texture, game_glyphs->rects[key],
                     x, y, 1, master_colors[APOLLO_PALETE][10] );
@@ -570,12 +571,11 @@ void we_DrawEditorHotKeys( int x, int y, int key, int abbv0, int abbv1,
 
 static void DrawCustomGlyph( int x, int y, int glyph, int bg, int fg, int scale )
 {
-  a_DrawFilledRect( x, y, game_glyphs->rects[glyph].w * scale,
-                    game_glyphs->rects[glyph].h * scale,
-                    master_colors[APOLLO_PALETE][bg].r,
-                    master_colors[APOLLO_PALETE][bg].g,
-                    master_colors[APOLLO_PALETE][bg].b,
-                    master_colors[APOLLO_PALETE][bg].a );
+  aRect_t glyph_rect = (aRect_t){ .x = x, .y = y,
+    .w = ( game_glyphs->rects[glyph].w * scale ),
+    .h = ( game_glyphs->rects[glyph].h * scale ) };
+  a_DrawFilledRect( glyph_rect,
+                    master_colors[APOLLO_PALETE][bg] );
 
   a_BlitTextureRect( game_glyphs->texture, game_glyphs->rects[glyph],
                     x, y, scale, master_colors[APOLLO_PALETE][fg] );
@@ -583,12 +583,11 @@ static void DrawCustomGlyph( int x, int y, int glyph, int bg, int fg, int scale 
 
 static void DrawGlyph( int x, int y, GameTile_t current_tile, int scale )
 {
-  a_DrawFilledRect( x, y, game_glyphs->rects[current_tile.glyph].w * scale,
-                    game_glyphs->rects[current_tile.glyph].h * scale,
-                    master_colors[APOLLO_PALETE][current_tile.bg].r,
-                    master_colors[APOLLO_PALETE][current_tile.bg].g,
-                    master_colors[APOLLO_PALETE][current_tile.bg].b,
-                    master_colors[APOLLO_PALETE][current_tile.bg].a );
+  aRect_t glyph_rect = (aRect_t){ .x = x, .y = y,
+    .w = ( game_glyphs->rects[current_tile.glyph].w * scale ),
+    .h = ( game_glyphs->rects[current_tile.glyph].h * scale ) };
+  a_DrawFilledRect( glyph_rect,
+                    master_colors[APOLLO_PALETE][current_tile.bg] );
 
   a_BlitTextureRect( game_glyphs->texture, game_glyphs->rects[current_tile.glyph],
                      x, y, scale, master_colors[APOLLO_PALETE][current_tile.fg] );

@@ -62,7 +62,7 @@ static void wes_SaveLogic( float dt )
 
 static void wes_SaveDraw( float dt )
 {
-  a_DrawText( "Save?", 635, 270, 255, 255, 255, app.font_type,
+  a_DrawText( "Save?", 635, 270, black, white, app.font_type,
              TEXT_ALIGN_CENTER, 0 );
 
   a_DrawWidgets();

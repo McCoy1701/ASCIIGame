@@ -9,6 +9,19 @@
 #ifndef __ENTITY_EDITOR_H__
 #define __ENTITY_EDITOR_H__
 
+#define COLOR_PALLETE_X 1177
+#define COLOR_PALLETE_Y 110
+#define GLYPH_PALLETE_X 1088
+#define GLYPH_PALLETE_Y 263
+#define GLYPH_BG_X 1083
+#define GLYPH_BG_Y 105
+#define ADD_LIST_BG_X 1083
+#define ADD_LIST_BG_Y 534
+#define RANDOMIZE_BG_X 1083
+#define RANDOMIZE_BG_Y 582
+#define GLYPH_SELECTED_X 1150
+#define GLYPH_SELECTED_Y 110
+
 void e_InitEntityEditor( void );
 void e_DestroyEntityEditor( void );
 

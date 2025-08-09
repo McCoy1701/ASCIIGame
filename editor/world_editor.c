@@ -195,7 +195,7 @@ static void e_WorldEditorDraw( float dt )
              selected_pos.local_index, selected_pos.level,
              selected_pos.local_z );
 
-    a_DrawText( pos_text, 750, 10, 255, 255, 255, app.font_type,
+    a_DrawText( pos_text, 750, 10, black, white, app.font_type,
                 TEXT_ALIGN_CENTER, 0 );
 
     int realm_x = 0, realm_y = 0;
@@ -205,17 +205,15 @@ static void e_WorldEditorDraw( float dt )
     if ( realm_x >= 0 && realm_x < WORLD_WIDTH &&
          realm_y >= 0 && realm_y < WORLD_HEIGHT )
     {
-      a_DrawRect( originx + ( realm_x * map->realm_width * CELL_WIDTH ),
-                 originy + ( realm_y * map->realm_height * CELL_HEIGHT ),
-                 ( map->realm_width * CELL_WIDTH ), 
-                 ( map->realm_height * CELL_HEIGHT ),
-                 255, 255, 0, 255 );
+      aRect_t realm_rect = (aRect_t){
+        .x = ( originx + ( realm_x * map->realm_width * CELL_WIDTH ) ),
+        .y = ( originy + ( realm_y * map->realm_height * CELL_HEIGHT ) ),
+        .w = ( map->realm_width * CELL_WIDTH ),
+        .h = ( map->realm_height * CELL_HEIGHT ) };
+      a_DrawRect( realm_rect, yellow );
     }
 
   }
-  
-  a_DrawRect( 451, 120, 378, 480, 255, 0, 255, 255 );
-  a_DrawFilledRect( 300, 300, 32, 32, 0, 255, 255, 255 );
 
   a_DrawWidgets();
 }

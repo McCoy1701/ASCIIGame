@@ -9,6 +9,7 @@
 #include <stdio.h>
 
 #include "Archimedes.h"
+#include "colors.h"
 #include "editor.h"
 #include "entity_editor.h"
 #include "world_editor.h"
@@ -105,8 +106,15 @@ static void e_EntityEditorLogic( float dt )
 
 static void e_EntityEditorDraw( float dt )
 {
-  a_DrawFilledRect( 512, 110, 266, 522, 117, 36, 56, 255 );
-  a_DrawFilledRect( 517, 115, 256, 512, 60, 94, 139, 255 );
+  aRect_t entity_bg_rect = (aRect_t){ .x = 512, .y = 110,
+                                      .w = 266, .h = 522 };
+  a_DrawFilledRect( entity_bg_rect,
+                    master_colors[APOLLO_PALETE][APOLLO_RED_2] );
+
+  aRect_t character_sheet_rect = (aRect_t){ .x = 517, .y = 115,
+                                            .w = 256, .h = 512 };
+  a_DrawFilledRect( character_sheet_rect,
+                    master_colors[APOLLO_PALETE][APOLLO_BLUE_2] );
   
   a_DrawWidgets();
 }
