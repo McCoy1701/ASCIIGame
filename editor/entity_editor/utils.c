@@ -50,7 +50,7 @@ void ee_DrawVirtues( void )
 {
   aRect_t virtues_rect = (aRect_t){ .x = 551, .y = 376, .w = 255, .h = 260 };
   a_DrawFilledRect( virtues_rect,
-                    master_colors[APOLLO_PALETE][APOLLO_TAN_4] ); //Virtues BG
+                    master_colors[APOLLO_PALETE][APOLLO_ORANGE_4] ); //Virtues BG
   
 }
 
