@@ -13,6 +13,7 @@
 #include "colors.h"
 #include "editor.h"
 #include "entity_editor.h"
+#include "traits.h"
 
 static void ee_CreationLogic( float );
 static void ee_CreationDraw( float );
@@ -36,6 +37,8 @@ static void ee_CreationLogic( float dt )
 {
   a_DoInput();
 
+  e_update(); 
+  
   if ( app.keyboard[ SDL_SCANCODE_ESCAPE ] == 1 )
   {
     app.keyboard[SDL_SCANCODE_ESCAPE] = 0;

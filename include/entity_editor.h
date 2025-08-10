@@ -37,5 +37,10 @@ void ee_DrawDisadvantages( void );
 void ee_DrawVirtues( void );
 void ee_DrawVices( void );
 
+void e_DrawList( int originx, int originy, char** list, int list_len,
+                 int list_offset, int display_count );
+void e_UpdateList( int list_len, int* list_offset, int value );
+void e_update( void );
+
 #endif
 
